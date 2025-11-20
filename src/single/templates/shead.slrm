@@ -1,0 +1,28 @@
+#!/bin/bash
+#SBATCH -J {{name}}	     ## name
+#SBATCH -N {{nnodes}}     ## 1 node
+#SBATCH --time={{trun}}
+#SBATCH -e {{name}}.err
+#SBATCH -o {{name}}.out
+#SBATCH --ntasks-per-node=32         # 32 tasks per node
+#SBATCH --partition={{partition}}
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=davide.breoni@unitn.it
+#SBATCH --account={{project}}  #private queue -comment previous two lines to use
+#SBATCH --qos={{qos}} #private queue
+
+module purge
+module load boost
+
+
+TIME="{{tsim}}"
+#SEED=$(od -vAn -N3 -tu4 < /dev/urandom | awk '{print $1}')
+LMP=$HOME/bin/lmp_mpi
+
+cd ${SLURM_SUBMIT_DIR}
+#echo "Running with seed: ${SEED}" > log
+echo "starting sim {{name}}" > log
+mpirun -np {{n_cpus}} $LMP  -v time ${TIME} -v minimize 1 -v datafile {{datafile}} -in {{input}} >> log
+
+#mpirun -np {{n_cpus}} $LMP -in thermalization_{{input}}
+#mpirun -np {{n_cpus}} $LMP -in {{input}}

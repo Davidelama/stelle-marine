@@ -1,0 +1,45 @@
+# Created by {{script}} on {{date}}
+
+{{n_atoms}} atoms
+{{n_bonds}} bonds
+{{n_angles}} angles
+
+{{n_atype}} atom types
+{{n_btype}} bond types
+{{n_antype}} angle types
+
+{{n_ellipsoids}} ellipsoids
+
+{{xlo}} {{xhi}} xlo xhi
+{{ylo}} {{yhi}} ylo yhi
+{{zlo}} {{zhi}} zlo zhi
+
+Masses
+
+{% for m in masses -%}
+    {{ m }}
+{% endfor %}
+
+Atoms
+
+{% for a in atoms -%}
+    {{ a }}
+{% endfor %}
+
+Bonds
+
+{% for b in bonds -%}
+    {{ b }}
+{% endfor %}
+
+Angles
+
+{% for an in angles -%}
+    {{ an }}
+{% endfor %}
+
+Ellipsoids
+
+{% for e in ellipsoids -%}
+    {{ e }}
+{% endfor %}

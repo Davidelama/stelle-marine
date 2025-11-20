@@ -1,0 +1,12 @@
+ITEM: TIMESTEP
+0
+ITEM: NUMBER OF ATOMS
+{{n_atoms}}
+ITEM: BOX BOUNDS pp pp pp
+{{xlo}} {{xhi}}
+{{ylo}} {{yhi}}
+{{zlo}} {{zhi}}
+ITEM: ATOMS id mol type xu yu zu
+{% for a in atoms -%}
+    {{ a }}
+{% endfor %}

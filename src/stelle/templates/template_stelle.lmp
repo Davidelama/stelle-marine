@@ -1,0 +1,176 @@
+#---- Created by {{scriptname}} on {{date}}
+#---- DEFAULT VARIABLES (overridden by -var)
+#-- Default: assume sim from data file, no minimization 
+variable seed index {{seed}}
+variable damp equal {{tau_damp}}
+variable dt equal {{timestep}} # timestep (must be lower than 0.0124
+variable time index "23:30:00"
+variable restart index 0
+variable minimize index 0
+variable name index "{{name}}"
+variable dumptime index {{dumptime|int}}
+variable balancetime index {{balancetime|int}}
+variable restime  index {{restime|int}}
+variable runtime  index {{runtime|int}}
+variable equitime equal {{equitime}}
+variable n_all equal {{n_all}}
+variable n_beadseff equal {{n_beadseff}}
+variable func equal {{func}}
+variable ghost equal {{ghost}}
+variable n_mol equal {{n_mol}}
+variable start_radius  index {{start_radius}}
+variable end_radius  index {{end_radius}}
+variable conf equal {{conf}}
+variable peclet equal {{peclet}}
+variable brownian equal {{brownian}}
+variable r_bond equal {{r_bond}}
+variable r_cbond equal {{r_cbond}}
+#---
+print "-> Seed: ${seed}"
+print "-> Stopping after walltime: ${time}"
+print "-> Minimize: ${minimize}"
+if "${restart} > 0" &
+then &
+"print '-> Restarting a previous simulation from latest.restart'" &
+else &
+"print '-> Starting a simulation from ${datafile}'"
+print "----------------------"
+
+#-----------------------------------------------------------------------------#
+# Reference paper:                                                            #
+# K. Kremer and G. S. Grest                                                   #
+# Dynamics of entangled linear polymer melts: A molecular-dynamics simulation #
+# J Chem Phys 92, 5057 (1990)                                                 #
+#-----------------------------------------------------------------------------#
+#---- PARAMETERS ----------------------#
+
+#LJ
+variable temp equal 1.0
+variable sigma equal 1.0
+variable rcutoff equal {{rcutoff}}
+variable epsilon equal 10.0
+variable Delta_cc equal {{Delta_cc}}
+variable Delta_cm equal {{Delta_cm}}
+
+#LANGEVIN
+variable temp_start equal 1.0 
+variable temp_end equal 1.0
+
+#FENE
+variable K equal 30.0
+variable R0 equal 1.5
+variable epsilon_bond equal 10.0
+variable fenesigma equal ${r_bond}
+
+#---- BOUNDARY CONDITIONS and INPUT DATA ----------------------#
+units lj
+dimension 2
+boundary     p p p
+atom_style hybrid angle ellipsoid #no charge! NOTE: this command must preceed read_data. use "molecular" for dihedral input
+
+if "${restart} >0" &
+then &
+"read_restart latest.restart" &
+else &
+"read_data ${datafile}"
+
+#----POTENTIALS AND STUFF -------------------------------------#
+#mass 1 1.0 #must be defined after sim. box. not necessary if already defined in configuration file
+
+#----BENDING -------------------------#
+#  E = K * (1 + cos(theta)), K>0
+angle_style cosine
+angle_coeff 1 {{bending}}
+
+#----NON-BONDED INTERACTIONS: WCA ----#
+#  E= 4*epsilon*[ (sigma/r)^12 - (sigma/r)^6]  for r<r_cut
+#  r_cut =1.12246 = 2^(1/6) is the minimum of the potential
+#
+#  pair_coeff for lj/cut, specify 4:
+#    * atom type interacting with
+#    * atom type
+#    * epsilon (energy units)
+#    * sigma (distance units)
+#
+pair_style  lj/expand 1.12246152962189
+pair_coeff 1 1 ${epsilon} ${sigma} ${Delta_cc}
+pair_coeff 1 2 0.0 0.0 0.0
+pair_coeff 1 3 ${epsilon} ${sigma} ${Delta_cm}
+pair_coeff 2 2 0.0 0.0 0.0
+pair_coeff 2 3 0.0 0.0 0.0
+pair_coeff 3 3 ${epsilon} ${sigma} 0
+pair_modify shift yes
+
+#----BONDED INTERACTIONS: FENE + WCA --#
+#  E= - 0.5 K R0^2 ln[ 1- ((r-Delta)/R0)^2]
+#     + 4epsilon[ (sigma/(r-Delta))^12 - (sigma/(r-Delta))^6] + epsilon
+# For style fene, specify:
+#   * bond type
+#   * K (energy/distance^2)
+#   * R0 (distance)
+#   * epsilon (energy)  (LJ component)
+#   * sigma (distance)  (LJ component)
+#   * Delta (distance)  (LJ component)
+bond_style      fene/expand #bond interaction (here is a fene/expand potential, accounting for differently sized particles)
+bond_coeff   1     ${K} ${R0} ${epsilon_bond} ${fenesigma} 0. #the meaning of coefficients depends on bond style. In this case we have "bond K R0 eps sigma Delta"
+special_bonds fene #<=== I M P O R T A N T (new command)  #sets lj potential coefficients to stay in line with fene
+
+#--------------------------------------------------------------#
+#---NEIGHBOUR LIST DETAILS
+neighbor	.3 bin
+neigh_modify one 10000
+#---GHOSTING
+if "${ghost}>0" then "neigh_modify exclude molecule/inter all"
+
+#--------------------------------------------------------------#
+#----FIXES ON SIMULATIONS -------------------------------------#
+# Details:
+# - NVE ensemble
+# - Langevin integrator Tstart Tstop 1/friction PRNG seed
+# -> sampling NVT ensemble
+# - Walls
+# - oscillating end
+# - ends fixed in x and y.
+#group ends id 1 512
+
+include grafting.lmp
+
+#---BALANCING -------------------------------------------------#
+comm_style tiled
+comm_modify cutoff 6
+balance     1.1 rcb
+fix         1 all balance ${balancetime} 1.1 rcb
+
+fix 5 all enforce2d
+
+#----OUTPUT DATA ----------------------------------------------#
+#----Configurations
+#---- ThermodynDNAringta  (temperature, energy, pressure)
+thermo {{n_thermo}}
+thermo_style   custom   step temp epair emol #v_wiggle temp epair emol
+restart     ${restime} ${name}-*.restart
+
+#--- ACTIVITY --------------------------------------------#
+group active type 3
+fix 6 active propel/self quat ${peclet} qvector 1.0 0.0 1.0
+
+#--- CONFINEMENT ---------------------------------------#
+if "(${restart}==0) && (${conf}>0)" then "include confinement.lmp"
+
+#--- THERMALIZATION ---------------------------------------#
+if "(${restart}==0)" then "include thermalization.lmp"
+
+#----OUTPUT DATA ----------------------------------------#
+include output_append.lmp
+include output_msd.lmp
+
+#----RUN ------------------------------------------------------#
+if "!(${restart}>0)" then "reset_timestep 0"
+timestep ${dt} # needed as it might change in minimize
+timer timeout ${time} every 1000
+run ${runtime} upto
+write_restart latest.restart
+write_data latest.restart.dat nocoeff
+write_dump all atom latest.dump
+
+

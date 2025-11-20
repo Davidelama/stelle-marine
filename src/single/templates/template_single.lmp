@@ -1,0 +1,140 @@
+#---- Created by {{scriptname}} on {{date}}
+#---- DEFAULT VARIABLES (overridden by -var)
+#-- Default: assume sim from data file, no minimization 
+variable seed index {{seed}}
+variable damp equal {{tau_damp}}
+variable dt equal {{timestep}} # timestep (must be lower than 0.0124
+variable time index "23:30:00"
+variable restart index 0
+variable minimize index 0
+variable name index "{{name}}"
+variable dumptime index {{dumptime|int}}
+variable balancetime index {{balancetime|int}}
+variable restime  index {{restime|int}}
+variable runtime  index {{runtime|int}}
+variable equitime equal {{equitime}}
+variable conf_radius  index {{conf_radius}}
+variable conf equal {{conf}}
+variable peclet equal {{peclet}}
+variable brownian equal {{brownian}}
+#---
+print "-> Seed: ${seed}"
+print "-> Stopping after walltime: ${time}"
+print "-> Minimize: ${minimize}"
+if "${restart} > 0" &
+then &
+"print '-> Restarting a previous simulation from latest.restart'" &
+else &
+"print '-> Starting a simulation from ${datafile}'"
+print "----------------------"
+
+#-----------------------------------------------------------------------------#
+# Reference paper:                                                            #
+# K. Kremer and G. S. Grest                                                   #
+# Dynamics of entangled linear polymer melts: A molecular-dynamics simulation #
+# J Chem Phys 92, 5057 (1990)                                                 #
+#-----------------------------------------------------------------------------#
+#---- PARAMETERS ----------------------#
+
+#LJ
+variable temp equal 1.0
+variable sigma equal 1.0
+variable rcutoff equal {{rcutoff}}
+variable epsilon equal 1.0
+
+#LANGEVIN
+variable temp_start equal 1.0 
+variable temp_end equal 1.0
+
+#---- BOUNDARY CONDITIONS and INPUT DATA ----------------------#
+units lj
+dimension 2
+boundary     p p p
+atom_style ellipsoid #no charge! NOTE: this command must preceed read_data. use "molecular" for dihedral input
+
+if "${restart} >0" &
+then &
+"read_restart latest.restart" &
+else &
+"read_data ${datafile}"
+
+#----POTENTIALS AND STUFF -------------------------------------#
+#mass 1 1.0 #must be defined after sim. box. not necessary if already defined in configuration file
+
+#----NON-BONDED INTERACTIONS: WCA ----#
+#  E= 4*epsilon*[ (sigma/r)^12 - (sigma/r)^6]  for r<r_cut
+#  r_cut =1.12246 = 2^(1/6) is the minimum of the potential
+#
+#  pair_coeff for lj/cut, specify 4:
+#    * atom type interacting with
+#    * atom type
+#    * epsilon (energy units)
+#    * sigma (distance units)
+#
+pair_style  lj/expand 1.12246152962189
+pair_coeff 1 1 ${epsilon} ${sigma} 0.0
+pair_modify shift yes
+
+#--------------------------------------------------------------#
+#---NEIGHBOUR LIST DETAILS
+neighbor	.3 bin
+neigh_modify one 10000
+
+#--------------------------------------------------------------#
+#----FIXES ON SIMULATIONS -------------------------------------#
+# Details:
+# - NVE ensemble
+# - Langevin integrator Tstart Tstop 1/friction PRNG seed
+# -> sampling NVT ensemble
+# - Walls
+# - oscillating end
+# - ends fixed in x and y.
+#group ends id 1 512
+
+
+if "${brownian} > 0" &
+then "fix 3 all brownian/asphere ${temp_end} ${seed} gamma_t_eigen ${damp} ${damp} inf gamma_r_eigen inf inf ${damp}" &
+else "fix 2 all nve/asphere" &
+"fix 3 all langevin ${temp_start} ${temp_end} ${damp} ${seed} angmom 3.333"
+
+#---BALANCING -------------------------------------------------#
+comm_style tiled
+comm_modify cutoff 6
+balance     1.1 rcb
+fix         1 all balance ${balancetime} 1.1 rcb
+
+fix 5 all enforce2d
+
+#----OUTPUT DATA ----------------------------------------------#
+#----Configurations
+#---- ThermodynDNAringta  (temperature, energy, pressure)
+thermo {{n_thermo}}
+thermo_style   custom   step temp epair emol #v_wiggle temp epair emol
+restart     ${restime} ${name}-*.restart
+
+#--- ACTIVITY --------------------------------------------#
+fix 6 all propel/self quat ${peclet} qvector 1.0 0.0 0.0
+
+#--- MINIMIZATION ---------------------------------------#
+if "(${minimize}>0)" then "include minimize.lmp"
+
+#--- CONFINEMENT ---------------------------------------#
+if "(${restart}==0) && (${conf}>0)" then "include confinement.lmp"
+
+#--- THERMALIZATION ---------------------------------------#
+if "(${restart}==0)" then "include thermalization.lmp"
+
+#----OUTPUT DATA ----------------------------------------#
+include output_append.lmp
+include output_msd.lmp
+
+#----RUN ------------------------------------------------------#
+if "!(${restart}>0)" then "reset_timestep 0"
+timestep ${dt} # needed as it might change in minimize
+timer timeout ${time} every 1000
+run ${runtime} upto
+write_restart latest.restart
+write_data latest.restart.dat nocoeff
+write_dump all atom latest.dump
+
+

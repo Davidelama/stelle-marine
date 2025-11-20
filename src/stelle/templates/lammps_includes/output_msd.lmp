@@ -1,0 +1,4 @@
+variable        f file logtime.txt
+variable        s equal next(f)
+dump            2 all custom ${dumptime} ${name}_msd.lammpstrj id type xu yu c_quat[1] c_quat[2]
+dump_modify     2 first yes every v_s append yes sort id format line "%10d %3d %12.6lf %12.6lf %6.3f %6.3f"
