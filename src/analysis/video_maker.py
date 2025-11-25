@@ -5,8 +5,11 @@ from celluloid import Camera
 from tqdm import tqdm
 from scipy.spatial import Delaunay
 from scipy.spatial.distance import cdist
-from stelle import IO
+import sys
 import os
+parent_dir = os.path.abspath("..")
+sys.path.insert(0, parent_dir)
+from stelle import IO
 import json
 
 def cmapper(max, cm=mpl.cm.plasma,cmap_mod=1.2):

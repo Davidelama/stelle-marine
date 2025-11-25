@@ -5,8 +5,11 @@ from celluloid import Camera
 from tqdm import tqdm
 from scipy.spatial import Delaunay
 from scipy.spatial.distance import cdist
-from single import IO
+import sys
 import os
+parent_dir = os.path.abspath("..")
+sys.path.insert(0, parent_dir)
+from single import IO
 import json
 
 with open('single_parameters.json',"r") as f:

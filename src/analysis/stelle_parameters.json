@@ -6,7 +6,7 @@
     "r_bond": 1.13,
     "r_cbond": 0.57,
     "peclet": 2.3,
-    "r_conf": 0,
+    "r_conf": 10,
     "ghost": 1,
     "brownian": 1,
      "Dr": 0.8,
