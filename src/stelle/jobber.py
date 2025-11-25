@@ -55,20 +55,22 @@ def job_maker(details):
     renderer.render_sim(Path(os.path.dirname(os.path.abspath(__file__))).parent.parent/"data"/"01_raw"/folder,exist_ok=True)
 
 
+sigma=15                #diameter of bead in mm. This does not enter in the simulation, as it is automatically set to 1, just makes it easier to define the other parameters
 n_mol=1                 #number of molecules (not yet fully implemented)
 n_beads=13              #number of beads per arm
-r_core=2/3              #core radius (units of bead diameters)
+r_core=20/(2*sigma)     #core radius (units of bead diameters)
 n_restarts=0            #number of times simulation is automatically restarted on cluster
 gh=1                    #molecules do not interact with each other (not yet fully implemented)
-r_conf=0.0              #radius of confinement. If 0, there is no confinement
-peclet=35/15            #peclet number (self propulsion strength)
-r_bond=17/15            #size of bead-bead bonds
-r_cbond=(10-1.5)/15     #distance of arm grafting locations on the core with respect to the core center
+r_conf=0.0/sigma        #radius of confinement in sigma. If 0, there is no confinement
+peclet=35/sigma         #peclet number (self propulsion strength) in sigma/s
+r_bond=17/sigma         #size of bead-bead bonds in sigma
+r_cbond=(10-1.5)/sigma  #distance of arm grafting locations on the core with respect to the core center in sigma
 brownian=1              #0 for Langevin dynamics, 0 for Brownian dynamics
-Dr=0.8                  #if brownian=1, defines the rotational diffusion coefficient Dr
-dt=0.001                #timestep
+Dr=0.8                  #if brownian=1, defines the rotational diffusion coefficient Dr in rad^2/s
+dt=0.001                #timestep in s
 if brownian:            #Brownian dynamics requires a smaller timestep
     dt=0.0001
+fs=[6]                  #number of arms of the star (functionality). This is also an example of vector of parameters for multiple simulations
 
 
 
@@ -77,7 +79,7 @@ partition='boost_usr_prod'
 qos='normal'
 project='INF25_biophys'
 
-fs=[6]#[16,32,64,128,168]#,60,120,200,300
+
 
 Nsims=1
 if Nsims==1:

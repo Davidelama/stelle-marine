@@ -2,6 +2,10 @@
 
 The single particle simulation framework models individual particles in a 2D system. These simulations can be used to study the behavior of active particles, including their motion, self-propulsion, and interactions with confinement. The following parameters are used to configure the single particle simulation:
 
+## How to Create and Run the Simulation
+
+1. **See the README in src/stelle:**
+
 ### Parameters
 
 ### 1. **Radius of Confinement (`r_conf`)**

@@ -51,11 +51,12 @@ def job_maker(details):
     
     renderer.render_sim(Path(os.path.dirname(os.path.abspath(__file__))).parent.parent/"data"/"01_raw"/folder,exist_ok=True)
 
+sigma=15                #diameter of bead in mm. This does not enter in the simulation, as it is automatically set to 1, just makes it easier to define the other parameters
 n_restarts=0            #number of times simulation is automatically restarted on cluster
-r_conf=0                #radius of confinement. If 0, there is no confinement
-peclet=35/15            #peclet number (self propulsion strength)
+r_conf=0.0/sigma        #radius of confinement in sigma. If 0, there is no confinement
+peclet=35/sigma         #peclet number (self propulsion strength) in sigma/s
 brownian=1              #0 for Langevin dynamics, 0 for Brownian dynamics
-Dr=0.8                  #if brownian=1, defines the rotational diffusion coefficient Dr
+Dr=0.8                  #if brownian=1, defines the rotational diffusion coefficient Dr in rad^2/s
 
 delet=True              #delete old data
 partition='boost_usr_prod'

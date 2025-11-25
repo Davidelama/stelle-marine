@@ -6,7 +6,7 @@ This project simulates the behavior of star polymers in 2D using the LAMMPS mole
 
 1. **Compile LAMMPS:**
     - download the last version of LAMMPS from https://www.lammps.org/
-    - in lammps-you-version/src/ activate the following packages with make yes-'package': ASPHERE, RIGID, MOLECULE, BROWNIAN
+    - in lammps-your-version/src/ activate the following packages with make yes-'package': ASPHERE, RIGID, MOLECULE, BROWNIAN
     - compile with make mpi and copy lmp_mpi as lmp_mpi_25 in the bin/ folder
 
 1. **Python Packages:**
@@ -39,56 +39,60 @@ This project simulates the behavior of star polymers in 2D using the LAMMPS mole
    - **Example:** `r_core = 2/3` means the core will have a radius of 2/3 bead diameters.
    - **Range:** Any positive real number.
 
-### 4. **Number of Restarts (`n_restarts`)**
-   - Sets the number of times the simulation will automatically restart to avoid long-term numerical instabilities (especially in large cluster environments).
-   - **Example:** `n_restarts = 0` means the simulation will not automatically restart.
-   - **Range:** Any non-negative integer.
-
-### 5. **Molecule-Molecule Interaction Flag (`gh`)**
+### 4. **Molecule-Molecule Interaction Flag (`gh`)**
    - Controls whether the molecules interact with each other (currently not fully implemented).
    - **Example:** `gh = 1` means the molecules will not interact.
    - **Range:** `0` or `1`.
 
-### 6. **Radius of Confinement (`r_conf`)**
+### 5. **Radius of Confinement (`r_conf`)**
    - Specifies the radius of confinement for the polymer system. If set to 0, there is no confinement.
    - **Example:** `r_conf = 0.0` means there will be no confinement.
    - **Range:** Any non-negative real number.
 
-### 7. **Peclet Number (`peclet`)**
+### 6. **Peclet Number (`peclet`)**
    - Defines the Peclet number, which controls the strength of self-propulsion for active particles. A higher Peclet number results in stronger propulsion.
    - **Example:** `peclet = 10.0` means the self-propulsion strength is set to 10.
    - **Range:** Any positive real number.
 
-### 8. **Bond Size (`r_bond`)**
+### 7. **Bond Size (`r_bond`)**
    - Specifies the size of the bond between adjacent beads in the polymer chain.
    - **Example:** `r_bond = 17/15` means the bead-bead bond size is 17/15.
    - **Range:** Any positive real number.
 
-### 9. **Arm Grafting Distance (`r_cbond`)**
+### 8. **Arm Grafting Distance (`r_cbond`)**
    - Defines the distance between the arm grafting location and the center of the core.
    - **Example:** `r_cbond = (10 - 1.5) / 15` means the arm grafting distance is calculated as `(10 - 1.5) / 15`.
    - **Range:** Any positive real number.
 
-### 10. **Dynamics Type (`brownian`)**
+### 9. **Dynamics Type (`brownian`)**
    - Determines the type of dynamics to be used in the simulation:
      - `0`: Langevin dynamics
      - `1`: Brownian dynamics
    - **Example:** `brownian = 1` means Brownian dynamics will be used.
    - **Range:** `0` or `1`.
 
-### 11. **Timestep (`dt`)**
+### 10. **Timestep (`dt`)**
    - Specifies the timestep used in the simulation.
    - **Example:** `dt = 0.001` means the simulation will use a timestep of 0.001.
    - **Range:** Any positive real number.
 
-### 12. **Adjustment for Brownian Dynamics**
+### 11. **Adjustment for Brownian Dynamics**
    - If `brownian = 1`, the timestep is automatically adjusted to a smaller value (0.0001) for numerical stability in Brownian dynamics simulations.
    - **Example:** If `brownian = 1`, `dt` will be automatically set to `0.0001`.
    - **Range:** This adjustment applies only when `brownian = 1`.
 
-### 13. **Rotational Diffusion Coefficient (`Dr`)**
+### 12. **Rotational Diffusion Coefficient (`Dr`)**
 
-   - **Description**: Specifies the **rotational diffusion coefficient** used *only when* `brownian = 1`. This parameter governs how quickly a particle’s orientation undergoes random rotational motion due to thermal fluctuations.
+   - Specifies the **rotational diffusion coefficient** used *only when* `brownian = 1`. This parameter governs how quickly a particle’s orientation undergoes random rotational motion due to thermal fluctuations.
    - **Example**: `Dr = 0.8` sets the rotational diffusion coefficient to 0.8 (in simulation-specific units), producing moderate rotational randomization during Brownian dynamics.
    - **Range**: Any positive real number.
    - **Note**: This parameter is **ignored** when `brownian = 0` (Langevin dynamics).
+
+### 13. **Number of Arms (`fs`)**
+
+   - Specifies the **functionality** of the star polymer, i.e., how many arms extend from the central bead. This parameter (and with little modification also the others) can also be provided as a **vector**, allowing multiple simulations to be run with different functionalities in a single batch.
+   - **Example:**
+     - `fs = [6]` sets the polymer to have **6 arms**.
+     - `fs = [4, 6, 8]` would initialize three simulations, one for each listed functionality.
+   - **Range:** Any positive integer (or a list of positive integers).
+   - **Note:** When a vector is provided, the simulation framework will iterate over each value, enabling systematic exploration of how star functionality affects polymer properties.
