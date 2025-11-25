@@ -13,9 +13,9 @@ from shutil import copy2
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from scipy.spatial.transform import Rotation as R
 from datetime import datetime, timedelta
-from single.IO import lammpsdat_reader
-from single.IO import  get_details
-from single.IO import get_name
+from IO import lammpsdat_reader
+from IO import  get_details
+from IO import get_name
 from itertools import combinations_with_replacement
 
 builderdir = Path(os.path.dirname(os.path.abspath(__file__)))
@@ -270,6 +270,7 @@ class LammpsLangevinInput:
         self.equitime = 1e5
         self.scriptname = scriptname
         self.brownian = int(self.details["brownian"])
+        self.Dr = self.details["Dr"]
         
         self.name = single.name
         date = datetime.now()

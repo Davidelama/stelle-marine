@@ -17,6 +17,7 @@ variable conf_radius  index {{conf_radius}}
 variable conf equal {{conf}}
 variable peclet equal {{peclet}}
 variable brownian equal {{brownian}}
+variable Dr equal {{Dr}}
 #---
 print "-> Seed: ${seed}"
 print "-> Stopping after walltime: ${time}"
@@ -93,7 +94,7 @@ neigh_modify one 10000
 
 
 if "${brownian} > 0" &
-then "fix 3 all brownian/asphere ${temp_end} ${seed} gamma_t_eigen ${damp} ${damp} inf gamma_r_eigen inf inf ${damp}" &
+then "fix 3 all brownian/asphere ${temp_end} ${seed} gamma_t_eigen ${damp} ${damp} inf gamma_r_eigen inf inf 1.0 rotation_temp ${Dr}" &
 else "fix 2 all nve/asphere" &
 "fix 3 all langevin ${temp_start} ${temp_end} ${damp} ${seed} angmom 3.333"
 

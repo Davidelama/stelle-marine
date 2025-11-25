@@ -1,6 +1,7 @@
 {
-    "peclet": 10,
+    "peclet": 2.3,
     "r_conf": 0,
     "brownian": 1,
+    "Dr": 0.8,
     "seed_start": null
 }

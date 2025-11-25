@@ -86,3 +86,9 @@ This project simulates the behavior of star polymers in 2D using the LAMMPS mole
    - **Example:** If `brownian = 1`, `dt` will be automatically set to `0.0001`.
    - **Range:** This adjustment applies only when `brownian = 1`.
 
+### 13. **Rotational Diffusion Coefficient (`Dr`)**
+
+   - **Description**: Specifies the **rotational diffusion coefficient** used *only when* `brownian = 1`. This parameter governs how quickly a particle’s orientation undergoes random rotational motion due to thermal fluctuations.
+   - **Example**: `Dr = 0.8` sets the rotational diffusion coefficient to 0.8 (in simulation-specific units), producing moderate rotational randomization during Brownian dynamics.
+   - **Range**: Any positive real number.
+   - **Note**: This parameter is **ignored** when `brownian = 0` (Langevin dynamics).

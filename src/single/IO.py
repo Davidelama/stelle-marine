@@ -261,6 +261,7 @@ def get_details(name):
 
     r_conf = 0.0
     peclet = 0.0
+    Dr = 0.0
     brownian = False
     seed_start = None
     for el in els:
@@ -270,10 +271,11 @@ def get_details(name):
             r_conf = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "bro" in el:
             brownian = True
+            Dr = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "seed" in el:
             seed_start = int(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
 
-    details = {"r_conf": r_conf, "peclet": peclet, "brownian": brownian, "seed_start": seed_start}
+    details = {"r_conf": r_conf, "peclet": peclet, "brownian": brownian, "Dr": Dr, "seed_start": seed_start}
     # print(details)
     return details
 
@@ -281,6 +283,7 @@ def get_details(name):
 def get_name(details, prefix=True):
     peclet = details["peclet"]
     r_conf = details["r_conf"]
+    Dr = details["Dr"]
     seed_start = details["seed_start"]
     suff = ""
     pref = "sin"
@@ -288,8 +291,8 @@ def get_name(details, prefix=True):
         suff += f"_pe{peclet:.1f}"
     if details["r_conf"] > 0:
         suff += f"_rf{r_conf:.1f}"
-    if details["brownian"]:
-        suff += "_bro"
+    if details["brownian"] > 0:
+        suff += f"_bro{Dr:.1f}"
     if details["seed_start"] != None:
         suff += f"_seed{seed_start:d}"
     if not prefix:

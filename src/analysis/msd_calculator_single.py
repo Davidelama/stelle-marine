@@ -2,9 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from tqdm import tqdm
-from single import IO
 from scipy.optimize import curve_fit
+import sys
 import os
+parent_dir = os.path.abspath("..")
+sys.path.insert(0, parent_dir)
+from single import IO
 import json
 
 def abp(t,D,Dr,v0):
@@ -61,10 +64,10 @@ perr = np.sqrt(np.diag(pcov))
 print(param)
 T=1
 gt=1
-gr=1
+gr=1/0.8
 Dv=T/gt
 Drv=T/gr
-v0v=10
+v0v=2.3
 paramv=[Dv,Drv,v0v]
 print(paramv)
 

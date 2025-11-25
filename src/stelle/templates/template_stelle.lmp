@@ -25,6 +25,7 @@ variable peclet equal {{peclet}}
 variable brownian equal {{brownian}}
 variable r_bond equal {{r_bond}}
 variable r_cbond equal {{r_cbond}}
+variable Dr equal {{Dr}}
 #---
 print "-> Seed: ${seed}"
 print "-> Stopping after walltime: ${time}"

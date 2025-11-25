@@ -53,8 +53,9 @@ def job_maker(details):
 
 n_restarts=0            #number of times simulation is automatically restarted on cluster
 r_conf=0                #radius of confinement. If 0, there is no confinement
-peclet=10.0             #peclet number (self propulsion strength)
+peclet=35/15            #peclet number (self propulsion strength)
 brownian=1              #0 for Langevin dynamics, 0 for Brownian dynamics
+Dr=0.8                  #if brownian=1, defines the rotational diffusion coefficient Dr
 
 delet=True              #delete old data
 partition='boost_usr_prod'
@@ -70,6 +71,6 @@ else:
 #al_defs=np.linspace(0,100,num=26,endpoint=True)
 
 for seed in seeds:
-    details = {"peclet":peclet, "r_conf":r_conf, "brownian":brownian, "seed_start": seed}
+    details = {"peclet":peclet, "r_conf":r_conf, "brownian":brownian, "Dr":Dr, "seed_start": seed}
     
     job_maker(details)

@@ -5,7 +5,7 @@ group grafted subtract all free
 
 
 if "${brownian} > 0" &
-then "fix 3 free brownian/asphere 0.000001 ${seed} gamma_t_eigen ${damp} ${damp} inf gamma_r_eigen inf inf ${damp} rotation_temp ${temp_end}" &
+then "fix 3 free brownian/asphere 0.000001 ${seed} gamma_t_eigen 1.0 1.0 inf gamma_r_eigen inf inf 1.0 rotation_temp ${Dr}" &
 else "fix 2 free nve/asphere" &
 "fix 3 free langevin ${temp_start} ${temp_end} ${damp} ${seed} angmom 3.333"
 

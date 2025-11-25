@@ -13,9 +13,9 @@ from shutil import copy2
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from scipy.spatial.transform import Rotation as R
 from datetime import datetime, timedelta
-from stelle.IO import lammpsdat_reader
-from stelle.IO import  get_details
-from stelle.IO import get_name
+from IO import lammpsdat_reader
+from IO import  get_details
+from IO import get_name
 from itertools import combinations_with_replacement
 
 builderdir = Path(os.path.dirname(os.path.abspath(__file__)))
@@ -380,6 +380,7 @@ class LammpsLangevinInput:
         self.brownian = int(self.details["brownian"])
         self.r_cbond = int(self.details["r_cbond"])
         self.r_bond = int(self.details["r_bond"])
+        self.Dr = self.details["Dr"]
         
         self.name = daisy.name  
         date = datetime.now()

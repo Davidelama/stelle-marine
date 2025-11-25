@@ -26,4 +26,11 @@ The single particle simulation framework models individual particles in a 2D sys
      - `1` for Brownian dynamics.
    - **Note**: The choice of dynamics affects the way the particle's motion is simulated and should be selected based on the physical model being applied.
 
+### 4. **Rotational Diffusion Coefficient (`Dr`)**
+
+   - **Description**: Specifies the **rotational diffusion coefficient** used *only when* `brownian = 1`. This parameter governs how quickly a particle’s orientation undergoes random rotational motion due to thermal fluctuations.
+   - **Example**: `Dr = 0.8` sets the rotational diffusion coefficient to 0.8 (in simulation-specific units), producing moderate rotational randomization during Brownian dynamics.
+   - **Range**: Any positive real number.
+   - **Note**: This parameter is **ignored** when `brownian = 0` (Langevin dynamics).
+
 ---

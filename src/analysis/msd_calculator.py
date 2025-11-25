@@ -2,11 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from tqdm import tqdm
-from stelle import IO
 from scipy.optimize import curve_fit
 import pandas as pd
 from matplotlib import gridspec
+import sys
 import os
+parent_dir = os.path.abspath("..")
+sys.path.insert(0, parent_dir)
+from stelle import IO
 import json
 
 def abp(t,D,Dr,v0):

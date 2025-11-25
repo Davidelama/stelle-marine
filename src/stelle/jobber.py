@@ -61,10 +61,11 @@ r_core=2/3              #core radius (units of bead diameters)
 n_restarts=0            #number of times simulation is automatically restarted on cluster
 gh=1                    #molecules do not interact with each other (not yet fully implemented)
 r_conf=0.0              #radius of confinement. If 0, there is no confinement
-peclet=10.0             #peclet number (self propulsion strength)
+peclet=35/15            #peclet number (self propulsion strength)
 r_bond=17/15            #size of bead-bead bonds
 r_cbond=(10-1.5)/15     #distance of arm grafting locations on the core with respect to the core center
 brownian=1              #0 for Langevin dynamics, 0 for Brownian dynamics
+Dr=0.8                  #if brownian=1, defines the rotational diffusion coefficient Dr
 dt=0.001                #timestep
 if brownian:            #Brownian dynamics requires a smaller timestep
     dt=0.0001
@@ -89,6 +90,6 @@ else:
 for seed in seeds:
     for fval in fs:
         details = {"n_beads": n_beads, "n_mol": n_mol,"functionality": fval,
-                "r_core": r_core, "peclet":peclet, "r_conf":r_conf, "r_bond":r_bond, "r_cbond":r_cbond, "seed_start": seed, "ghost":gh, "brownian":brownian}
+                "r_core": r_core, "peclet":peclet, "r_conf":r_conf, "r_bond":r_bond, "r_cbond":r_cbond, "seed_start": seed, "ghost":gh, "brownian":brownian, "Dr":Dr}
     
         job_maker(details)
