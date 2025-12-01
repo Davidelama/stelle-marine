@@ -1,0 +1,7 @@
+#---recreate confinement--------------------------------------------#
+
+region finalCyl cylinder z 0 0 ${end_radius} INF INF units box
+fix wall all wall/region finalCyl lj126 1.0 1.0 ${rcutoff}
+
+unfix 5
+fix 5 all enforce2d
