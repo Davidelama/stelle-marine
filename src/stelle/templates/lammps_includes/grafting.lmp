@@ -1,5 +1,6 @@
 #---rigid body evolution --------------------------------------------#
 group free type 3
+group cores type 1
 
 group grafted subtract all free
 

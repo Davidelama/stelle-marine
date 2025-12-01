@@ -26,6 +26,7 @@ variable brownian equal {{brownian}}
 variable r_bond equal {{r_bond}}
 variable r_cbond equal {{r_cbond}}
 variable Dr equal {{Dr}}
+variable int_fix equal {{int_fix}}
 #---
 print "-> Seed: ${seed}"
 print "-> Stopping after walltime: ${time}"
@@ -158,6 +159,9 @@ fix 6 active propel/self quat ${peclet} qvector 1.0 0.0 1.0
 #--- CONFINEMENT ---------------------------------------#
 if "(${restart}==0) && (${conf}>0)" then "include confinement.lmp"
 if "(${restart}>0) && (${conf}>0)" then "include confinement_restart.lmp"
+
+#--- COREFIX ---------------------------------------#
+if "(${restart}==0) && (${int_fix}>0)" then "include int_fix.lmp"
 
 #--- THERMALIZATION ---------------------------------------#
 if "(${restart}==0)" then "include thermalization.lmp"

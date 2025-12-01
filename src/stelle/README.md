@@ -96,3 +96,17 @@ This project simulates the behavior of star polymers in 2D using the LAMMPS mole
      - `fs = [4, 6, 8]` would initialize three simulations, one for each listed functionality.
    - **Range:** Any positive integer (or a list of positive integers).
    - **Note:** When a vector is provided, the simulation framework will iterate over each value, enabling systematic exploration of how star functionality affects polymer properties.
+
+
+### 14. **Interaction Distance (`r_int`)**
+
+   - Allows to study **effective interactions** between stars at distance `r_int`, expressed in terms of the **sigma** parameter.
+   - **Example**: `r_int = 150/sigma` sets the star cores apart of a distance `r_int` and fixes their positions.
+   - **Range**: Any positive real number.
+   - **Note**: If `r_int > 0`, this automatically sets the following parameters:
+     - `mol = 2`: only 2 stars allowed.
+     - `gh = 0`: interactions between stars must be active.
+     - `rconf = 0`: no confinement allowed.
+     - This will also output the forces active on the core.
+
+

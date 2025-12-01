@@ -80,6 +80,7 @@ for g, data in traj.groupby(["timestep"]):
                    data.y[data.type == 3] + np.sin(data.theta[data.type == 3]) * diam * .25, s=s * .09, color="k")
     else:
         ax.scatter(data.x[data.type == 1], data.y[data.type == 1], edgecolors="k", color="w")
+        ax.scatter(data.x[data.type == 2], data.y[data.type == 2], edgecolors="k", color="k")
         ax.scatter(data.x[data.type == 3], data.y[data.type == 3], edgecolors="k", color="w")
     ax.text(0.01,.95,str(g[0]*dt)+r"$\tau$",color="k",transform=ax.transAxes,fontsize=20)
 

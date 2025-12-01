@@ -7,7 +7,7 @@ unfix 5
 fix 5 all enforce2d
 
 timestep 0.00001
-run 1000000
+run 100000
 unfix wall
 
 region finalCyl cylinder z 0 0 ${end_radius} INF INF units box
@@ -17,3 +17,5 @@ unfix 5
 fix 5 all enforce2d
 
 reset_timestep 0
+
+print("cose")

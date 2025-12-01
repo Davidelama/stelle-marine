@@ -82,6 +82,10 @@ class DaisyBuilder:
         """
         self.details = details
         self.m_core = (self.details["r_core"]/.5)**3
+        if self.details["r_int"] > 0:
+            self.details["n_mol"] = 2
+            self.details["ghost"] = 0
+            self.details["r_conf"] = 0
 
     def build_system(self) -> Daisy:
         """Build a daisy with n beads per petal, f petals and core radius r_core
@@ -117,6 +121,8 @@ class DaisyBuilder:
             else:
                 o += 1
 
+            if self.details["r_int"] > 0:
+                cent=[self.details["r_int"]*(-.5+i),0,0]
             star = build_daisy(self.details, mol=i, last=n_tot, center=cent)
             bonds, angles = add_topology(star, self.details, last=n_tot, last_b=nb_tot, last_a=na_tot)
 
@@ -381,6 +387,7 @@ class LammpsLangevinInput:
         self.r_cbond = int(self.details["r_cbond"])
         self.r_bond = int(self.details["r_bond"])
         self.Dr = self.details["Dr"]
+        self.int_fix = int(self.details["r_int"]>0)
         
         self.name = daisy.name  
         date = datetime.now()
@@ -480,6 +487,10 @@ class LammpsDatafile:
         system["rmass"]=1.9098593171027443
         system["ellipse"] = 1
         system.loc[system["at_type"] == 2,"ellipse"]=0
+        if self.daisy.details["r_int"]>0:
+            system.loc[system["at_type"] == 1, "ellipse"] = 0
+            system.loc[system["at_type"] == 1, "rmass"] = 1000000000
+            self.daisy.m_core=1000000000
         """
         at_types = len(system.at_type.unique())
         
@@ -627,6 +638,8 @@ def add_topology(dai_in: pd.DataFrame, details: dict, last=0, last_b=0, last_a=0
 
 def add_ellipsoids(dai_in, details, flat=False):
     econd=dai_in["at_type"]!=2
+    if details["r_int"] > 0:
+        econd=dai_in["at_type"]==3
     npart=np.sum(econd)
     daisy_ellipsoids=pd.DataFrame({})
     id = dai_in[econd].at_idx.values

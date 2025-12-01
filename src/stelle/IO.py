@@ -269,25 +269,31 @@ def get_details(name):
     peclet = 0.0
     Dr = 0.0
     n_mol = 1
+    r_int = 0.0
     brownian = False
     seed_start = None
     for el in els:
-        if "mols" in el:
+        if "mols" in el and r_int==0.0:
             n_mol = int(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "pe" in el:
             peclet = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
-        if "rf" in el:
+        if "rf" in el and r_int==0.0:
             r_conf = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "bro" in el:
             brownian = True
             Dr = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
-        if "gh" in el:
+        if "gh" in el and r_int==0.0:
             ghost = True
         if "seed" in el:
             seed_start = int(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
+        if "r_int" in el:
+            r_int = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
+            n_mol=2
+            r_conf=0.0
+            ghost=False
 
     details = {"n_beads": n_beads, "n_mol": n_mol, "functionality": functionality,
-               "r_core": r_core, "r_bond":r_bond, "r_cbond":r_cbond, "r_conf": r_conf, "peclet": peclet, "brownian": brownian, "Dr": Dr,"seed_start": seed_start,"ghost": ghost}
+               "r_core": r_core, "r_bond":r_bond, "r_cbond":r_cbond, "r_conf": r_conf, "peclet": peclet, "brownian": brownian, "Dr": Dr, "r_int":r_int,"seed_start": seed_start,"ghost": ghost}
     # print(details)
     return details
 
@@ -302,6 +308,7 @@ def get_name(details, prefix=True):
     r_bond = details["r_bond"]
     r_cbond = details["r_cbond"]
     Dr = details["Dr"]
+    r_int = details["r_int"]
     seed_start = details["seed_start"]
     suff = ""
     pref = "mar_"
@@ -317,6 +324,8 @@ def get_name(details, prefix=True):
         suff += f"_bro{Dr:.1f}"
     if details["seed_start"] != None:
         suff += f"_seed{seed_start:d}"
+    if details["r_int"] > 0:
+        suff += f"_ri{r_int:.1f}"
     if not prefix:
         pref=""
     name = f'{pref}n{n_beads:03d}_f{functionality:03d}_rc{r_core:.2f}_rb{r_bond:.2f}_rcb{r_cbond:.2f}' + suff
