@@ -39,6 +39,7 @@ class Daisy:
         #self.f = system.p_idx.nunique()-1
         #self.r_core = r_core
         self.m_core = (self.details["r_core"]/.5)**3
+        self.L = (self.details["r_cbond"]+ (self.details["n_beads"]+1) * self.details["r_bond"]) * 2 * int(np.ceil(self.details["n_mol"]**(1/2)))
         self._name = None
         
     @property
@@ -90,7 +91,6 @@ class DaisyBuilder:
         Daisy
             a Daisy class with n beads per petal, f petals and core radius r_core.
         """
-        L = (self.details["r_core"] + self.details["n_beads"]*self.details["r_bond"]  + 10)*2
 
         n_tot = 0
         nb_tot = 0
@@ -101,12 +101,13 @@ class DaisyBuilder:
         system_angles = pd.DataFrame({})
 
         lmols=int(np.ceil(n_mol**(1/2)))
-        lcell=(L**2/n_mol)**(1/2)
+        self.L=(self.details["r_cbond"]+ (self.details["n_beads"]+1) * self.details["r_bond"]) * 2 * int(np.ceil(self.details["n_mol"]**(1/2)))
+        lcell=self.L/lmols
         o=0
         p=0
 
         for i in range(n_mol):
-            cent = [(lcell-L)*.5 + lcell*o,(lcell-L)*.5 + lcell*p,0]
+            cent = [(lcell-self.L)*.5 + lcell*o,(lcell-self.L)*.5 + lcell*p,0]
             if o == lmols-1:
                 o = 0
                 if p == lmols - 1:
@@ -356,13 +357,12 @@ class LammpsLangevinInput:
         self.timestep = timestep
         self.runtime = int(runtime)
         self.details = daisy.details
-        L = (self.details["r_core"] + self.details["n_beads"]*self.details["r_bond"] + 10) + self.details["r_conf"]
         self.n_beadseff = int(self.details["n_beads"])+1
         self.n_mol = int(self.details["n_mol"])
         self.ghost = int(self.details["ghost"])
         self.conf = int(self.details["r_conf"]>0)
         self.peclet = self.details["peclet"]
-        self.start_radius = L
+        self.start_radius = daisy.L*np.sqrt(2)/2
         self.end_radius = self.details["r_conf"]
         self.n_all = 1+self.n_beadseff*int(self.details["functionality"])
         self.func = int(self.details["functionality"])
@@ -462,11 +462,9 @@ class LammpsDatafile:
         np.array
             box sizes [[-dx,dx], [-dy,dy], [-dz,dz]]
         """
-        n = daisy.details["n_beads"]
-        f = daisy.details["functionality"]
-        r_core = daisy.details["r_core"]
-        d_petal = r_core + n
-        dx = d_petal + delta + daisy.details["r_conf"]
+        dx = daisy.L*.5
+        if daisy.details["r_conf"]>0:
+            dx*=np.sqrt(2)
         return np.array([[-dx, dx], [-dx, dx], [-.5, .5]])
     
     

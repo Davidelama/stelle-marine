@@ -2,9 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from celluloid import Camera
-from tqdm import tqdm
-from scipy.spatial import Delaunay
-from scipy.spatial.distance import cdist
 import sys
 import os
 parent_dir = os.path.abspath("..")
@@ -38,7 +35,7 @@ if details['brownian']==0:
 else:
     dt=0.0001
 
-cmap = cmapper(details["functionality"], cm=mpl.cm.jet)
+cmap = cmapper(details["functionality"]*details["n_mol"], cm=mpl.cm.jet,cmap_mod=1)
 
 name="../../data/01_raw/stelle/"+IO.get_name(details)+"/"+IO.get_name(details)+".dat.lammpstrj"
 print(name)
@@ -47,8 +44,10 @@ print("Reading data:")
 traj = IO.reconstruct_traj([name], cols=('at_id', 'mol_id', 'type', 'x', 'y','q1','q4'))
 traj[["x","y"]]*=diam
 traj["theta"]=np.arctan2(traj["q4"],traj["q1"])*2
-ntot=1+details["functionality"]*(details["n_beads"]+1)
-traj["p_idx"]=((np.arange(len(traj))%ntot)-1)//(details["n_beads"]+1)+1
+ntot=(1+details["functionality"]*(details["n_beads"]+1))*details["n_mol"]
+traj["p_idx"]=((np.arange(len(traj))%ntot)-traj["mol_id"])//(details["n_beads"]+1)
+traj.loc[traj.type==1,"p_idx"]=-1
+
 #plt.hist(traj.theta, range=(-np.pi, np.pi), bins=np.linspace(-np.pi, np.pi, 20))
 #plt.show()
 
@@ -73,7 +72,7 @@ for g, data in traj.groupby(["timestep"]):
     if details['r_conf'] != 0:
         ax.scatter(Cx,Cy,s=S,edgecolors= "blue",color="lightblue")
         ax.scatter(data.x[data.type == 1], data.y[data.type == 1], s=s_core, edgecolors="k", color="w",lw=2)
-        for f in range(1,details["functionality"]+1):
+        for f in range(0,details["functionality"]*details["n_mol"]):
             ax.plot(data.x[data.p_idx == f], data.y[data.p_idx == f], color=cmap.to_rgba(f),lw=2)
         ax.scatter(data.x[data.type == 2], data.y[data.type == 2], s=s2, edgecolors="k", color=cmap.to_rgba(data.p_idx[data.type==2]))
         ax.scatter(data.x[data.type==3],data.y[data.type==3],s=s,edgecolors= cmap.to_rgba(data.p_idx[data.type==3]),color="w",lw=2)

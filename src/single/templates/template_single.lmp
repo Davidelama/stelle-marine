@@ -121,6 +121,7 @@ if "(${minimize}>0)" then "include minimize.lmp"
 
 #--- CONFINEMENT ---------------------------------------#
 if "(${restart}==0) && (${conf}>0)" then "include confinement.lmp"
+if "(${restart}>0) && (${conf}>0)" then "include confinement_restart.lmp"
 
 #--- THERMALIZATION ---------------------------------------#
 if "(${restart}==0)" then "include thermalization.lmp"

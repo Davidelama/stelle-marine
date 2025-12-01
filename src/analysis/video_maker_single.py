@@ -2,9 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from celluloid import Camera
-from tqdm import tqdm
-from scipy.spatial import Delaunay
-from scipy.spatial.distance import cdist
 import sys
 import os
 parent_dir = os.path.abspath("..")

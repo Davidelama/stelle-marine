@@ -157,6 +157,7 @@ fix 6 active propel/self quat ${peclet} qvector 1.0 0.0 1.0
 
 #--- CONFINEMENT ---------------------------------------#
 if "(${restart}==0) && (${conf}>0)" then "include confinement.lmp"
+if "(${restart}>0) && (${conf}>0)" then "include confinement_restart.lmp"
 
 #--- THERMALIZATION ---------------------------------------#
 if "(${restart}==0)" then "include thermalization.lmp"

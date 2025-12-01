@@ -25,7 +25,7 @@ This project simulates the behavior of star polymers in 2D using the LAMMPS mole
 ## Parameters Overview
 
 ### 1. **Number of Molecules (`n_mol`)**
-   - Specifies the number of star polymer molecules to simulate. (Not yet fully implemented)
+   - Specifies the number of star polymer molecules to simulate.
    - **Example:** `n_mol = 1` means 1 molecule will be generated in the system.
    - **Range:** Any positive integer.
 
@@ -40,7 +40,7 @@ This project simulates the behavior of star polymers in 2D using the LAMMPS mole
    - **Range:** Any positive real number.
 
 ### 4. **Molecule-Molecule Interaction Flag (`gh`)**
-   - Controls whether the molecules interact with each other (currently not fully implemented).
+   - Controls whether the molecules interact with each other.
    - **Example:** `gh = 1` means the molecules will not interact.
    - **Range:** `0` or `1`.
 

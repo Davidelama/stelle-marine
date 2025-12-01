@@ -56,11 +56,11 @@ def job_maker(details):
 
 
 sigma=15                #diameter of bead in mm. This does not enter in the simulation, as it is automatically set to 1, just makes it easier to define the other parameters
-n_mol=1                 #number of molecules (not yet fully implemented)
-n_beads=13              #number of beads per arm
+n_mol=4                 #number of molecules (not yet fully implemented)
+n_beads=5              #number of beads per arm
 r_core=20/(2*sigma)     #core radius (units of bead diameters)
 n_restarts=0            #number of times simulation is automatically restarted on cluster
-gh=1                    #molecules do not interact with each other (not yet fully implemented)
+gh=0                    #molecules do not interact with each other (not yet fully implemented)
 r_conf=150.0/sigma      #radius of confinement in sigma. If 0, there is no confinement
 peclet=35/sigma         #peclet number (self propulsion strength) in sigma/s
 r_bond=17/sigma         #size of bead-bead bonds in sigma
