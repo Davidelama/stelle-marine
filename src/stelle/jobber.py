@@ -1,13 +1,7 @@
 import builder as ds
 import numpy as np
-import pandas as pd
-import mpl_toolkits.mplot3d
-import matplotlib.pyplot as plt
 from pathlib import Path
 import os
-import shutil
-from IO import get_name
-from copy import copy, deepcopy
 from builder import logtimer
 
 def job_maker(details):

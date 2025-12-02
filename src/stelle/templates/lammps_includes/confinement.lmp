@@ -17,5 +17,3 @@ unfix 5
 fix 5 all enforce2d
 
 reset_timestep 0
-
-print("cose")
