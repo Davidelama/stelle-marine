@@ -71,7 +71,7 @@ dt=0.001                #timestep in s
 if brownian:            #Brownian dynamics requires a smaller timestep
     dt=0.0001
 fs=[6]                  #number of arms of the star (functionality). This is also an example of vector of parameters for multiple simulations
-r_int=150/sigma          #calculation of effective interaction between stars in sigma. If r_int>0, this automatically sets mol=2, gh=0, rconf=0, fixes the core positions and outputs their forces
+r_int=50/sigma          #calculation of effective interaction between stars in sigma. If r_int>0, this automatically sets mol=2, gh=0, rconf=0, fixes the core positions and outputs their forces
 
 
 

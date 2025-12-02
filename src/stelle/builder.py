@@ -39,7 +39,8 @@ class Daisy:
         #self.f = system.p_idx.nunique()-1
         #self.r_core = r_core
         self.m_core = (self.details["r_core"]/.5)**3
-        self.L = (self.details["r_cbond"]+ (self.details["n_beads"]+1) * self.details["r_bond"]) * 2 * int(np.ceil(self.details["n_mol"]**(1/2)))
+        self.lmol = int(np.ceil(self.details["n_mol"]**(1/2)))
+        self.L = (self.details["r_cbond"]+ (self.details["n_beads"]+1) * self.details["r_bond"]) * 2 * self.lmol
         self._name = None
         
     @property
@@ -121,8 +122,6 @@ class DaisyBuilder:
             else:
                 o += 1
 
-            if self.details["r_int"] > 0:
-                cent=[self.details["r_int"]*(-.5+i),0,0]
             star = build_daisy(self.details, mol=i, last=n_tot, center=cent)
             bonds, angles = add_topology(star, self.details, last=n_tot, last_b=nb_tot, last_a=na_tot)
 
@@ -387,7 +386,12 @@ class LammpsLangevinInput:
         self.r_cbond = int(self.details["r_cbond"])
         self.r_bond = int(self.details["r_bond"])
         self.Dr = self.details["Dr"]
+        self.dtmove = 1e-5
+        self.tmove = 1e6
+        self.vmove=(daisy.L/daisy.lmol-self.details["r_int"])/(self.tmove*self.dtmove)
         self.int_fix = int(self.details["r_int"]>0)
+        self.n_beadseff = int(self.details["n_beads"])+1
+
         
         self.name = daisy.name  
         date = datetime.now()
@@ -487,9 +491,12 @@ class LammpsDatafile:
         system["rmass"]=1.9098593171027443
         system["ellipse"] = 1
         system.loc[system["at_type"] == 2,"ellipse"]=0
+        m_pin=0.001
+        m_bead=1.0
         if self.daisy.details["r_int"]>0:
             system.loc[system["at_type"] == 1, "ellipse"] = 0
             system.loc[system["at_type"] == 1, "rmass"] = 1000000000
+            m_pin=4*self.daisy.details["r_core"]**2*m_bead/self.daisy.details["functionality"]
             self.daisy.m_core=1000000000
         """
         at_types = len(system.at_type.unique())
@@ -501,7 +508,7 @@ class LammpsDatafile:
         """
         max_at_types = max(system.at_type)
         mass_lines = np.arange(1,max_at_types+1).astype(str)
-        m_array = ['{0:.1f}'.format(self.daisy.m_core)] + ["0.001"] + ["1.0"] * (max_at_types - 2)
+        m_array = ['{0:.1f}'.format(self.daisy.m_core)] + [str(m_pin)] + [str(m_bead)] * (max_at_types - 2)
         for i in range(max_at_types):
             mass_lines[i] = mass_lines[i] + ' ' + m_array[i]
         

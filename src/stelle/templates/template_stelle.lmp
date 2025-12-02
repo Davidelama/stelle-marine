@@ -27,6 +27,10 @@ variable r_bond equal {{r_bond}}
 variable r_cbond equal {{r_cbond}}
 variable Dr equal {{Dr}}
 variable int_fix equal {{int_fix}}
+variable n_beadseff equal {{n_beadseff}}
+variable vmove equal {{vmove}}
+variable tmove equal {{tmove}}
+variable dtmove equal {{dtmove}}
 #---
 print "-> Seed: ${seed}"
 print "-> Stopping after walltime: ${time}"

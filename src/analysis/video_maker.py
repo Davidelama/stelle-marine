@@ -79,9 +79,12 @@ for g, data in traj.groupby(["timestep"]):
         ax.scatter(data.x[data.type == 3] + np.cos(data.theta[data.type == 3]) * diam * .25,
                    data.y[data.type == 3] + np.sin(data.theta[data.type == 3]) * diam * .25, s=s * .09, color="k")
     else:
-        ax.scatter(data.x[data.type == 1], data.y[data.type == 1], edgecolors="k", color="w")
-        ax.scatter(data.x[data.type == 2], data.y[data.type == 2], edgecolors="k", color="k")
-        ax.scatter(data.x[data.type == 3], data.y[data.type == 3], edgecolors="k", color="w")
+        ax.scatter(data.x[data.type == 1], data.y[data.type == 1], edgecolors="k", color="w",s=50)
+        for f in range(0,details["functionality"]*details["n_mol"]):
+            ax.plot(data.x[data.p_idx == f], data.y[data.p_idx == f], color=cmap.to_rgba(f),lw=2)
+        ax.scatter(data.x[data.type == 2], data.y[data.type == 2], edgecolors="k",
+                   color=cmap.to_rgba(data.p_idx[data.type == 2]), s=3)
+        ax.scatter(data.x[data.type == 3], data.y[data.type == 3], edgecolors="k", color=cmap.to_rgba(data.p_idx[data.type == 3]))
     ax.text(0.01,.95,str(g[0]*dt)+r"$\tau$",color="k",transform=ax.transAxes,fontsize=20)
 
     #if i!=0 and i*nskip!=len(t)-1:
