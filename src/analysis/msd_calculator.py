@@ -1,7 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib as mpl
-from tqdm import tqdm
 from scipy.optimize import curve_fit
 import pandas as pd
 from matplotlib import gridspec
@@ -54,7 +52,7 @@ msd_c_std=np.zeros(nmax)
 
 traj.reset_index(level='timestep',inplace=True)
 times=pd.unique(traj['timestep'])
-trajlist = np.array([data[["x","y"]] for _, data in traj.groupby(["timestep"])])
+trajlist = np.array([data[data.type==3][["x","y"]] for _, data in traj.groupby(["timestep"])])
 trajlistc = np.array([data[data.type==1][["x","y"]] for _, data in traj.groupby(["timestep"])])
 utr, utc = np.triu_indices(len(times),1)
 diffs=np.abs(times[utr]-times[utc])
@@ -72,6 +70,8 @@ for i, tval in enumerate(frames):
     #msd[i]=np.mean((trajlist[utr[cond],1]-trajlist[utc[cond],1])**2+(trajlist[utr[cond],2]-trajlist[utc[cond],2])**2)
 
 t=frames*dt
+results=pd.DataFrame(columns=["time", "msd_arms", "msd_arms_std", "msd_core", "msd_core_std"], data=np.c_[t,msd,msd_std,msd_c,msd_c_std])
+results.to_csv("../../data/02_processed/msd/"+IO.get_name(details)+"_msd.txt", sep=' ', index=False)
 nlast=4
 param, pcov = curve_fit(ap, t[:-nlast], msd[:-nlast],sigma=msd_std[:-nlast])
 perr = np.sqrt(np.diag(pcov))

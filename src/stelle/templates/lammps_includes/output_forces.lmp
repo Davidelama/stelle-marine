@@ -1,0 +1,26 @@
+#---Output of forces--------------------------------------------#
+variable id1 equal 1
+variable id2 equal ${n_all}+1
+
+group second subtract grafted first
+
+group core1 id ${id1}
+group core2 id ${id2}
+
+compute f1 first reduce sum fx fy
+compute f2 second reduce sum fx fy
+
+compute r1 core1 reduce sum x y
+compute r2 core2 reduce sum x y
+
+variable fx1 equal c_f1[1]
+variable fy1 equal c_f1[2]
+variable x1 equal c_r1[1]
+variable y1 equal c_r1[2]
+
+variable fx2 equal c_f2[1]
+variable fy2 equal c_f2[2]
+variable x2 equal c_r2[1]
+variable y2 equal c_r2[2]
+
+fix print_forces all print ${t_force_dump} "$(step) ${id1} ${fx1} ${fy1} ${x1} ${y1} ${id2} ${fx2} ${fy2} ${x2} ${y2}" append ${name}_forces.dat title "Step id1 fx1 fy1 x1 y1 id2 fx2 fy2 x2 y2" screen no

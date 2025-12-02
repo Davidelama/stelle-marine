@@ -1,7 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib as mpl
-from tqdm import tqdm
 from scipy.optimize import curve_fit
 import sys
 import os
@@ -9,6 +7,7 @@ parent_dir = os.path.abspath("..")
 sys.path.insert(0, parent_dir)
 from single import IO
 import json
+import pandas as pd
 
 def abp(t,D,Dr,v0):
     return 4*D*t+2*v0**2/Dr**2*(Dr*t+np.exp(-t*Dr)-1)
@@ -58,6 +57,8 @@ for i, tval in enumerate(frames):
     #msd[i]=np.mean((trajlist[utr[cond],1]-trajlist[utc[cond],1])**2+(trajlist[utr[cond],2]-trajlist[utc[cond],2])**2)
 
 t=frames*dt
+results=pd.DataFrame(columns=["time", "msd", "msd_std"], data=np.c_[t,msd,msd_std])
+results.to_csv("../../data/02_processed/msd/"+IO.get_name(details)+"_msd.txt", sep=' ', index=False)
 nlast=4
 param, pcov = curve_fit(abp, t[:-nlast], msd[:-nlast],sigma=msd_std[:-nlast])
 perr = np.sqrt(np.diag(pcov))

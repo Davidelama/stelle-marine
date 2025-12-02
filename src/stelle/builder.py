@@ -325,7 +325,7 @@ class LammpsLangevinInput:
     template_dir = builderdir / 'templates'
     template_lmp_input = 'template_stelle.lmp'
 
-    def __init__(self, daisy, scriptname="stelle.builder", n_thermo=1e5, timestep=.001, bending=1, runtime=1e9, restime=1e7, dumptime=1e6, balancetime=1e6, temp=1.0, tau_damp=1.0): # Delta_cm=3.5, Delta_cc=8.,
+    def __init__(self, daisy, scriptname="stelle.builder", timestep=.001, bending=1, runtime=1e9, restime=1e7, dumptime=1e6, balancetime=1e6, temp=1.0, tau_damp=1.0): # Delta_cm=3.5, Delta_cc=8.,
         """Lammps data for a Langevin simulation
 
         Parameters
@@ -372,7 +372,7 @@ class LammpsLangevinInput:
         self.n_all = 1+self.n_beadseff*int(self.details["functionality"])
         self.func = int(self.details["functionality"])
         self.balancetime = int(balancetime)
-        self.n_thermo = int(n_thermo)
+        self.n_thermo =  10*int(1/timestep)
         self.restime = int(restime)
         self.dumptime = int(dumptime)
         self.temp = temp
@@ -386,8 +386,9 @@ class LammpsLangevinInput:
         self.r_cbond = int(self.details["r_cbond"])
         self.r_bond = int(self.details["r_bond"])
         self.Dr = self.details["Dr"]
-        self.dtmove = 1e-5
-        self.tmove = 1e6
+        self.dtmove = timestep
+        self.tmove = 10*int(1/timestep)
+        self.t_force_dump = 1e4
         self.vmove=(daisy.L/daisy.lmol-self.details["r_int"])/(self.tmove*self.dtmove)
         self.int_fix = int(self.details["r_int"]>0)
         self.n_beadseff = int(self.details["n_beads"])+1
