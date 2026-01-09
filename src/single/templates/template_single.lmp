@@ -17,7 +17,7 @@ variable conf_radius  index {{conf_radius}}
 variable conf equal {{conf}}
 variable peclet equal {{peclet}}
 variable brownian equal {{brownian}}
-variable Dr equal {{Dr}}
+variable Tr equal {{Tr}}
 #---
 print "-> Seed: ${seed}"
 print "-> Stopping after walltime: ${time}"
@@ -38,14 +38,14 @@ print "----------------------"
 #---- PARAMETERS ----------------------#
 
 #LJ
-variable temp equal 1.0
+variable temp equal {{temp}}
 variable sigma equal 1.0
 variable rcutoff equal {{rcutoff}}
 variable epsilon equal 1.0
 
 #LANGEVIN
-variable temp_start equal 1.0 
-variable temp_end equal 1.0
+variable temp_start equal {{temp}}
+variable temp_end equal {{temp}}
 
 #---- BOUNDARY CONDITIONS and INPUT DATA ----------------------#
 units lj
@@ -94,9 +94,9 @@ neigh_modify one 10000
 
 
 if "${brownian} > 0" &
-then "fix 3 all brownian/asphere ${temp_end} ${seed} gamma_t_eigen ${damp} ${damp} inf gamma_r_eigen inf inf 1.0 rotation_temp ${Dr}" &
+then "fix 3 all brownian/asphere ${temp_end} ${seed} gamma_t_eigen ${damp} ${damp} inf gamma_r_eigen inf inf 1.0 rotation_temp ${Tr}" &
 else "fix 2 all nve/asphere" &
-"fix 3 all langevin ${temp_start} ${temp_end} ${damp} ${seed} angmom 3.333"
+"fix 3 all langevin/trot ${temp_start} ${temp_end} ${damp} ${seed} angmom 1.0 trot ${Tr} ${Tr} ${damp}"
 
 #---BALANCING -------------------------------------------------#
 comm_style tiled

@@ -25,13 +25,14 @@ variable peclet equal {{peclet}}
 variable brownian equal {{brownian}}
 variable r_bond equal {{r_bond}}
 variable r_cbond equal {{r_cbond}}
-variable Dr equal {{Dr}}
+variable Tr equal {{Tr}}
 variable int_fix equal {{int_fix}}
 variable n_beadseff equal {{n_beadseff}}
 variable vmove equal {{vmove}}
 variable tmove equal {{tmove}}
 variable dtmove equal {{dtmove}}
 variable t_force_dump equal {{t_force_dump}}
+variable sigma_core equal {{sigma_core}}
 #---
 print "-> Seed: ${seed}"
 print "-> Stopping after walltime: ${time}"
@@ -52,7 +53,7 @@ print "----------------------"
 #---- PARAMETERS ----------------------#
 
 #LJ
-variable temp equal 1.0
+variable temp equal {{temp}}
 variable sigma equal 1.0
 variable rcutoff equal {{rcutoff}}
 variable epsilon equal 10.0
@@ -60,8 +61,8 @@ variable Delta_cc equal {{Delta_cc}}
 variable Delta_cm equal {{Delta_cm}}
 
 #LANGEVIN
-variable temp_start equal 1.0 
-variable temp_end equal 1.0
+variable temp_start equal {{temp}}
+variable temp_end equal {{temp}}
 
 #FENE
 variable K equal 30.0
@@ -157,16 +158,16 @@ thermo {{n_thermo}}
 thermo_style   custom   step temp epair emol #v_wiggle temp epair emol
 restart     ${restime} ${name}-*.restart
 
-#--- ACTIVITY --------------------------------------------#
-group active type 3
-fix 6 active propel/self quat ${peclet} qvector 1.0 0.0 1.0
-
 #--- CONFINEMENT ---------------------------------------#
 if "(${restart}==0) && (${conf}>0)" then "include confinement.lmp"
 if "(${restart}>0) && (${conf}>0)" then "include confinement_restart.lmp"
 
 #--- COREFIX ---------------------------------------#
 if "(${restart}==0) && (${int_fix}>0)" then "include int_fix.lmp"
+
+#--- ACTIVITY --------------------------------------------#
+group active type 3
+fix 6 active propel/self quat ${peclet} qvector 1.0 0.0 1.0
 
 #--- THERMALIZATION ---------------------------------------#
 if "(${restart}==0)" then "include thermalization.lmp"

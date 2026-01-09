@@ -63,12 +63,13 @@ nlast=4
 param, pcov = curve_fit(abp, t[:-nlast], msd[:-nlast],sigma=msd_std[:-nlast])
 perr = np.sqrt(np.diag(pcov))
 print(param)
-T=1
-gt=1
-gr=1/0.8
-Dv=T/gt
-Drv=T/gr
-v0v=2.3
+Dv=details["Dt"]#0.01
+Drv=details["Dr"]
+gt=details["gamma"]
+I=2/5*0.5**2
+m=1
+gr=gt
+v0v=details["peclet"]
 paramv=[Dv,Drv,v0v]
 print(paramv)
 

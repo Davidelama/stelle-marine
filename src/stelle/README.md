@@ -6,7 +6,8 @@ This project simulates the behavior of star polymers in 2D using the LAMMPS mole
 
 1. **Compile LAMMPS:**
     - download the last version of LAMMPS from https://www.lammps.org/
-    - in lammps-your-version/src/ activate the following packages with make yes-'package': ASPHERE, RIGID, MOLECULE, BROWNIAN
+    - in lammps-your-version/src/ activate the following packages with make yes-'package': ASPHERE, RIGID, MOLECULE, BROWNIAN, EXTRA-FIX
+    - copy the files in src/lammps_custom to lammps-your-version/src/
     - compile with make mpi and copy lmp_mpi as lmp_mpi_25 in the bin/ folder
 
 1. **Python Packages:**
@@ -81,14 +82,25 @@ This project simulates the behavior of star polymers in 2D using the LAMMPS mole
    - **Example:** If `brownian = 1`, `dt` will be automatically set to `0.0001`.
    - **Range:** This adjustment applies only when `brownian = 1`.
 
-### 12. **Rotational Diffusion Coefficient (`Dr`)**
+### 12. **Traslational Diffusion Coefficient (`Dt`)**
 
-   - Specifies the **rotational diffusion coefficient** used *only when* `brownian = 1`. This parameter governs how quickly a particle’s orientation undergoes random rotational motion due to thermal fluctuations.
+   - Specifies the **traslational diffusion coefficient**. This parameter governs how quickly a particle undergoes random traslational motion due to thermal fluctuations.
+   - **Example**: `Dt = 0.1` sets the rotational diffusion coefficient to 0.1 (in simulation-specific units), producing Brownian dynamics.
+   - **Range**: Any positive real number.
+
+### 13. **Rotational Diffusion Coefficient (`Dr`)**
+
+   - Specifies the **rotational diffusion coefficient**. This parameter governs how quickly a particle’s orientation undergoes random rotational motion due to thermal fluctuations.
    - **Example**: `Dr = 0.8` sets the rotational diffusion coefficient to 0.8 (in simulation-specific units), producing moderate rotational randomization during Brownian dynamics.
    - **Range**: Any positive real number.
-   - **Note**: This parameter is **ignored** when `brownian = 0` (Langevin dynamics).
 
-### 13. **Number of Arms (`fs`)**
+### 14. **Friction Coefficient (`gamma`)**
+
+   - Specifies the **friction coefficient**. This parameter is important in Langevin simulations, as it determins if the system is over- or underdamped.
+   - **Example**: `gamma = 100` sets the friction coefficient to 100 (in simulation-specific units), producing overdamped dynamics.
+   - **Range**: Any positive real number.
+
+### 15. **Number of Arms (`fs`)**
 
    - Specifies the **functionality** of the star polymer, i.e., how many arms extend from the central bead. This parameter (and with little modification also the others) can also be provided as a **vector**, allowing multiple simulations to be run with different functionalities in a single batch.
    - **Example:**
@@ -98,7 +110,7 @@ This project simulates the behavior of star polymers in 2D using the LAMMPS mole
    - **Note:** When a vector is provided, the simulation framework will iterate over each value, enabling systematic exploration of how star functionality affects polymer properties.
 
 
-### 14. **Interaction Distance (`r_int`)**
+### 16. **Interaction Distance (`r_int`)**
 
    - Allows to study **effective interactions** between stars at distance `r_int`, expressed in terms of the **sigma** parameter.
    - **Example**: `r_int = 150/sigma` sets the star cores apart of a distance `r_int` and fixes their positions.

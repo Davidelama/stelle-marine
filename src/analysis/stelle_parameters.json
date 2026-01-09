@@ -1,15 +1,17 @@
 {
     "n_beads": 13,
-    "n_mol": 2,
+    "n_mol": 3,
     "functionality": 6,
     "r_core": 0.67,
     "r_bond": 1.13,
     "r_cbond": 0.57,
     "peclet": 2.3,
-    "r_conf": 0,
+    "r_conf": 10,
     "ghost": 0,
-    "brownian": 1,
+    "brownian": 0,
     "Dr": 0.8,
-    "r_int": 3.3,
+    "Dt": 0.01,
+    "gamma": 100,
+    "r_int": 0.0,
     "seed_start": null
 }

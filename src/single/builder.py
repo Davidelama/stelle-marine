@@ -221,7 +221,7 @@ class LammpsLangevinInput:
     template_dir = builderdir / 'templates'
     template_lmp_input = 'template_single.lmp'
 
-    def __init__(self, single, scriptname="single.builder", n_thermo=1e5, timestep=.001, bending=1, runtime=1e9, restime=1e7, dumptime=1e6, balancetime=1e6, temp=1.0, tau_damp=1.0): # Delta_cm=3.5, Delta_cc=8.,
+    def __init__(self, single, scriptname="single.builder", n_thermo=1e5, timestep=.001, bending=1, runtime=1e9, restime=1e7, dumptime=1e6, balancetime=1e6): # Delta_cm=3.5, Delta_cc=8.,
         """Lammps data for a Langevin simulation
 
         Parameters
@@ -254,23 +254,33 @@ class LammpsLangevinInput:
             PRNG seed
         
         """
+        mass=1
+        radius=.5
+        inertia=2/5*mass*radius**2
         self.timestep = timestep
         self.runtime = int(runtime)
         self.details = single.details
         self.conf = int(self.details["r_conf"]>0)
-        self.peclet = self.details["peclet"]
+        self.peclet = self.details["peclet"]*self.details["gamma"]
         self.conf_radius = self.details["r_conf"]
         self.balancetime = int(balancetime)
         self.n_thermo = int(n_thermo)
         self.restime = int(restime)
         self.dumptime = int(dumptime)
-        self.temp = temp
-        self.tau_damp = tau_damp
         self.rcutoff = 1.12246152962189
         self.equitime = 1e5
         self.scriptname = scriptname
         self.brownian = int(self.details["brownian"])
-        self.Dr = self.details["Dr"]
+        self.tau_damp = 1/self.details["gamma"]
+        self.temp = self.details["Dt"] * self.details["gamma"]
+        self.Tr = self.details["Dr"] * self.details["gamma"]
+        if self.brownian == 0:
+            self.temp *= mass
+            self.Tr *= inertia
+        if self.details["Dt"] == 0:
+            self.temp = 0.000001
+        if self.details["Dr"] == 0:
+            self.Tr = 0.000001
         
         self.name = single.name
         date = datetime.now()

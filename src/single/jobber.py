@@ -13,7 +13,7 @@ from builder import logtimer
 
 def job_maker(details):
     
-    runtime=1e8
+    runtime=1e7
     dumptime=1e5
     restime=1e7
     
@@ -39,7 +39,7 @@ def job_maker(details):
 
     logtimer(dumptime, runtime, dir_name + "/" + "logtime.txt")
     
-    lammps_input=ds.LammpsLangevinInput(single, runtime=runtime, restime=restime, dumptime=dumptime, timestep=.001, tau_damp=1.0)
+    lammps_input=ds.LammpsLangevinInput(single, runtime=runtime, restime=restime, dumptime=dumptime, timestep=.001)
     
     lammps_config=ds.LammpsDatafile(single)
     
@@ -55,8 +55,11 @@ sigma=15                #diameter of bead in mm. This does not enter in the simu
 n_restarts=0            #number of times simulation is automatically restarted on cluster
 r_conf=0.0/sigma        #radius of confinement in sigma. If 0, there is no confinement
 peclet=35/sigma         #peclet number (self propulsion strength) in sigma/s
-brownian=1              #0 for Langevin dynamics, 0 for Brownian dynamics
-Dr=0.8                  #if brownian=1, defines the rotational diffusion coefficient Dr in rad^2/s
+brownian=0              #0 for Langevin dynamics, 0 for Brownian dynamics
+gamma=1000                 #determines the friction coefficient gamma (choose big for overdamped dynamics)
+Dr=0.8              #defines the rotational diffusion constant
+Dt=0.1                #defines the translational diffusion constant
+
 
 delet=True              #delete old data
 partition='boost_usr_prod'
@@ -72,6 +75,6 @@ else:
 #al_defs=np.linspace(0,100,num=26,endpoint=True)
 
 for seed in seeds:
-    details = {"peclet":peclet, "r_conf":r_conf, "brownian":brownian, "Dr":Dr, "seed_start": seed}
+    details = {"peclet":peclet, "r_conf":r_conf, "brownian":brownian, "gamma":gamma, "Dr":Dr, "Dt":Dt, "seed_start": seed}
     
     job_maker(details)

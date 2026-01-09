@@ -2,6 +2,9 @@
 #dump    0 all custom 10000 bad-test_config.data.lammpstrj id mol type xu yu zu
 #dump_modify 0  sort id format line "%10d %6d %3d %12.6lf %12.6lf %12.6lf"
 
+timestep 0.00001
+run ${equitime}
+
 timestep ${dt}
 run ${equitime}
 

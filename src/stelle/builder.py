@@ -325,7 +325,7 @@ class LammpsLangevinInput:
     template_dir = builderdir / 'templates'
     template_lmp_input = 'template_stelle.lmp'
 
-    def __init__(self, daisy, scriptname="stelle.builder", timestep=.001, bending=1, runtime=1e9, restime=1e7, dumptime=1e6, balancetime=1e6, temp=1.0, tau_damp=1.0): # Delta_cm=3.5, Delta_cc=8.,
+    def __init__(self, daisy, scriptname="stelle.builder", timestep=.001, bending=1, runtime=1e9, restime=1e7, dumptime=1e6, balancetime=1e6): # Delta_cm=3.5, Delta_cc=8.,
         """Lammps data for a Langevin simulation
 
         Parameters
@@ -358,6 +358,9 @@ class LammpsLangevinInput:
             PRNG seed
         
         """
+        mass=1
+        radius=.5
+        inertia=2/5*mass*radius**2
         self.bending = bending
         self.timestep = timestep
         self.runtime = int(runtime)
@@ -375,21 +378,29 @@ class LammpsLangevinInput:
         self.n_thermo =  10*int(1/timestep)
         self.restime = int(restime)
         self.dumptime = int(dumptime)
-        self.temp = temp
-        self.tau_damp = tau_damp
         self.rcutoff = 1.12246152962189
         self.equitime = 500000 + self.n_beadseff*50000
         self.Delta_cm = self.details["r_core"] - .5 #r_core+r_monomer-1
         self.Delta_cc = self.details["r_core"] * 2 - 1 #r_core+r_core-1
+        self.sigma_core = self.details["r_core"]*2
         self.scriptname = scriptname
         self.brownian = int(self.details["brownian"])
         self.r_cbond = int(self.details["r_cbond"])
         self.r_bond = int(self.details["r_bond"])
-        self.Dr = self.details["Dr"]
+        self.tau_damp = 1/self.details["gamma"]
+        self.temp = self.details["Dt"] * self.details["gamma"]
+        self.Tr = self.details["Dr"] * self.details["gamma"]
+        if self.brownian == 0:
+            self.temp *= mass
+            self.Tr *= inertia
+        if self.details["Dt"] == 0:
+            self.temp = 0.000001
+        if self.details["Dr"] == 0:
+            self.Tr = 0.000001
         self.dtmove = timestep
         self.tmove = 10*int(1/timestep)
         self.t_force_dump = 1e4
-        self.vmove=(daisy.L/daisy.lmol-self.details["r_int"])/(self.tmove*self.dtmove)
+        self.vmove=(daisy.L/daisy.lmol-self.details["r_int"])/(self.tmove*self.dtmove)*.5
         self.int_fix = int(self.details["r_int"]>0)
         self.n_beadseff = int(self.details["n_beads"])+1
 
@@ -592,13 +603,14 @@ def build_daisy(details: dict, mol=0, last=0, center=[0,0,0]) -> pd.DataFrame: #
     yc=center[1]
     zc=center[2]
     f=details["functionality"]
+    phase=2*np.pi/(2*f)
     # grafting angles
 
     
     # build petals
         
     daisy = pd.DataFrame([[1,0,0,0,0]], index=[1], columns=['at_type', 'p_idx', 'x', 'y', 'z'])
-    theta = np.linspace(0,2*np.pi, num=details["functionality"],endpoint=False)
+    theta = np.linspace(0,2*np.pi, num=details["functionality"],endpoint=False)+phase
     for f in range(details["functionality"]):
         petal = build_petal(details, theta[f])
         types = np.ones((nbeadseff)) * 3

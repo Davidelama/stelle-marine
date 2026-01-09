@@ -1,6 +1,9 @@
 #---Fixing cores--------------------------------------------#
 group first id 1 2:${n_all}:${n_beadseff}
+group second subtract grafted first
+
 fix 7 first move linear ${vmove} 0.0 0.0
+fix 8 second move linear -${vmove} 0.0 0.0
 unfix 5
 fix 5 all enforce2d
 
@@ -13,6 +16,7 @@ run ${tmove}
 
 #undump 1
 unfix 7
+unfix 8
 unfix 5
 fix 5 all enforce2d
 

@@ -17,7 +17,7 @@ module load boost
 
 TIME="{{tsim}}"
 SEED=$(od -vAn -N3 -tu4 < /dev/urandom | awk '{print $1}')
-LMP=$HOME/bin/lmp_mpi
+LMP=$HOME/bin/lmp_mpi_25
 
 cd ${SLURM_SUBMIT_DIR}
 echo "Restarting sim ----- " >>log

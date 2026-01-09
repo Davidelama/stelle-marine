@@ -2,8 +2,6 @@
 variable id1 equal 1
 variable id2 equal ${n_all}+1
 
-group second subtract grafted first
-
 group core1 id ${id1}
 group core2 id ${id2}
 

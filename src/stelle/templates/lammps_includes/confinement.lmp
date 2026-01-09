@@ -1,18 +1,31 @@
 #---create confinement--------------------------------------------#
+variable rcutoff_wall equal ${rcutoff} * 0.5
+variable rcutoff_wall_cores equal ${rcutoff} * 0.5 * ${sigma_core}
+variable sigma_wall_cores equal ${sigma_core} * 0.5
+variable sigma_wall equal ${sigma} * 0.5
+
 variable radius equal ramp(${start_radius},${end_radius})
 region Cyl cylinder z 0 0 v_radius INF INF units box
-fix wall all wall/region Cyl lj126 1.0 1.0 ${rcutoff}
+fix wallm free wall/region Cyl lj126 ${sigma_wall} ${sigma_wall} ${rcutoff_wall}
+fix wallc cores wall/region Cyl lj126 ${sigma_wall_cores} ${sigma_wall_cores} ${rcutoff_wall_cores}
+fix  9 grafted spring/rg 10.0 0 #${end_radius}
 
 unfix 5
 fix 5 all enforce2d
 
-timestep 0.00001
-run 100000
-unfix wall
+#dump    1 all custom 1000 ${name}_test.lammpstrj id mol type xu yu zu
+#dump_modify 1  append yes sort id format line "%10d %6d %3d %12.6lf %12.6lf %12.6lf"
+
+run 1000000
+unfix wallm
+unfix wallc
 
 region finalCyl cylinder z 0 0 ${end_radius} INF INF units box
-fix wall all wall/region finalCyl lj126 1.0 1.0 ${rcutoff}
+fix wallm free wall/region finalCyl lj126 ${sigma_wall} ${sigma_wall} ${rcutoff_wall}
+fix wallc cores wall/region finalCyl lj126 ${sigma_wall_cores} ${sigma_wall_cores} ${rcutoff_wall_cores}
 
+#undump 1
+unfix 9
 unfix 5
 fix 5 all enforce2d
 

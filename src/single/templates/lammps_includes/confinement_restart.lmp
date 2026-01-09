@@ -1,7 +1,9 @@
 #---recreate confinement--------------------------------------------#
+variable rcutoff_wall equal ${rcutoff} * 0.5
+variable sigma_wall equal ${sigma} * 0.5
 
 region finalCyl cylinder z 0 0 ${end_radius} INF INF units box
-fix wall all wall/region finalCyl lj126 1.0 1.0 ${rcutoff}
+fix wall all wall/region finalCyl lj126 ${sigma_wall} ${sigma_wall} ${rcutoff_wall}
 
 unfix 5
 fix 5 all enforce2d

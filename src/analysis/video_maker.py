@@ -33,7 +33,7 @@ if details['r_conf']!=0:
 if details['brownian']==0:
     dt=0.001
 else:
-    dt=0.0001
+    dt=0.00001
 
 cmap = cmapper(details["functionality"]*details["n_mol"], cm=mpl.cm.jet,cmap_mod=1)
 

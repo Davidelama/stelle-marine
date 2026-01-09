@@ -267,7 +267,9 @@ def get_details(name):
     ghost = False
     r_conf = 0.0
     peclet = 0.0
-    Dr = 0.0
+    Dr = 1.0
+    Dt = 1.0
+    gamma = 1.0
     n_mol = 1
     r_int = 0.0
     brownian = False
@@ -281,7 +283,12 @@ def get_details(name):
             r_conf = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "bro" in el:
             brownian = True
+        if "Dt" in el:
+            Dt = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
+        if "Dr" in el:
             Dr = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
+        if "gm" in el:
+            gamma = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "gh" in el and r_int==0.0:
             ghost = True
         if "seed" in el:
@@ -293,7 +300,7 @@ def get_details(name):
             ghost=False
 
     details = {"n_beads": n_beads, "n_mol": n_mol, "functionality": functionality,
-               "r_core": r_core, "r_bond":r_bond, "r_cbond":r_cbond, "r_conf": r_conf, "peclet": peclet, "brownian": brownian, "Dr": Dr, "r_int":r_int,"seed_start": seed_start,"ghost": ghost}
+               "r_core": r_core, "r_bond":r_bond, "r_cbond":r_cbond, "r_conf": r_conf, "peclet": peclet, "brownian": brownian, "Dr": Dr, "Dt": Dt, "gamma": gamma, "r_int":r_int,"seed_start": seed_start,"ghost": ghost}
     # print(details)
     return details
 
@@ -308,6 +315,8 @@ def get_name(details, prefix=True):
     r_bond = details["r_bond"]
     r_cbond = details["r_cbond"]
     Dr = details["Dr"]
+    Dt = details["Dt"]
+    gamma = details["gamma"]
     r_int = details["r_int"]
     seed_start = details["seed_start"]
     suff = ""
@@ -321,7 +330,13 @@ def get_name(details, prefix=True):
     if details["r_conf"] > 0:
         suff += f"_rf{r_conf:.1f}"
     if details["brownian"] > 0:
-        suff += f"_bro{Dr:.1f}"
+        suff += f"_bro"
+    if details["Dt"] != 1.0:
+        suff += f"_Dt{Dt:.3f}"
+    if details["Dr"] != 1.0:
+        suff += f"_Dr{Dr:.3f}"
+    if details["gamma"] != 1.0:
+        suff += f"_gm{gamma:.0f}"
     if details["seed_start"] != None:
         suff += f"_seed{seed_start:d}"
     if details["r_int"] > 0:

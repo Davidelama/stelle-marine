@@ -37,6 +37,7 @@ The project is organized into several directories, each serving a specific purpo
 └── src/
   ├── stelle/
   ├── single/
+  ├── lammps_custom/
   └── analysis/
 
 ### 1. **`bin/`**
@@ -74,6 +75,10 @@ The project is organized into several directories, each serving a specific purpo
      - This folder contains the scripts for simulating **single bead** systems.
      - These scripts focus on running simulations of single particles (e.g., active particles, Brownian particles) under various conditions such as confinement and self-propulsion.
      - **Example**: Scripts for initializing single particle dynamics, running simulations, and outputting results.
+
+   - **`lammps_custom/`**:
+     - This folder contains the custom lammps scripts used for this project.
+     - These have to be copied in the src/ folder of lammps before compilation
 
    - **`analysis/`**:
      - This folder contains the scripts used for **data analysis** and **visualization**.

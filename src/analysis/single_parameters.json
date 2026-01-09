@@ -1,7 +1,9 @@
 {
     "peclet": 2.3,
     "r_conf": 0,
-    "brownian": 1,
+    "brownian": 0,
     "Dr": 0.8,
+    "Dt": 0.1,
+    "gamma": 1000,
     "seed_start": null
 }
