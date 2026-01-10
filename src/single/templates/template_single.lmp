@@ -104,7 +104,6 @@ comm_modify cutoff 6
 balance     1.1 rcb
 fix         1 all balance ${balancetime} 1.1 rcb
 
-fix 5 all enforce2d
 
 #----OUTPUT DATA ----------------------------------------------#
 #----Configurations
@@ -115,6 +114,7 @@ restart     ${restime} ${name}-*.restart
 
 #--- ACTIVITY --------------------------------------------#
 fix 6 all propel/self quat ${peclet} qvector 1.0 0.0 0.0
+fix 5 all enforce2d
 
 #--- MINIMIZATION ---------------------------------------#
 if "(${minimize}>0)" then "include minimize.lmp"

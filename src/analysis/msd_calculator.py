@@ -26,7 +26,7 @@ time_limit=1
 initial_skip=0
 diam=1
 if details['brownian']==0:
-    dt=0.001
+    dt=0.01/details["gamma"]
 else:
     dt=0.0001
 

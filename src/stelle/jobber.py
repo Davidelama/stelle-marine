@@ -59,12 +59,12 @@ r_cbond=(10-1.5)/sigma  #distance of arm grafting locations on the core with res
 brownian=0              #0 for Langevin dynamics, 0 for Brownian dynamics
 Dt=0.01                  #if brownian=1, defines translational diffusion coefficient in sigma^2/s
 Dr=0.8                 #if brownian=1, defines the rotational diffusion coefficient Dr in rad^2/s
-dt=0.001                #timestep in s
+gamma=100                 #determines the friction coefficient gamma (choose big for overdamped dynamics)
+dt=min(0.01,0.01/gamma)                #timestep in s
 if brownian:            #Brownian dynamics requires a smaller timestep
     dt=0.0001
-gamma=100                 #determines the friction coefficient gamma (choose big for overdamped dynamics)
 fs=[6]                  #number of arms of the star (functionality). This is also an example of vector of parameters for multiple simulations
-r_ints=[0]#[4,5,6,7,8,9,10,12,14,16,18,20]#50/sigma          #calculation of effective interaction between stars in sigma. If r_int>0, this automatically sets mol=2, gh=0, rconf=0, fixes the core positions and outputs their forces
+r_ints=[4]#[4,5,6,7,8,9,10,12,14,16,18,20]#50/sigma          #calculation of effective interaction between stars in sigma. If r_int>0, this automatically sets mol=2, gh=0, rconf=0, fixes the core positions and outputs their forces
 
 
 

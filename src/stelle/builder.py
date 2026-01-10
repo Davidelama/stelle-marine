@@ -361,7 +361,6 @@ class LammpsLangevinInput:
         mass=1
         radius=.5
         inertia=2/5*mass*radius**2
-        self.bending = bending
         self.timestep = timestep
         self.runtime = int(runtime)
         self.details = daisy.details
@@ -369,7 +368,6 @@ class LammpsLangevinInput:
         self.n_mol = int(self.details["n_mol"])
         self.ghost = int(self.details["ghost"])
         self.conf = int(self.details["r_conf"]>0)
-        self.peclet = self.details["peclet"]
         self.start_radius = daisy.L*np.sqrt(2)/2
         self.end_radius = self.details["r_conf"]
         self.n_all = 1+self.n_beadseff*int(self.details["functionality"])
@@ -388,6 +386,10 @@ class LammpsLangevinInput:
         self.r_cbond = int(self.details["r_cbond"])
         self.r_bond = int(self.details["r_bond"])
         self.tau_damp = 1/self.details["gamma"]
+        #all force coefficients must be multiplied by gamma
+        self.bending = bending * self.details["gamma"]
+        self.peclet = self.details["peclet"] * self.details["gamma"]
+        self.epsilon = 10.0 * self.details["gamma"]
         self.temp = self.details["Dt"] * self.details["gamma"]
         self.Tr = self.details["Dr"] * self.details["gamma"]
         if self.brownian == 0:
@@ -397,8 +399,9 @@ class LammpsLangevinInput:
             self.temp = 0.000001
         if self.details["Dr"] == 0:
             self.Tr = 0.000001
+
         self.dtmove = timestep
-        self.tmove = 10*int(1/timestep)
+        self.tmove = 1e5#10*int(1/timestep)
         self.t_force_dump = 1e4
         self.vmove=(daisy.L/daisy.lmol-self.details["r_int"])/(self.tmove*self.dtmove)*.5
         self.int_fix = int(self.details["r_int"]>0)
@@ -507,9 +510,9 @@ class LammpsDatafile:
         m_bead=1.0
         if self.daisy.details["r_int"]>0:
             system.loc[system["at_type"] == 1, "ellipse"] = 0
-            system.loc[system["at_type"] == 1, "rmass"] = 1000000000
+            system.loc[system["at_type"] == 1, "rmass"] = 1e12
             m_pin=4*self.daisy.details["r_core"]**2*m_bead/self.daisy.details["functionality"]
-            self.daisy.m_core=1000000000
+            self.daisy.m_core=1e12
         """
         at_types = len(system.at_type.unique())
         

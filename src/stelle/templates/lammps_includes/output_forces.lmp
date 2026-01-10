@@ -22,3 +22,6 @@ variable x2 equal c_r2[1]
 variable y2 equal c_r2[2]
 
 fix print_forces all print ${t_force_dump} "$(step) ${id1} ${fx1} ${fy1} ${x1} ${y1} ${id2} ${fx2} ${fy2} ${x2} ${y2}" append ${name}_forces.dat title "Step id1 fx1 fy1 x1 y1 id2 fx2 fy2 x2 y2" screen no
+
+fix freeze1 core1 setforce 0.0 0.0 0.0
+fix freeze2 core2 setforce 0.0 0.0 0.0

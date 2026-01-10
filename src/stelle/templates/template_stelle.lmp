@@ -56,7 +56,7 @@ print "----------------------"
 variable temp equal {{temp}}
 variable sigma equal 1.0
 variable rcutoff equal {{rcutoff}}
-variable epsilon equal 10.0
+variable epsilon equal {{epsilon}}
 variable Delta_cc equal {{Delta_cc}}
 variable Delta_cm equal {{Delta_cm}}
 
@@ -65,9 +65,9 @@ variable temp_start equal {{temp}}
 variable temp_end equal {{temp}}
 
 #FENE
-variable K equal 30.0
+variable K equal 30.0*${epsilon}
 variable R0 equal 1.5
-variable epsilon_bond equal 10.0
+variable epsilon_bond equal ${epsilon}
 variable fenesigma equal ${r_bond}
 
 #---- BOUNDARY CONDITIONS and INPUT DATA ----------------------#
@@ -168,6 +168,8 @@ if "(${restart}==0) && (${int_fix}>0)" then "include int_fix.lmp"
 #--- ACTIVITY --------------------------------------------#
 group active type 3
 fix 6 active propel/self quat ${peclet} qvector 1.0 0.0 1.0
+unfix 5
+fix 5 all enforce2d
 
 #--- THERMALIZATION ---------------------------------------#
 if "(${restart}==0)" then "include thermalization.lmp"

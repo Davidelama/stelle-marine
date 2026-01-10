@@ -76,6 +76,7 @@ This project simulates the behavior of star polymers in 2D using the LAMMPS mole
    - Specifies the timestep used in the simulation.
    - **Example:** `dt = 0.001` means the simulation will use a timestep of 0.001.
    - **Range:** Any positive real number.
+   - **Note**: More overdamped systems require a smaller dt
 
 ### 11. **Adjustment for Brownian Dynamics**
    - If `brownian = 1`, the timestep is automatically adjusted to a smaller value (0.0001) for numerical stability in Brownian dynamics simulations.

@@ -96,6 +96,7 @@ The project is organized into several directories, each serving a specific purpo
 - **`src/`**:
   - `stelle/`: Scripts for star polymer simulations.
   - `single/`: Scripts for single particle simulations.
+  - `lammps_custom/`: Custom LAMMPS scripts used for this project.
   - `analysis/`: Scripts for data analysis and visualization.
 
 This structure is designed to keep the project organized and allow for easy access to the different stages of simulation and analysis.
