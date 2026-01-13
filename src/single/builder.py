@@ -261,7 +261,6 @@ class LammpsLangevinInput:
         self.runtime = int(runtime)
         self.details = single.details
         self.conf = int(self.details["r_conf"]>0)
-        self.peclet = self.details["peclet"]*self.details["gamma"]
         self.conf_radius = self.details["r_conf"]
         self.balancetime = int(balancetime)
         self.n_thermo = int(n_thermo)
@@ -272,6 +271,8 @@ class LammpsLangevinInput:
         self.scriptname = scriptname
         self.brownian = int(self.details["brownian"])
         self.tau_damp = 1/self.details["gamma"]
+
+        self.peclet = self.details["peclet"] * self.details["gamma"]
         self.temp = self.details["Dt"] * self.details["gamma"]
         self.Tr = self.details["Dr"] * self.details["gamma"]
         if self.brownian == 0:
@@ -375,15 +376,21 @@ class LammpsDatafile:
             Dictionary passed to jinja2 to write the data file
         """
         system = self.single.data
-        system["rmass"]=1.9098593171027443
-        system["ellipse"] = 1
+        system["diameter"] = 1.0
+        system["rmass"] = 1.9098593171027443
+        system["q"] = 0.0
+        theta=np.random.uniform(-np.pi,np.pi)
+        system["mux"] = np.cos(theta)
+        system["muy"] = np.sin(theta)
+        system["muz"] = 0.0
 
         max_at_types = max(system.at_type)
         
         def rower(row):
-            atom_string = "{:7d} {:6d} {:6d} {:16.9f} {:16.9f} {:16.9f} {:16.9f}"
-            #print(*row[['at_idx', 'mol_idx', 'at_type', 'x', 'y', 'z']])
-            return atom_string.format(*row[['at_idx', 'at_type', 'ellipse', 'rmass', 'x', 'y', 'z']])
+            #atom_string = "{:7d} {:6d} {:16.9f} {:16.9f} {:16.9f} {:6d} {:16.9f} {:16.9f}"
+            #return atom_string.format(*row[['at_idx', 'at_type', 'x', 'y', 'z', 'ellipse', 'rmass','radius']])
+            atom_string = "{:7d} {:6d} {:16.9f} {:16.9f} {:16.9f} {:16.9f} {:16.9f} {:16.9f} {:16.9f} {:16.9f} {:16.9f}"
+            return atom_string.format(*row[['at_idx', 'at_type', 'x', 'y', 'z', 'diameter', 'rmass','q','mux','muy','muz']])
         
         atoms_lines=system.astype('O').apply(rower,axis=1)
         
@@ -395,9 +402,9 @@ class LammpsDatafile:
         
         #atoms_lines = "{0:7d} {1:6d} {2:6d} {3:16.9f} {4:16.9f} {5:16.9f}".format(system.at_idx, system.mol_idx, system.at_type, system.x, system.y, system.z)
 
-        ellipsoids = self.single.ellipsoids
+        #ellipsoids = self.single.ellipsoids
 
-        ellipsoids_lines = ellipsoids.e_idx.astype(str) + ' ' + ellipsoids.diamx.astype(str) + ' ' + ellipsoids.diamy.astype(str) + ' ' + ellipsoids.diamz.astype(str) + ' ' + ellipsoids.q1.astype(str) + ' ' + ellipsoids.q2.astype(str) + ' ' + ellipsoids.q3.astype(str) + ' ' + ellipsoids.q4.astype(str)
+        #ellipsoids_lines = ellipsoids.e_idx.astype(str) + ' ' + ellipsoids.diamx.astype(str) + ' ' + ellipsoids.diamy.astype(str) + ' ' + ellipsoids.diamz.astype(str) + ' ' + ellipsoids.q1.astype(str) + ' ' + ellipsoids.q2.astype(str) + ' ' + ellipsoids.q3.astype(str) + ' ' + ellipsoids.q4.astype(str)
 
         lammps_data = {'script': self.scriptname, 'date': datetime.today().strftime('%Y-%m-%d'),
                        'n_atoms': system.shape[0],
@@ -405,8 +412,8 @@ class LammpsDatafile:
                        'xlo': self.box[0][0], 'xhi': self.box[0][1],
                        'ylo': self.box[1][0], 'yhi': self.box[1][1],
                        'zlo': self.box[2][0], 'zhi': self.box[2][1],
-                       'atoms': atoms_lines,
-                       'ellipsoids': ellipsoids_lines}
+                       'atoms': atoms_lines}
+                       #'ellipsoids': ellipsoids_lines}
         return lammps_data
 
     def to_file(self, outfile):

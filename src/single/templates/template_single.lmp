@@ -18,6 +18,7 @@ variable conf equal {{conf}}
 variable peclet equal {{peclet}}
 variable brownian equal {{brownian}}
 variable Tr equal {{Tr}}
+variable damp_rot equal ${damp}*3.3333333
 #---
 print "-> Seed: ${seed}"
 print "-> Stopping after walltime: ${time}"
@@ -51,7 +52,7 @@ variable temp_end equal {{temp}}
 units lj
 dimension 2
 boundary     p p p
-atom_style ellipsoid #no charge! NOTE: this command must preceed read_data. use "molecular" for dihedral input
+atom_style hybrid sphere dipole #no charge! NOTE: this command must preceed read_data. use "molecular" for dihedral input
 
 if "${restart} >0" &
 then &
@@ -94,9 +95,9 @@ neigh_modify one 10000
 
 
 if "${brownian} > 0" &
-then "fix 3 all brownian/asphere ${temp_end} ${seed} gamma_t_eigen ${damp} ${damp} inf gamma_r_eigen inf inf 1.0 rotation_temp ${Tr}" &
-else "fix 2 all nve/asphere" &
-"fix 3 all langevin/trot ${temp_start} ${temp_end} ${damp} ${seed} angmom 1.0 trot ${Tr} ${Tr} ${damp}"
+then "fix 3 all brownian/sphere ${temp_end} ${seed} gamma_t ${damp} gamma_r 1.0 rotation_temp ${Tr}" &
+else "fix 2 all nve/sphere update dipole" &
+"fix 3 all langevin/trot ${temp_start} ${temp_end} ${damp} ${seed} omega yes trot ${Tr} ${Tr} ${damp_rot}"
 
 #---BALANCING -------------------------------------------------#
 comm_style tiled
@@ -113,7 +114,7 @@ thermo_style   custom   step temp epair emol #v_wiggle temp epair emol
 restart     ${restime} ${name}-*.restart
 
 #--- ACTIVITY --------------------------------------------#
-fix 6 all propel/self quat ${peclet} qvector 1.0 0.0 0.0
+fix 6 all propel/self dipole ${peclet}
 fix 5 all enforce2d
 
 #--- MINIMIZATION ---------------------------------------#

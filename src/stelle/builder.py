@@ -503,16 +503,25 @@ class LammpsDatafile:
             Dictionary passed to jinja2 to write the data file
         """
         system = self.daisy.data
+        system["q"] = 0.0
+        system["muz"] = 0.0
+        theta= np.random.uniform(-np.pi,np.pi,system.shape[0])
+        system["mux"] =np.cos(theta)
+        system["muy"] = np.sin(theta)
         system["rmass"]=1.9098593171027443
-        system["ellipse"] = 1
-        system.loc[system["at_type"] == 2,"ellipse"]=0
+        system["diameter"] = 1.0
+        system.loc[system["at_type"] == 2,"diameter"] = 0.001
+        system.loc[system["at_type"] == 1, "diameter"] = self.daisy.details["r_core"]*2
         m_pin=0.001
         m_bead=1.0
         if self.daisy.details["r_int"]>0:
-            system.loc[system["at_type"] == 1, "ellipse"] = 0
             system.loc[system["at_type"] == 1, "rmass"] = 1e12
-            m_pin=4*self.daisy.details["r_core"]**2*m_bead/self.daisy.details["functionality"]
-            self.daisy.m_core=1e12
+            system.loc[system["at_type"] == 1, "diameter"] = 0
+            Icore = 2/5*self.daisy.m_core*self.daisy.details["r_core"]**2
+            m_pin_new = Icore/self.daisy.details["functionality"]/self.daisy.details["r_cbond"]**2
+            system.loc[system["at_type"] == 2, "rmass"] = m_pin_new/(1/6*np.pi*0.001**3)
+            #m_pin=self.daisy.m_core/self.daisy.details["functionality"]#4*self.daisy.details["r_core"]**2*m_bead/self.daisy.details["functionality"]
+            #self.daisy.m_core=1e12
         """
         at_types = len(system.at_type.unique())
         
@@ -528,9 +537,9 @@ class LammpsDatafile:
             mass_lines[i] = mass_lines[i] + ' ' + m_array[i]
         
         def rower(row):
-            atom_string = "{:7d} {:6d}{:16.9f} {:16.9f} {:16.9f} {:6d} {:6d} {:16.9f}"
+            atom_string = "{:7d} {:6d} {:16.9f} {:16.9f} {:16.9f} {:6d} {:16.9f} {:16.9f} {:16.9f} {:16.9f} {:16.9f} {:16.9f}"
             #print(*row[['at_idx', 'mol_idx', 'at_type', 'x', 'y', 'z']])
-            return atom_string.format(*row[['at_idx', 'at_type', 'x', 'y', 'z', 'mol_idx', 'ellipse', 'rmass']])
+            return atom_string.format(*row[['at_idx', 'at_type', 'x', 'y', 'z', 'mol_idx', 'diameter', 'rmass','q','mux','muy','muz']])
         
         atoms_lines=system.astype('O').apply(rower,axis=1)
         
@@ -667,7 +676,7 @@ def add_ellipsoids(dai_in, details, flat=False):
     daisy_ellipsoids=pd.DataFrame({})
     id = dai_in[econd].at_idx.values
     diam=np.ones(npart)
-    diam[0]*=details["r_core"]*2
+    diam[0]*=details["r_core"]*2 #this is wrong!! - does not consider the other stars
     daisy_ellipsoids["e_idx"] = id
     daisy_ellipsoids["diamx"] = diam
     daisy_ellipsoids["diamy"] = diam

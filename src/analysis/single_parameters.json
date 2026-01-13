@@ -3,7 +3,7 @@
     "r_conf": 0,
     "brownian": 0,
     "Dr": 0.8,
-    "Dt": 0.1,
-    "gamma": 1000,
+    "Dt": 0.5,
+    "gamma": 10000,
     "seed_start": null
 }

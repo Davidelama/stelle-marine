@@ -52,7 +52,7 @@ n_beads=13              #number of beads per arm
 r_core=20/(2*sigma)     #core radius (units of bead diameters)
 n_restarts=0            #number of times simulation is automatically restarted on cluster
 gh=0                    #molecules do not interact with each other (not yet fully implemented)
-r_conf=150.0/sigma      #radius of confinement in sigma. If 0, there is no confinement
+r_conf=0.0/sigma      #radius of confinement in sigma. If 0, there is no confinement
 peclet=35/sigma         #peclet number (self propulsion strength) in sigma/s
 r_bond=17/sigma         #size of bead-bead bonds in sigma
 r_cbond=(10-1.5)/sigma  #distance of arm grafting locations on the core with respect to the core center in sigma
@@ -60,7 +60,7 @@ brownian=0              #0 for Langevin dynamics, 0 for Brownian dynamics
 Dt=0.01                  #if brownian=1, defines translational diffusion coefficient in sigma^2/s
 Dr=0.8                 #if brownian=1, defines the rotational diffusion coefficient Dr in rad^2/s
 gamma=100                 #determines the friction coefficient gamma (choose big for overdamped dynamics)
-dt=min(0.01,0.01/gamma)                #timestep in s
+dt=min(0.001,0.01/gamma)                #timestep in s
 if brownian:            #Brownian dynamics requires a smaller timestep
     dt=0.0001
 fs=[6]                  #number of arms of the star (functionality). This is also an example of vector of parameters for multiple simulations

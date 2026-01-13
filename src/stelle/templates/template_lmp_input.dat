@@ -8,8 +8,6 @@
 {{n_btype}} bond types
 {{n_antype}} angle types
 
-{{n_ellipsoids}} ellipsoids
-
 {{xlo}} {{xhi}} xlo xhi
 {{ylo}} {{yhi}} ylo yhi
 {{zlo}} {{zhi}} zlo zhi
@@ -36,10 +34,4 @@ Angles
 
 {% for an in angles -%}
     {{ an }}
-{% endfor %}
-
-Ellipsoids
-
-{% for e in ellipsoids -%}
-    {{ e }}
 {% endfor %}

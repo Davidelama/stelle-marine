@@ -33,6 +33,8 @@ variable tmove equal {{tmove}}
 variable dtmove equal {{dtmove}}
 variable t_force_dump equal {{t_force_dump}}
 variable sigma_core equal {{sigma_core}}
+variable damp_rot equal ${damp}*3.3333333
+variable sdt equal ${dt}*0.1
 #---
 print "-> Seed: ${seed}"
 print "-> Stopping after walltime: ${time}"
@@ -74,7 +76,7 @@ variable fenesigma equal ${r_bond}
 units lj
 dimension 2
 boundary     p p p
-atom_style hybrid angle ellipsoid #no charge! NOTE: this command must preceed read_data. use "molecular" for dihedral input
+atom_style hybrid angle sphere dipole #no charge! NOTE: this command must preceed read_data. use "molecular" for dihedral input
 
 if "${restart} >0" &
 then &
@@ -100,6 +102,15 @@ angle_coeff 1 {{bending}}
 #    * epsilon (energy units)
 #    * sigma (distance units)
 #
+#pair_style  hybrid/overlay lj/expand 1.12246152962189 gran/hooke/history 200000.0 NULL 50.0 NULL 0.5 1
+#pair_coeff 1 1 lj/expand ${epsilon} ${sigma} ${Delta_cc}
+#pair_coeff 1 2 lj/expand 0.0 0.0 0.0
+#pair_coeff 1 3 lj/expand ${epsilon} ${sigma} ${Delta_cm}
+#pair_coeff 2 2 lj/expand 0.0 0.0 0.0
+#pair_coeff 2 3 lj/expand 0.0 0.0 0.0
+#pair_coeff 3 3 lj/expand ${epsilon} ${sigma} 0
+#pair_coeff * * gran/hooke/history
+
 pair_style  lj/expand 1.12246152962189
 pair_coeff 1 1 ${epsilon} ${sigma} ${Delta_cc}
 pair_coeff 1 2 0.0 0.0 0.0
@@ -144,10 +155,9 @@ if "${ghost}>0" then "neigh_modify exclude molecule/inter all"
 include grafting.lmp
 
 #---BALANCING -------------------------------------------------#
-comm_style tiled
+comm_style brick
 comm_modify cutoff 6
-balance     1.1 rcb
-fix         1 all balance ${balancetime} 1.1 rcb
+comm_modify vel yes
 
 fix 5 all enforce2d
 
@@ -167,7 +177,7 @@ if "(${restart}==0) && (${int_fix}>0)" then "include int_fix.lmp"
 
 #--- ACTIVITY --------------------------------------------#
 group active type 3
-fix 6 active propel/self quat ${peclet} qvector 1.0 0.0 1.0
+fix 6 active propel/self dipole ${peclet}
 unfix 5
 fix 5 all enforce2d
 

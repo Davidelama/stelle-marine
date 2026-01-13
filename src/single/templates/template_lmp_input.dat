@@ -4,8 +4,6 @@
 
 {{n_atype}} atom types
 
-{{n_atoms}} ellipsoids
-
 {{xlo}} {{xhi}} xlo xhi
 {{ylo}} {{yhi}} ylo yhi
 {{zlo}} {{zhi}} zlo zhi
@@ -14,10 +12,4 @@ Atoms
 
 {% for a in atoms -%}
     {{ a }}
-{% endfor %}
-
-Ellipsoids
-
-{% for e in ellipsoids -%}
-    {{ e }}
 {% endfor %}

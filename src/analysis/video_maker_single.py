@@ -21,7 +21,7 @@ big_diam=details['r_conf']*diam*2
 L=big_diam*1.1
 Cx=0
 Cy=0
-dt=0.01
+dt=min(0.001,0.1/details["gamma"])
 
 size_cmp=20
 norm = mpl.colors.Normalize(vmin=0, vmax=size_cmp)
@@ -32,9 +32,9 @@ name="../../data/01_raw/single/"+IO.get_name(details)+"/"+IO.get_name(details)+"
 print(name)
 print("Reading data:")
 
-traj = IO.reconstruct_traj([name], cols=('at_id', 'type', 'x', 'y','q1','q4'))
+traj = IO.reconstruct_traj([name], cols=('at_id', 'type', 'x', 'y','mux','muy'))
 traj[["x","y"]]*=diam
-traj["theta"]=np.arctan2(traj["q4"],traj["q1"])*2
+traj["theta"]=np.arctan2(traj["muy"],traj["mux"])
 #plt.hist(traj.theta, range=(-np.pi, np.pi), bins=np.linspace(-np.pi, np.pi, 20))
 #plt.show()
 

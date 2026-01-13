@@ -1,5 +1,5 @@
 #!/bin/bash
-suffixes=("_pe2.3_Dt0.100_Dr0.800_gm1000") #_gh_rf20.0 ("_gh_grft_star_stk_iden0.001_ieps3.0_irc0.75") #_bad_bfix("_opendef") #("_impl5.0") #("_star_impl") #("")
+suffixes=("_pe2.3_Dt0.500_Dr0.800_gm10000") #_gh_rf20.0 ("_gh_grft_star_stk_iden0.001_ieps3.0_irc0.75") #_bad_bfix("_opendef") #("_impl5.0") #("_star_impl") #("")
 for suffix in "${suffixes[@]}";
 do
 

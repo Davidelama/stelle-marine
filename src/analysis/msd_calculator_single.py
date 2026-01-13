@@ -12,6 +12,12 @@ import pandas as pd
 def abp(t,D,Dr,v0):
     return 4*D*t+2*v0**2/Dr**2*(Dr*t+np.exp(-t*Dr)-1)
 
+def lp(t,D,gm):
+    return 2*D/gm*(t*gm+np.exp(-t*gm)-1)
+
+def alp(t,D,Dr,v0,gm):
+    alpha=Dr/gm #big means big inertia
+    return 4/gm*(D+v0**2/Dr*1/(1-1/alpha**2))*(t*gm+np.exp(-t*gm)-1)+2*v0**2/Dr**2*1/(1-alpha**2)*(Dr*t+np.exp(-Dr*t)-1)
 
 with open('single_parameters.json',"r") as f:
     details = json.load(f)
@@ -21,15 +27,15 @@ nskip=1#per video di tutto usa 200
 time_limit=1
 initial_skip=0
 diam=1
-dt=1e-3
+dt=min(0.001,0.1/details["gamma"])
 
 name="../../data/01_raw/single/"+IO.get_name(details)+"/"+IO.get_name(details)+"_msd.lammpstrj"
 print(name)
 print("Reading data:")
 
-traj = IO.reconstruct_traj([name], cols=('at_id', 'type', 'x', 'y','q1','q4'))
+traj = IO.reconstruct_traj([name], cols=('at_id', 'type', 'x', 'y','mux','muy'))
 traj[["x","y"]]*=diam
-traj["theta"]=np.arctan2(traj["q4"],traj["q1"])*2
+traj["theta"]=np.arctan2(traj["mux"],traj["muy"])
 #plt.hist(traj.theta, range=(-np.pi, np.pi), bins=np.linspace(-np.pi, np.pi, 20))
 #plt.show()
 
@@ -60,9 +66,7 @@ t=frames*dt
 results=pd.DataFrame(columns=["time", "msd", "msd_std"], data=np.c_[t,msd,msd_std])
 results.to_csv("../../data/02_processed/msd/"+IO.get_name(details)+"_msd.txt", sep=' ', index=False)
 nlast=4
-param, pcov = curve_fit(abp, t[:-nlast], msd[:-nlast],sigma=msd_std[:-nlast])
-perr = np.sqrt(np.diag(pcov))
-print(param)
+
 Dv=details["Dt"]#0.01
 Drv=details["Dr"]
 gt=details["gamma"]
@@ -70,7 +74,12 @@ I=2/5*0.5**2
 m=1
 gr=gt
 v0v=details["peclet"]
-paramv=[Dv,Drv,v0v]
+#paramv=[Dv,Drv,v0v]
+paramv=[Dv,Drv,v0v,gt/m]
+#paramv=[Dv,gt/m]
+param, pcov = curve_fit(alp, t[:-nlast], msd[:-nlast],sigma=msd_std[:-nlast],p0=paramv)
+perr = np.sqrt(np.diag(pcov))
+print(param)
 print(paramv)
 
 
@@ -79,8 +88,8 @@ ax.set_ylabel(r"$msd[\sigma^2]$",fontsize=20)
 ax.set_xlabel(r"$t[\tau]$",fontsize=20)
 ax.tick_params(axis='both', which='major', labelsize=20)
 ax.errorbar(t,msd,yerr=msd_std,c="k",lw=2,ls="",marker="o")
-ax.plot(t, abp(t, *paramv), linestyle='--',c="b")
-ax.plot(t, abp(t, *param), linestyle=':',c="r")
+ax.plot(t, alp(t, *paramv), linestyle='--',c="b")
+ax.plot(t, alp(t, *param), linestyle=':',c="r")
 ax.set_xscale('log')
 ax.set_yscale('log')
 plt.show()

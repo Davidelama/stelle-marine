@@ -6,8 +6,8 @@ group grafted subtract all free
 
 
 if "${brownian} > 0" &
-then "fix 3 free brownian/asphere ${temp_end} ${seed} gamma_t_eigen ${damp} ${damp} inf gamma_r_eigen inf inf 1.0 rotation_temp ${Tr}" &
-else "fix 2 free nve/asphere" &
-"fix 3 free langevin/trot ${temp_start} ${temp_end} ${damp} ${seed} angmom 1.0 trot ${Tr} ${Tr} ${damp}"
+then "fix 3 free brownian/sphere ${temp_end} ${seed} gamma_t ${damp} gamma_r 1.0 rotation_temp ${Tr}" &
+else "fix 2 free nve/sphere update dipole" &
+"fix 3 free langevin/trot ${temp_start} ${temp_end} ${damp} ${seed} omega yes trot ${Tr} ${Tr} ${damp_rot}"
 
 fix 4 grafted rigid molecule langevin ${temp_start} ${temp_end} ${damp} ${seed}

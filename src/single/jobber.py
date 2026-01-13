@@ -39,7 +39,7 @@ def job_maker(details):
 
     logtimer(dumptime, runtime, dir_name + "/" + "logtime.txt")
     
-    lammps_input=ds.LammpsLangevinInput(single, runtime=runtime, restime=restime, dumptime=dumptime, timestep=.001)
+    lammps_input=ds.LammpsLangevinInput(single, runtime=runtime, restime=restime, dumptime=dumptime, timestep=dt)
     
     lammps_config=ds.LammpsDatafile(single)
     
@@ -56,10 +56,10 @@ n_restarts=0            #number of times simulation is automatically restarted o
 r_conf=0.0/sigma        #radius of confinement in sigma. If 0, there is no confinement
 peclet=35/sigma         #peclet number (self propulsion strength) in sigma/s
 brownian=0              #0 for Langevin dynamics, 0 for Brownian dynamics
-gamma=1000                 #determines the friction coefficient gamma (choose big for overdamped dynamics)
+gamma=10000                #determines the friction coefficient gamma (choose big for overdamped dynamics)
 Dr=0.8              #defines the rotational diffusion constant
-Dt=0.1                #defines the translational diffusion constant
-
+Dt=0.5                #defines the translational diffusion constant
+dt=min(0.001,0.1/gamma)                #timestep in s
 
 delet=True              #delete old data
 partition='boost_usr_prod'
