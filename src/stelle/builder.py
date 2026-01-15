@@ -399,7 +399,7 @@ class LammpsLangevinInput:
             self.temp = 0.000001
         if self.details["Dr"] == 0:
             self.Tr = 0.000001
-
+        self.contact = int(self.details["contact"])
         self.dtmove = timestep
         self.tmove = 1e5#10*int(1/timestep)
         self.t_force_dump = 1e4

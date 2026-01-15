@@ -35,6 +35,7 @@ variable t_force_dump equal {{t_force_dump}}
 variable sigma_core equal {{sigma_core}}
 variable damp_rot equal ${damp}*3.3333333
 variable sdt equal ${dt}*0.1
+variable contact equal {{contact}}
 #---
 print "-> Seed: ${seed}"
 print "-> Stopping after walltime: ${time}"
@@ -68,11 +69,21 @@ variable temp_end equal {{temp}}
 
 #FENE
 variable K equal 30.0*${epsilon}
-variable R0 equal 1.5
+variable R0 equal 1.5*${r_bond}
 variable epsilon_bond equal ${epsilon}
 variable fenesigma equal ${r_bond}
 
+#GRANULAR
+variable kn equal 100000.0
+variable en equal 50.0
+variable kt equal 100000000.0
+variable er equal 0.001
+variable mu equal 1000000000.0
+variable ktwall equal 100000.0
+variable muwall equal 1.0
+
 #---- BOUNDARY CONDITIONS and INPUT DATA ----------------------#
+newton off
 units lj
 dimension 2
 boundary     p p p
@@ -102,23 +113,23 @@ angle_coeff 1 {{bending}}
 #    * epsilon (energy units)
 #    * sigma (distance units)
 #
-#pair_style  hybrid/overlay lj/expand 1.12246152962189 gran/hooke/history 200000.0 NULL 50.0 NULL 0.5 1
-#pair_coeff 1 1 lj/expand ${epsilon} ${sigma} ${Delta_cc}
-#pair_coeff 1 2 lj/expand 0.0 0.0 0.0
-#pair_coeff 1 3 lj/expand ${epsilon} ${sigma} ${Delta_cm}
-#pair_coeff 2 2 lj/expand 0.0 0.0 0.0
-#pair_coeff 2 3 lj/expand 0.0 0.0 0.0
-#pair_coeff 3 3 lj/expand ${epsilon} ${sigma} 0
-#pair_coeff * * gran/hooke/history
 
-pair_style  lj/expand 1.12246152962189
-pair_coeff 1 1 ${epsilon} ${sigma} ${Delta_cc}
-pair_coeff 1 2 0.0 0.0 0.0
-pair_coeff 1 3 ${epsilon} ${sigma} ${Delta_cm}
-pair_coeff 2 2 0.0 0.0 0.0
-pair_coeff 2 3 0.0 0.0 0.0
-pair_coeff 3 3 ${epsilon} ${sigma} 0
-pair_modify shift yes
+if "${contact}==0" then &
+"pair_style  lj/expand 1.12246152962189" &
+"pair_coeff 1 1 ${epsilon} ${sigma} ${Delta_cc}" &
+"pair_coeff 1 2 0.0 0.0 0.0" &
+"pair_coeff 1 3 ${epsilon} ${sigma} ${Delta_cm}" &
+"pair_coeff 2 2 0.0 0.0 0.0" &
+"pair_coeff 2 3 0.0 0.0 0.0" &
+"pair_coeff 3 3 ${epsilon} ${sigma} 0" &
+else &
+"pair_style granular" &
+"pair_coeff 1 1 hertz ${kn} ${en} tangential mindlin ${kt} ${er} ${mu} damping mass_velocity" &
+"pair_coeff 1 2 hertz 0.0001 ${en} tangential mindlin 0.0001 ${er} ${mu} damping mass_velocity" &
+"pair_coeff 1 3 hertz ${kn} ${en} tangential mindlin ${kt} ${er} ${mu} damping mass_velocity" &
+"pair_coeff 2 2 hertz ${kn} ${en} tangential mindlin ${kt} ${er} ${mu} damping mass_velocity" &
+"pair_coeff 2 3 hertz ${kn} ${en} tangential mindlin ${kt} ${er} ${mu} damping mass_velocity" &
+"pair_coeff 3 3 hertz ${kn} ${en} tangential mindlin ${kt} ${er} ${mu} damping mass_velocity"
 
 #----BONDED INTERACTIONS: FENE + WCA --#
 #  E= - 0.5 K R0^2 ln[ 1- ((r-Delta)/R0)^2]

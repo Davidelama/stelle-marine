@@ -122,4 +122,9 @@ This project simulates the behavior of star polymers in 2D using the LAMMPS mole
      - `rconf = 0`: no confinement allowed.
      - This will also output the forces active on the core.
 
+### 17. **Contact Friction (`contact`)**
+
+   - If set to 1, introduces **contact friction** between particles and between the particles and the wall.
+   - **Example**: `contact = 1` turns on contact friction.
+   - **Range**: `0` or `1`.
 
