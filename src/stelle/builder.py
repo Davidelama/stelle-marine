@@ -325,7 +325,7 @@ class LammpsLangevinInput:
     template_dir = builderdir / 'templates'
     template_lmp_input = 'template_stelle.lmp'
 
-    def __init__(self, daisy, scriptname="stelle.builder", timestep=.001, bending=1, runtime=1e9, restime=1e7, dumptime=1e6, balancetime=1e6): # Delta_cm=3.5, Delta_cc=8.,
+    def __init__(self, daisy, scriptname="stelle.builder", timestep=.001, bending=0, runtime=1e9, restime=1e7, dumptime=1e6, balancetime=1e6): # Delta_cm=3.5, Delta_cc=8.,
         """Lammps data for a Langevin simulation
 
         Parameters
