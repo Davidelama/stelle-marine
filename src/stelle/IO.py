@@ -3,7 +3,7 @@ import pandas as pd
 from copy import copy
 import re
 
-def lammpsdump_reader(file, cols=('at_id', 'mol_id', 'type', 'x', 'y', 'z')):
+def lammpsdump_reader(file, cols=('at_id', 'mol_id', 'type', 'x', 'y', 'mux','muy')):
     """
     Reads the LAMMPSDUMP files (LAMMPS Trajectories) and stores the results
     in a pandas DataFrame
@@ -47,17 +47,16 @@ def lammpsdump_reader(file, cols=('at_id', 'mol_id', 'type', 'x', 'y', 'z')):
     data.set_index(['frame', 'timestep'], inplace=True)
     return data[list(cols)]
 
-
 def lammpsdump_writer(filename: str, data: pd.DataFrame, boxlen):
     """
     Write a lammpsdump file to be visualized in VMD
     """
-    assert {'at_id', 'mol_id', 'type', 'x', 'y', 'z'} <= set(data.columns)
+    assert {'at_id', 'mol_id', 'type', 'x', 'y', 'mux', 'muy'} <= set(data.columns)
     ts_str = "ITEM: TIMESTEP\n{:d}\n"
     n_atn_str = "ITEM: NUMBER OF ATOMS\n{:d}\n"
     boxlen_str = f"ITEM: BOX BOUNDS pp pp pp\n" + 3 * f"{-boxlen:.16e} {boxlen:.16e}\n"
-    coord_str = "ITEM: ATOMS id mol type xu yu zu\n"
-    at_str = "{:10d} {:6d} {:3d} {:12.6f} {:12.6f} {:12.6f}\n"
+    coord_str = "ITEM: ATOMS id mol type xu yu mux muy\n"
+    at_str = "{:10d} {:6d} {:3d} {:12.6f} {:12.6f} {:12.6f} {:12.6f}\n"
     with open(filename, 'w') as fout:
         for ts, new in data.groupby(level='timestep'):
             data = new.droplevel('timestep').reset_index()
@@ -68,27 +67,9 @@ def lammpsdump_writer(filename: str, data: pd.DataFrame, boxlen):
             fout.write(coord_str)
             data.reset_index()
             for index, row in data.iterrows():
-                fout.write(at_str.format(int(row['at_id']),int(row['mol_id']),int(row['type']), row['x'], row['y'], row['z']))
+                fout.write(at_str.format(int(row['at_id']),int(row['mol_id']),int(row['type']), row['x'], row['y'], row['mux'], row['muy']))
 
-
-def knt_writer(filename: str, data: pd.DataFrame, colx='x', coly='y', colz='z'):
-    """
-    Write a .knt file to be analyzed with entang
-    """
-    n_atn_str = "{:10d}\n"
-    at_str = "{:16.9f} {:16.9f} {:16.9f}\n"
-    with open(filename, 'w') as fout:
-        for ts, new in data.groupby(level='timestep'):
-            data = new.droplevel('timestep').reset_index()
-            fout.write(n_atn_str.format(data.shape[0] + 1))
-            data.reset_index()
-            for index, row in data.iterrows():
-                fout.write(at_str.format(row[colx], row[coly], row[colz]))
-            row = data.iloc[0]
-            fout.write(at_str.format(row[colx], row[coly], row[colz]))
-
-
-def reconstruct_traj(filelist, cols=('at_id', 'mol_id', 'type', 'x', 'y', 'z')):
+def reconstruct_traj(filelist, cols=('at_id', 'mol_id', 'type', 'x', 'y', 'mux', 'muy')):
     """
     Collate a set of pandas traj
     files into a unique trajectory, sorting according to timestep and dropping duplicates.
@@ -115,51 +96,6 @@ def reconstruct_traj(filelist, cols=('at_id', 'mol_id', 'type', 'x', 'y', 'z')):
     traj = traj.drop_duplicates(subset=['timestep', 'at_id'])
     traj.set_index(['timestep'], append=True, inplace=True)
     return traj
-
-
-
-def to_vtf_file(data, M, n, colx, coly, colz, nx, ny, nz, filename):
-    """
-        Write a .vtf file to be opened with VMD
-        Note: assumes that all frames have the same value of M
-    """
-    at_str = "{:d} {:16.9f} {:16.9f} {:16.9f}\n"
-    s = 0.5 * n / np.pi
-    with open(filename, 'w') as fout:
-        # write preamble (topology)
-        fout.write(f"atom default name CENTER radius 1.0\n")
-        max_line_len = 20
-        iters = M // max_line_len
-        # normals atoms
-        for i in range(iters):
-            idx0 = i * max_line_len
-            fout.write(f"atom {2 * idx0 + 1}")
-            for l in range(1, max_line_len):
-                idx = idx0 + l
-                if idx >= M:
-                    break
-                fout.write(f',{2 * idx + 1}')
-            fout.write(f" name NORMAL radius 0.5\n")
-        # bonds
-        for i in range(iters):
-            idx0 = i * max_line_len
-            fout.write(f"bonds {2 * idx0}:{2 * (idx0 + 1)},{2 * idx0}:{2 * idx0 + 1}")
-            for l in range(1, max_line_len):
-                idx = idx0 + l
-                if idx >= M:
-                    break
-                fout.write(f',{2 * idx}:{2 * (idx + 1)},{2 * idx}:{2 * idx + 1}')
-            fout.write(f"\n")
-        # write coordinates
-        #for ts, new in data.groupby(level=CatCG.conf_id):
-        #    data = new.droplevel(CatCG.conf_id).reset_index()
-        #    # data.reset_index()
-        #    fout.write("timestep indexed\n")
-        #    for index, row in data.iterrows():
-        #        fout.write(at_str.format(2 * index, row[colx], row[coly], row[colz]))
-        #        fout.write(at_str.format(2 * index + 1, row[colx] + s * row[nx], row[coly] + s * row[ny],
-        #                                 row[colz] + s * row[nz]))
-
 
 def lammpsdat_reader(file, type="angles"):
     """
@@ -255,7 +191,6 @@ def lammpsdat_reader(file, type="angles"):
         system_angles.reset_index(inplace=True,drop=True)
     return system, system_bonds, system_angles, masses, xlim, ylim, zlim
 
-
 def get_details(name):
     els = re.split("[_]", name)  # '[nNfFrcRgrft]', input_dir.name)
     n_beads = int(re.findall(r"[-+]?\d*\.\d+|\d+", els[1])[0])
@@ -306,7 +241,6 @@ def get_details(name):
                "r_core": r_core, "r_bond":r_bond, "r_cbond":r_cbond, "r_conf": r_conf, "peclet": peclet, "brownian": brownian, "Dr": Dr, "Dt": Dt, "gamma": gamma, "r_int":r_int,"seed_start": seed_start,"ghost": ghost,"contact":contact}
     # print(details)
     return details
-
 
 def get_name(details, prefix=True):
     n_beads = details["n_beads"]
