@@ -41,9 +41,9 @@ name="../../data/01_raw/stelle/"+IO.get_name(details)+"/"+IO.get_name(details)+"
 print(name)
 print("Reading data:")
 
-traj = IO.reconstruct_traj([name], cols=('at_id', 'type', 'x', 'y','q1','q4'))
+traj = IO.reconstruct_traj([name], cols=('at_id', 'type', 'x', 'y','mux','muy'))
 traj[["x","y"]]*=diam
-traj["theta"]=np.arctan2(traj["q4"],traj["q1"])*2
+traj["theta"]=np.arctan2(traj["muy"],traj["mux"])
 #plt.hist(traj.theta, range=(-np.pi, np.pi), bins=np.linspace(-np.pi, np.pi, 20))
 #plt.show()
 

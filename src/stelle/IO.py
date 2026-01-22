@@ -35,13 +35,12 @@ def lammpsdump_reader(file, cols=('at_id', 'mol_id', 'type', 'x', 'y', 'mux','mu
     n_frames = confs.shape[0]
     confs = confs.reshape((confs.shape[0] * confs.shape[1], confs.shape[2]))
     data = pd.DataFrame(confs, columns=cols)
-    data[['x', 'y']] = data[['x', 'y']].astype(float)
-    if 'z' in cols:
-        data[['z']] = data[['z']].astype(float)
-    data[['at_id', 'type']] = data[['at_id', 'type']].astype(int)
-    if 'mol_id' in cols:
-        data[['mol_id']] = data[['mol_id']].astype(int)
-    # dt = timesteps[1] - timesteps[0]
+    for lab in ["x", "y", "z"]:
+        if lab in cols:
+            data[[lab]] = data[[lab]].astype(float)
+    for lab in ["at_id", "type", "mol_id"]:
+        if lab in cols:
+            data[[lab]] = data[[lab]].astype(int)
     data['timestep'] = np.repeat(np.array(timesteps), n_atoms)
     data['frame'] = np.repeat(np.arange(n_frames), n_atoms)
     data.set_index(['frame', 'timestep'], inplace=True)

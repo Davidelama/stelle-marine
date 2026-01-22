@@ -6,9 +6,10 @@ from builder import logtimer
 
 def job_maker(details):
     
-    runtime=1e7#1e9#5e6
-    dumptime=1e5#1e7#1e4
-    restime=1e8
+    runtime = 1e8#1e9#5e6
+    dumptime = 1e6#1e7#1e4
+    dumptime_angle = 1e4
+    restime = 1e8
     
     queue="topol_cpuQ"
     input_name="test_input.run"
@@ -23,7 +24,7 @@ def job_maker(details):
     Path(f"../../data/01_raw/{folder}/"+daisy.name).mkdir(parents=True, exist_ok=True)
     #Path("../../data/02_processed/cycles/"+daisy.name).mkdir(parents=True, exist_ok=True)
     #Path("../../data/03_analyzed/cycles/"+daisy.name).mkdir(parents=True, exist_ok=True)
-
+    print("Creating: " + daisy.name)
     dir_name = f"../../data/01_raw/{folder}/" + daisy.name
     if delet:
         list_dir=os.listdir(dir_name)
@@ -33,7 +34,7 @@ def job_maker(details):
 
     logtimer(dumptime, runtime, dir_name + "/" + "logtime.txt")
     
-    lammps_input=ds.LammpsLangevinInput(daisy, runtime=runtime, restime=restime, dumptime=dumptime, timestep=dt)
+    lammps_input=ds.LammpsLangevinInput(daisy, runtime=runtime, restime=restime, dumptime=dumptime, timestep=dt, dumptime_angle=dumptime_angle)
     
     lammps_config=ds.LammpsDatafile(daisy)
     
@@ -63,14 +64,14 @@ gamma=100                 #determines the friction coefficient gamma (choose big
 dt=min(0.001,0.01/gamma)                #timestep in s
 if brownian:            #Brownian dynamics requires a smaller timestep
     dt=0.0001
-fs=[6]                  #number of arms of the star (functionality). This is also an example of vector of parameters for multiple simulations
+fs=[3]                  #number of arms of the star (functionality). This is also an example of vector of parameters for multiple simulations
 r_ints=[0]#[4,5,6,7,8,9,10,12,14,16,18,20]#50/sigma          #calculation of effective interaction between stars in sigma. If r_int>0, this automatically sets mol=2, gh=0, rconf=0, fixes the core positions and outputs their forces
 contact=1               #if 1, introduces contact friction between particles and walls
 
 
 delet=True              #delete old data
 partition='boost_usr_prod'
-qos='normal'
+qos='normal' #'boost_qos_lprod'
 project='INF25_biophys'
 
 
@@ -88,5 +89,5 @@ for seed in seeds:
         for rint in r_ints:
             details = {"n_beads": n_beads, "n_mol": n_mol,"functionality": fval,
                 "r_core": r_core, "peclet":peclet, "r_conf":r_conf, "r_bond":r_bond, "r_cbond":r_cbond, "r_int":rint, "seed_start": seed, "ghost":gh, "brownian":brownian, "Dr":Dr, "Dt":Dt, "gamma":gamma, "contact":contact}
-    
+
             job_maker(details)
