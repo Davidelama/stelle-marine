@@ -145,7 +145,7 @@ class DaisyBuilder:
         return Daisy(system, system_bonds, system_angles, system_ellipsoids, self.details)
 
 class PBSParams:
-    def __init__(self, scriptname="stelle.builder", name='sim', fin='in.lmp', ncpus=8, queue='compphys_cpuQ', hours=23, minutes=50, delta=120):
+    def __init__(self, scriptname="stelle.builder", name='sim', fin='in.lmp', ncpus=8, queue='compphysCPUQ', hours=23, minutes=50, delta=120):
         """PBS job submitter
 
         Parameters
@@ -163,13 +163,13 @@ class PBSParams:
         delta : float
             safety time before end of simulation
         """
-        if queue == 'compphys_cpuQ':
+        if queue == 'compphysCPUQ':
             hours = 23
             minutes = 50
-        elif queue == 'short_cpuQ':
+        elif queue == 'shortCPUQ':
             hours = 5
             minutes = 50
-        elif queue == 'topol_cpuQ':
+        elif queue == 'topolCPUQ':
             hours = 71#47
             minutes = 50
         trun = timedelta(hours=hours, minutes=minutes)

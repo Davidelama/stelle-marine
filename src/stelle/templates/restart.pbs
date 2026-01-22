@@ -12,8 +12,8 @@
 
 #-- Created by {{scriptname}} on {{date}}
 
-module load openmpi-3.0.0
-module load Intel_parallel_studio_xe2018u2
+module OpenMPI
+#module load Intel_parallel_studio_xe2018u2
 
 TIME="{{tsim}}"
 SEED=$(od -vAn -N3 -tu4 < /dev/urandom | awk '{print $1}')
