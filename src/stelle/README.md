@@ -6,7 +6,7 @@ This project simulates the behavior of star polymers in 2D using the LAMMPS mole
 
 1. **Compile LAMMPS:**
     - download the last version of LAMMPS from https://www.lammps.org/
-    - in lammps-your-version/src/ activate the following packages with make yes-'package': RIGID, MOLECULE, BROWNIAN, GRANULAR, DIPOLE
+    - in lammps-your-version/src/ activate the following packages with make yes-'package': RIGID, MOLECULE, BROWNIAN, GRANULAR, DIPOLE, EXTRA-FIX
     - copy the files in src/lammps_custom to lammps-your-version/src/
     - compile with make mpi and copy lmp_mpi as lmp_mpi_25 in the bin/ folder
 

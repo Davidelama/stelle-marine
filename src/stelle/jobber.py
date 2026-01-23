@@ -88,7 +88,7 @@ for seed in seeds:
     for fval in fs:
         for nval in n_beads:
             for rint in r_ints:
-                details = {"n_beads": n_beads, "n_mol": n_mol,"functionality": fval,
+                details = {"n_beads": nval, "n_mol": n_mol,"functionality": fval,
                 "r_core": r_core, "peclet":peclet, "r_conf":r_conf, "r_bond":r_bond, "r_cbond":r_cbond, "r_int":rint, "seed_start": seed, "ghost":gh, "brownian":brownian, "Dr":Dr, "Dt":Dt, "gamma":gamma, "contact":contact}
 
                 job_maker(details)
