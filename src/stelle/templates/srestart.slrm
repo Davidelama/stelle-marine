@@ -4,7 +4,7 @@
 #SBATCH --time={{trun}}
 #SBATCH -e {{name}}.err
 #SBATCH -o {{name}}.out
-#SBATCH --ntasks-per-node=32         # 32 tasks per node
+#SBATCH --ntasks-per-node={{ncores}}         # 32 tasks per node
 #SBATCH --partition={{partition}}
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=davide.breoni@unitn.it

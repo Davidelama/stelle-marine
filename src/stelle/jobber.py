@@ -40,7 +40,7 @@ def job_maker(details):
     
     pbs_par=ds.PBSParams(name=job_name, fin=input_name, queue=queue)
 
-    slurm_par = ds.SLURMParams(name=job_name, nnodes=1, partition=partition, project=project, qos=qos,  fin=input_name, delta=120)
+    slurm_par = ds.SLURMParams(name=job_name, nnodes=1, ncores=4, partition=partition, project=project, qos=qos,  fin=input_name, delta=120)
     
     renderer=ds.SimulationRenderer(lammps_config, lammps_input, pbs_par, slurm_par, n_restarts=n_restarts, delta_box=10, suffix='')
     

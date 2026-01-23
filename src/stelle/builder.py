@@ -192,7 +192,7 @@ class PBSParams:
         return f'{hours}:{minutes:02d}:{seconds:02d}'
 
 class SLURMParams:
-    def __init__(self, scriptname="stelle.builder", name='sim', nnodes=1, partition='boost_usr_prod', project='INF25_biophys', qos='normal',  fin='in.lmp', hours=23, minutes=50, delta=120):
+    def __init__(self, scriptname="stelle.builder", name='sim', nnodes=1, ncores=32, partition='boost_usr_prod', project='INF25_biophys', qos='normal',  fin='in.lmp', hours=23, minutes=50, delta=120):
         """PBS job submitter
 
         Parameters
@@ -219,8 +219,9 @@ class SLURMParams:
         trun = timedelta(hours=hours, minutes=minutes)
         tbuffer = timedelta(minutes=delta)
         tsim = trun - tbuffer
-        self.data = {'n_cpus': nnodes*32,
+        self.data = {'n_cpus': nnodes*ncores,
                      'nnodes': nnodes,
+                     'ncores': ncores,
                      'name': name,
                      'project': project,
                      'trun': self.__timedelta_fmt(trun),
