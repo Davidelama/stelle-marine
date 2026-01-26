@@ -69,19 +69,19 @@ variable temp_start equal {{temp}}
 variable temp_end equal {{temp}}
 
 #FENE
-variable K equal 30.0*${epsilon}
-variable R0 equal 1.5*${r_bond}
 variable epsilon_bond equal ${epsilon}
+variable K equal 30.0*${epsilon_bond}
+variable R0 equal 1.5*${r_bond}
 variable fenesigma equal ${r_bond}
 
 #GRANULAR
 variable kn equal 100000.0
 variable en equal 50.0
-variable kt equal 100000000.0
-variable er equal 0.001
-variable mu equal 1000000000.0
+variable kt equal 1000000.0
+variable er equal 0.1
+variable mu equal 10.0
 variable ktwall equal 100000.0
-variable muwall equal 1.0
+variable muwall equal 1.5
 
 #---- BOUNDARY CONDITIONS and INPUT DATA ----------------------#
 newton off
@@ -125,12 +125,12 @@ if "${contact}==0" then &
 "pair_coeff 3 3 ${epsilon} ${sigma} 0" &
 else &
 "pair_style granular" &
-"pair_coeff 1 1 hertz ${kn} ${en} tangential mindlin ${kt} ${er} ${mu} damping mass_velocity" &
-"pair_coeff 1 2 hertz 0.0001 ${en} tangential mindlin 0.0001 ${er} ${mu} damping mass_velocity" &
-"pair_coeff 1 3 hertz ${kn} ${en} tangential mindlin ${kt} ${er} ${mu} damping mass_velocity" &
-"pair_coeff 2 2 hertz ${kn} ${en} tangential mindlin ${kt} ${er} ${mu} damping mass_velocity" &
-"pair_coeff 2 3 hertz ${kn} ${en} tangential mindlin ${kt} ${er} ${mu} damping mass_velocity" &
-"pair_coeff 3 3 hertz ${kn} ${en} tangential mindlin ${kt} ${er} ${mu} damping mass_velocity"
+"pair_coeff 1 1 hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 1 2 hertz 0.0001 ${en} tangential mindlin_rescale/force 0.0001 ${er} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 1 3 hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 2 2 hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 2 3 hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 3 3 hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}"
 
 #----BONDED INTERACTIONS: FENE + WCA --#
 #  E= - 0.5 K R0^2 ln[ 1- ((r-Delta)/R0)^2]

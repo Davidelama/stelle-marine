@@ -6,8 +6,8 @@ from builder import logtimer
 
 def job_maker(details):
     
-    runtime = 1e8#1e10#5e6
-    dumptime = 1e6#1e8#1e4
+    runtime = 5e6#1e10#5e6
+    dumptime = 2e4#1e8#1e4
     dumptime_angle = 1e4
     restime = 1e9
     
@@ -49,7 +49,7 @@ def job_maker(details):
 
 sigma=15                    #diameter of bead in mm. This does not enter in the simulation, as it is automatically set to 1, just makes it easier to define the other parameters
 n_mol=1                     #number of molecules (not yet fully implemented)
-n_beads=[5,7,9,11,13,15]    #number of beads per arm
+n_beads=[13]#[5,7,9,11,13,15]    #number of beads per arm
 r_core=20/(2*sigma)         #core radius (units of bead diameters)
 n_restarts=0                #number of times simulation is automatically restarted on cluster
 gh=0                        #molecules do not interact with each other (not yet fully implemented)
@@ -67,6 +67,7 @@ if brownian:                #Brownian dynamics requires a smaller timestep
 fs=[3,4,5,6]                #number of arms of the star (functionality). This is also an example of vector of parameters for multiple simulations
 r_ints=[0]#[4,5,6,7,8,9,10,12,14,16,18,20]          #calculation of effective interaction between stars in sigma. If r_int>0, this automatically sets mol=2, gh=0, rconf=0, fixes the core positions and outputs their forces
 contact=0                   #if 1, introduces contact friction between particles and walls
+rolling=0                   #if 1, introduce rolling friction in the system
 
 
 delet=True              #delete old data
@@ -89,6 +90,6 @@ for seed in seeds:
         for nval in n_beads:
             for rint in r_ints:
                 details = {"n_beads": nval, "n_mol": n_mol,"functionality": fval,
-                "r_core": r_core, "peclet":peclet, "r_conf":r_conf, "r_bond":r_bond, "r_cbond":r_cbond, "r_int":rint, "seed_start": seed, "ghost":gh, "brownian":brownian, "Dr":Dr, "Dt":Dt, "gamma":gamma, "contact":contact}
+                "r_core": r_core, "peclet":peclet, "r_conf":r_conf, "r_bond":r_bond, "r_cbond":r_cbond, "r_int":rint, "seed_start": seed, "ghost":gh, "brownian":brownian, "Dr":Dr, "Dt":Dt, "gamma":gamma, "contact":contact, "rolling":rolling}
 
                 job_maker(details)

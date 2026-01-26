@@ -209,6 +209,7 @@ def get_details(name):
     brownian = False
     contact = False
     seed_start = None
+    rolling = False
     for el in els:
         if "mols" in el and r_int==0.0:
             n_mol = int(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
@@ -235,9 +236,11 @@ def get_details(name):
             ghost=False
         if "ctc" in el:
             contact = True
+        if "rll" in el:
+            rolling = True
 
     details = {"n_beads": n_beads, "n_mol": n_mol, "functionality": functionality,
-               "r_core": r_core, "r_bond":r_bond, "r_cbond":r_cbond, "r_conf": r_conf, "peclet": peclet, "brownian": brownian, "Dr": Dr, "Dt": Dt, "gamma": gamma, "r_int":r_int,"seed_start": seed_start,"ghost": ghost,"contact":contact}
+               "r_core": r_core, "r_bond":r_bond, "r_cbond":r_cbond, "r_conf": r_conf, "peclet": peclet, "brownian": brownian, "Dr": Dr, "Dt": Dt, "gamma": gamma, "r_int":r_int,"seed_start": seed_start,"ghost": ghost,"contact":contact,"rolling":rolling}
     # print(details)
     return details
 
@@ -279,6 +282,8 @@ def get_name(details, prefix=True):
         suff += f"_ri{r_int:.1f}"
     if details["contact"] > 0:
         suff += f"_ctc"
+        if details["rolling"] > 0:
+            suff += f"_rll"
     if not prefix:
         pref=""
     name = f'{pref}n{n_beads:03d}_f{functionality:03d}_rc{r_core:.2f}_rb{r_bond:.2f}_rcb{r_cbond:.2f}' + suff

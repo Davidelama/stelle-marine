@@ -128,3 +128,10 @@ This project simulates the behavior of star polymers in 2D using the LAMMPS mole
    - **Example**: `contact = 1` turns on contact friction.
    - **Range**: `0` or `1`.
 
+### 18. **Rolling Friction (`rolling`)**
+
+   - If set to 1, introduces **rolling friction** to the particles.
+   - **Example**: `rolling = 1` turns on rolling friction.
+   - **Range**: `0` or `1`.
+   - **Note**: This can only be activated if **contact friction** is activated
+

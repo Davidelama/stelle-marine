@@ -1,7 +1,7 @@
 {
     "n_beads": 13,
     "n_mol": 1,
-    "functionality": 3,
+    "functionality": 6,
     "r_core": 0.67,
     "r_bond": 1.13,
     "r_cbond": 0.57,
@@ -14,5 +14,6 @@
     "gamma": 100,
     "r_int": 0.0,
     "seed_start": null,
-    "contact": 1
+    "contact": 0,
+    "rolling": 0
 }

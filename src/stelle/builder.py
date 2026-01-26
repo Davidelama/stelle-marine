@@ -248,6 +248,8 @@ class SimulationRenderer:
         self.data = {'lmpdata': lmpdata.lammps_data,
                      'lmpdump': lmpdata.lammps_data,
                      'lmpinput': vars(lmpinput),
+                     'conf1': vars(lmpinput),
+                     'conf2': vars(lmpinput),
                      'pbshead': self._create_pbs_data(self.name, pbspar.data),
                      'pbsres': self._create_pbs_data(self.name, pbspar.data),
                      'shead': self._create_slurm_data(self.name, slurmpar.data),
@@ -259,6 +261,8 @@ class SimulationRenderer:
         self.template = {'lmpdata': LammpsDatafile.template_lmp_data,
                          'lmpdump': lmpdata.template_dump_input,
                          'lmpinput': LammpsLangevinInput.template_lmp_input,
+                         'conf1': "confinement.lmp",
+                         'conf2': "confinement_restart.lmp",
                          'pbshead': 'head.pbs',
                          'pbsres': 'restart.pbs',
                          'shead': 'shead.slrm',
@@ -270,6 +274,8 @@ class SimulationRenderer:
         self.outfile = {'lmpdata': self.name + '.dat',
                         'lmpdump': self.name +'.dump',
                         'lmpinput': self.name + '.lmp',
+                        'conf1': "confinement.lmp",
+                        'conf2': "confinement_restart.lmp",
                         'pbshead': 'head.pbs',
                         'pbsres': 'restart.pbs',
                         'shead': 'shead.slrm',
@@ -385,8 +391,8 @@ class LammpsLangevinInput:
         self.sigma_core = self.details["r_core"]*2
         self.scriptname = scriptname
         self.brownian = int(self.details["brownian"])
-        self.r_cbond = int(self.details["r_cbond"])
-        self.r_bond = int(self.details["r_bond"])
+        self.r_cbond = self.details["r_cbond"]
+        self.r_bond = self.details["r_bond"]
         self.tau_damp = 1/self.details["gamma"]
         #all force coefficients must be multiplied by gamma
         self.bending = bending * self.details["gamma"]
@@ -402,6 +408,9 @@ class LammpsLangevinInput:
         if self.details["Dr"] == 0:
             self.Tr = 0.000001
         self.contact = int(self.details["contact"])
+        self.rolling=""
+        if self.details["rolling"]:
+            self.rolling = "rolling sds ${kn} ${en} 1.0"
         self.dtmove = timestep
         self.tmove = 1e5#10*int(1/timestep)
         self.t_force_dump = 1e4
