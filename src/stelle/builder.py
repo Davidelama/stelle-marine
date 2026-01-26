@@ -332,7 +332,7 @@ class LammpsLangevinInput:
     template_dir = builderdir / 'templates'
     template_lmp_input = 'template_stelle.lmp'
 
-    def __init__(self, daisy, scriptname="stelle.builder", timestep=.001, bending=0, runtime=1e9, restime=1e7, dumptime=1e6, balancetime=1e6, dumptime_angle=1e4): # Delta_cm=3.5, Delta_cc=8.,
+    def __init__(self, daisy, scriptname="stelle.builder", timestep=.001, bending=0, runtime=1e9, restime=1e7, dumptime=1e6, balancetime=1e6, dumptime_angle=1e4,dumptime_msd=1e7): # Delta_cm=3.5, Delta_cc=8.,
         """Lammps data for a Langevin simulation
 
         Parameters
@@ -383,6 +383,7 @@ class LammpsLangevinInput:
         self.n_thermo =  10*int(1/timestep)
         self.restime = int(restime)
         self.dumptime = int(dumptime)
+        self.dumptime_msd = int(dumptime_msd)
         self.dumptime_angle = int(dumptime_angle)
         self.rcutoff = 1.12246152962189
         self.equitime = 500000 + self.n_beadseff*50000

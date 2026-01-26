@@ -9,6 +9,7 @@ variable restart index 0
 variable minimize index 0
 variable name index "{{name}}"
 variable dumptime index {{dumptime|int}}
+variable dumptime_msd index {{dumptime_msd|int}}
 variable dumptime_angle index {{dumptime_angle|int}}
 variable balancetime index {{balancetime|int}}
 variable restime  index {{restime|int}}

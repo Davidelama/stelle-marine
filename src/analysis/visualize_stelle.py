@@ -56,8 +56,8 @@ def self_avoidance_nof(x, b):
 def multiplication_factor(x, b):
     return b * x
 
-def cmapper(max, cm=mpl.cm.plasma,cmap_mod=1.2):
-    norm = mpl.colors.Normalize(vmin=0, vmax=max*cmap_mod)
+def cmapper(max, cm=mpl.cm.plasma,cmap_mod=1.2,min=0):
+    norm = mpl.colors.Normalize(vmin=min, vmax=max*cmap_mod)
     cmap = mpl.cm.ScalarMappable(norm=norm, cmap=cm)
     cmap.set_array([])
     return cmap
@@ -81,6 +81,7 @@ rg_Dt = np.array([])
 rg_Dr = np.array([])
 rg_gm = np.array([])
 rg_ctc = np.array([])
+rg_rll = np.array([])
 rg_bro = np.array([])
 rg_seed = np.array([])
 rg_dts = np.array([])
@@ -129,6 +130,7 @@ if __name__ == '__main__':
                 rg_Dr = np.append(rg_Dr, pipeline.details["Dr"])
                 rg_gm = np.append(rg_gm, pipeline.details["gamma"])
                 rg_ctc = np.append(rg_ctc, pipeline.details["contact"])
+                rg_rll = np.append(rg_rll, pipeline.details["rolling"])
                 rg_bro = np.append(rg_bro, pipeline.details["brownian"])
                 rg_dts = np.append(rg_dts, np.shape(static["gyration"]))
                 if np.shape(static["gyration"])[0] < 00:
@@ -170,6 +172,7 @@ rgs["Dt"] = rg_Dt*diam*diam
 rgs["Dr"] = rg_Dr
 rgs["gamma"] = rg_gm
 rgs["contact"] = rg_ctc.astype(int)
+rgs["roll"] = rg_rll.astype(int)
 rgs["brownian"] = rg_bro.astype(int)
 rgs["rg_mean"] = all_static.iloc[equil:, :].mean().values*diam
 rgs["rg_std"] = all_static.iloc[equil:, :].std().values*diam
@@ -185,8 +188,8 @@ rgs["rg_ratio_std"] = np.sqrt((rgs["rg_mean_off"]/rgs["armrg_mean"]*rgs["armrg_s
 dt = 1e-4
 
 
-def R_g_n_fig(n_want=5):
-    nplots = 1
+def R_g_n_fig():
+    nplots = 2
 
     fig = plt.figure(figsize=(5*nplots, 5))
     gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
@@ -195,30 +198,34 @@ def R_g_n_fig(n_want=5):
     for i in range(nplots):
         ax.append(fig.add_subplot(gs[:, i:i + 1]))
 
+    cmap = cmapper(np.max(rgs.f), min=np.min(rgs.f))
     for i in range(nplots):
-
-        sel = rgs[(rgs.n == n_want) & (rgs.contact == 1) & (rgs.brownian == 0)]
-        ax[i].errorbar(sel.f.values * (i + 1), sel.rg_mean.values, yerr=sel.rg_std.values, c="b", linestyle="",
+        for fval in np.unique(rgs.f):
+            sel = rgs[(rgs.f == fval) &  (rgs.contact == i) & (rgs.roll == 0)  & (rgs.brownian == 0)]
+            ax[i].errorbar(sel.n.values, sel.rg_mean.values, yerr=sel.rg_std.values, c=cmap.to_rgba(fval), linestyle="",
                            marker="o")
 
 
     ax[0].set_ylabel(r"$R_g[mm]$", fontsize=30)  #+.5
-    ax[0].set_xlabel(r"$f$", fontsize=30)
+
     #ax[0].legend(fontsize=25, frameon=False, loc="lower right")
     for i in range(nplots):
-
+        ax[i].set_title(labs[i],fontsize=25)
         ax[i].text(.05,.9,letters[i],fontsize=30, transform=ax[i].transAxes)
-        ax[i].set_ylim(0,)
-        ax[i].set_xlim(0,)
+        ax[i].set_ylim(0,100)
+        #ax[i].set_xlim(0,)
+        ax[i].set_xlabel(r"$n$", fontsize=30)
         #ax[i].set_xscale("log")
         #ax[i].set_yscale("log")
         ax[i].tick_params(axis='y', which='major', labelsize=30)
         ax[i].tick_params(axis='x', which='major', labelsize=30)
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
 
-    fig.savefig(output_dir / f"R_g_n{n_want:d}.png", bbox_inches="tight",dpi=300)
+    fig.savefig(output_dir / f"R_g_n.png", bbox_inches="tight",dpi=300)
 
-def arm_R_g_n_fig(n_want=5):
-    nplots = 1
+def R_g_f_fig():
+    nplots = 2
 
     fig = plt.figure(figsize=(5*nplots, 5))
     gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
@@ -227,29 +234,33 @@ def arm_R_g_n_fig(n_want=5):
     for i in range(nplots):
         ax.append(fig.add_subplot(gs[:, i:i + 1]))
 
+    cmap=cmapper(np.max(rgs.n),min=np.min(rgs.n))
     for i in range(nplots):
-
-        sel = rgs[(rgs.n == n_want) & (rgs.contact == 1) & (rgs.brownian == 0)]
-        ax[i].errorbar(sel.f.values * (i + 1), sel.armrg_mean.values, yerr=sel.armrg_std.values, c="b", linestyle="",
+        for nval in np.unique(rgs.n):
+            sel = rgs[(rgs.n == nval) &  (rgs.contact == i) & (rgs.roll == 0) & (rgs.brownian == 0)]
+            ax[i].errorbar(sel.f.values, sel.rg_mean.values, yerr=sel.rg_std.values, c=cmap.to_rgba(nval), linestyle="",
                            marker="o")
 
 
     ax[0].set_ylabel(r"$R_g[mm]$", fontsize=30)  #+.5
-    ax[0].set_xlabel(r"$f$", fontsize=30)
+
     #ax[0].legend(fontsize=25, frameon=False, loc="lower right")
     for i in range(nplots):
-
+        ax[i].set_title(labs[i],fontsize=25)
+        ax[i].set_xlabel(r"$f$", fontsize=30)
         ax[i].text(.05,.9,letters[i],fontsize=30, transform=ax[i].transAxes)
-        ax[i].set_ylim(0,)
-        ax[i].set_xlim(0,)
+        ax[i].set_ylim(0,100)
+        #ax[i].set_xlim(0,)
         #ax[i].set_xscale("log")
         #ax[i].set_yscale("log")
         ax[i].tick_params(axis='y', which='major', labelsize=30)
         ax[i].tick_params(axis='x', which='major', labelsize=30)
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
 
-    fig.savefig(output_dir / f"arm_R_g_n{n_want:d}.png", bbox_inches="tight",dpi=300)
+    fig.savefig(output_dir / f"R_g_f.png", bbox_inches="tight",dpi=300)
 
-def asph_n_fig(n_want=5):
+def R_g_nf_fig():
     nplots = 1
 
     fig = plt.figure(figsize=(5*nplots, 5))
@@ -260,31 +271,177 @@ def asph_n_fig(n_want=5):
         ax.append(fig.add_subplot(gs[:, i:i + 1]))
 
     for i in range(nplots):
+        for j in [0,1]:
+            sel = rgs[(rgs.contact == j) & (rgs.roll == 0) & (rgs.brownian == 0)]
+            ax[i].errorbar(sel.f.values*sel.n.values, sel.rg_mean.values, yerr=sel.rg_std.values, c=colors[j], linestyle="",
+                           marker=ms[j],label=labs[j])
 
-        sel = rgs[(rgs.n == n_want) & (rgs.contact == 1) & (rgs.brownian == 0)]
-        ax[i].errorbar(sel.f.values * (i + 1), sel.asph_mean.values, yerr=sel.asph_std.values, c="b", linestyle="",
+
+    ax[0].set_ylabel(r"$R_g[mm]$", fontsize=30)  #+.5
+
+    ax[0].legend(fontsize=25, frameon=False)#, loc="lower right")
+    for i in range(nplots):
+        ax[i].set_xlabel(r"$f\times n$", fontsize=30)
+        ax[i].text(.05,.9,letters[i],fontsize=30, transform=ax[i].transAxes)
+        ax[i].set_ylim(0,100)
+        #ax[i].set_xlim(0,)
+        #ax[i].set_xscale("log")
+        #ax[i].set_yscale("log")
+        ax[i].tick_params(axis='y', which='major', labelsize=30)
+        ax[i].tick_params(axis='x', which='major', labelsize=30)
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
+
+    fig.savefig(output_dir / f"R_g_nf.png", bbox_inches="tight",dpi=300)
+
+
+def arm_R_g_n_fig():
+    nplots = 2
+
+    fig = plt.figure(figsize=(5*nplots, 5))
+    gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
+
+    ax = []
+    for i in range(nplots):
+        ax.append(fig.add_subplot(gs[:, i:i + 1]))
+
+    cmap = cmapper(np.max(rgs.f), min=np.min(rgs.f))
+    for i in range(nplots):
+        for fval in np.unique(rgs.f):
+            sel = rgs[(rgs.f == fval) &  (rgs.contact == i) & (rgs.roll == 0)  & (rgs.brownian == 0)]
+            ax[i].errorbar(sel.n.values, sel.armrg_mean.values, yerr=sel.armrg_std.values, c=cmap.to_rgba(fval), linestyle="",
+                           marker="o")
+
+
+    ax[0].set_ylabel(r"$R_g[mm]$", fontsize=30)  #+.5
+
+    #ax[0].legend(fontsize=25, frameon=False, loc="lower right")
+    for i in range(nplots):
+        ax[i].text(.05,.9,letters[i],fontsize=30, transform=ax[i].transAxes)
+        ax[i].set_title(labs[i], fontsize=25)
+        ax[i].set_ylim(0,60)
+        #ax[i].set_xlim(0,)
+        ax[i].set_xlabel(r"$n$", fontsize=30)
+        #ax[i].set_xscale("log")
+        #ax[i].set_yscale("log")
+        ax[i].tick_params(axis='y', which='major', labelsize=30)
+        ax[i].tick_params(axis='x', which='major', labelsize=30)
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
+
+    fig.savefig(output_dir / f"arm_R_g_n.png", bbox_inches="tight",dpi=300)
+
+def arm_R_g_f_fig():
+    nplots = 2
+
+    fig = plt.figure(figsize=(5*nplots, 5))
+    gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
+
+    ax = []
+    for i in range(nplots):
+        ax.append(fig.add_subplot(gs[:, i:i + 1]))
+
+    cmap=cmapper(np.max(rgs.n),min=np.min(rgs.n))
+    for i in range(nplots):
+        for nval in np.unique(rgs.n):
+            sel = rgs[(rgs.n == nval) &  (rgs.contact == i) & (rgs.roll == 0) & (rgs.brownian == 0)]
+            ax[i].errorbar(sel.f.values, sel.armrg_mean.values, yerr=sel.armrg_std.values, c=cmap.to_rgba(nval), linestyle="",
+                           marker="o")
+
+
+    ax[0].set_ylabel(r"$R_g[mm]$", fontsize=30)  #+.5
+
+    #ax[0].legend(fontsize=25, frameon=False, loc="lower right")
+    for i in range(nplots):
+        ax[i].text(.05,.9,letters[i],fontsize=30, transform=ax[i].transAxes)
+        ax[i].set_xlabel(r"$f$", fontsize=30)
+        ax[i].text(.05,.9,letters[i],fontsize=30, transform=ax[i].transAxes)
+        ax[i].set_ylim(0,60)
+        #ax[i].set_xlim(0,)
+        #ax[i].set_xscale("log")
+        #ax[i].set_yscale("log")
+        ax[i].tick_params(axis='y', which='major', labelsize=30)
+        ax[i].tick_params(axis='x', which='major', labelsize=30)
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
+
+    fig.savefig(output_dir / f"arm_R_g_f.png", bbox_inches="tight",dpi=300)
+
+def arm_R_g_nf_fig():
+    nplots = 1
+
+    fig = plt.figure(figsize=(5*nplots, 5))
+    gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
+
+    ax = []
+    for i in range(nplots):
+        ax.append(fig.add_subplot(gs[:, i:i + 1]))
+
+    for i in range(nplots):
+        for j in [0,1]:
+            sel = rgs[(rgs.contact == j) & (rgs.roll == 0) & (rgs.brownian == 0)]
+            ax[i].errorbar(sel.f.values*sel.n.values, sel.armrg_mean.values, yerr=sel.armrg_std.values, c=colors[j], linestyle="",
+                           marker=ms[j],label=labs[j])
+
+
+    ax[0].set_ylabel(r"$R_g[mm]$", fontsize=30)  #+.5
+
+    ax[0].legend(fontsize=25, frameon=False)#, loc="lower right")
+    for i in range(nplots):
+        ax[i].set_xlabel(r"$f\times n$", fontsize=30)
+        ax[i].text(.05,.9,letters[i],fontsize=30, transform=ax[i].transAxes)
+        ax[i].set_ylim(0,60)
+        #ax[i].set_xlim(0,)
+        #ax[i].set_xscale("log")
+        #ax[i].set_yscale("log")
+        ax[i].tick_params(axis='y', which='major', labelsize=30)
+        ax[i].tick_params(axis='x', which='major', labelsize=30)
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
+
+    fig.savefig(output_dir / f"arm_R_g_nf.png", bbox_inches="tight",dpi=300)
+
+
+def asph_f_fig():
+    nplots = 2
+
+    fig = plt.figure(figsize=(5*nplots, 5))
+    gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
+
+    ax = []
+    for i in range(nplots):
+        ax.append(fig.add_subplot(gs[:, i:i + 1]))
+
+    cmap=cmapper(np.max(rgs.n),min=np.min(rgs.n))
+    for i in range(nplots):
+        for nval in np.unique(rgs.n):
+            sel = rgs[(rgs.n == nval) &  (rgs.contact == i) & (rgs.roll == 0) & (rgs.brownian == 0)]
+            ax[i].errorbar(sel.f.values, sel.asph_mean.values, yerr=sel.asph_std.values, c=cmap.to_rgba(nval), linestyle="",
                            marker="o")
 
 
     ax[0].set_ylabel(r"$A$", fontsize=30)  #+.5
-    ax[0].set_xlabel(r"$f$", fontsize=30)
+
     #ax[0].legend(fontsize=25, frameon=False, loc="lower right")
     for i in range(nplots):
-
+        ax[i].set_title(labs[i],fontsize=25)
+        ax[i].set_xlabel(r"$f$", fontsize=30)
         ax[i].text(.05,.9,letters[i],fontsize=30, transform=ax[i].transAxes)
-        ax[i].set_ylim(0,)
-        ax[i].set_xlim(0,)
+        ax[i].set_ylim(0,.2)
+        #ax[i].set_xlim(0,)
         #ax[i].set_xscale("log")
         #ax[i].set_yscale("log")
         ax[i].tick_params(axis='y', which='major', labelsize=30)
         ax[i].tick_params(axis='x', which='major', labelsize=30)
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
 
-    fig.savefig(output_dir / f"asph_n{n_want:d}.png", bbox_inches="tight",dpi=300)
+    fig.savefig(output_dir / f"asph_f.png", bbox_inches="tight",dpi=300)
+
 
 def rad_n_fig(n_want=5):
-    f_max=6
-    cmap = cmapper(f_max)
-    nplots = 1
+    cmap = cmapper(np.max(rgs.f),min=np.min(rgs.f))
+    nplots = 2
 
     fig = plt.figure(figsize=(5 * nplots, 5))
     gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
@@ -294,31 +451,37 @@ def rad_n_fig(n_want=5):
         ax.append(fig.add_subplot(gs[:, i:i + 1]))
 
     for column in all_rad:
-        fake_pipeline = AnalysisPipeline("dai_" + column)
+        fake_pipeline = AnalysisPipeline("mar_" + column)
         fake_details = fake_pipeline.details
         fake_f = fake_details["functionality"]
         rad_means = all_rad[column].iloc[equil:].mean() / (2 * np.pi * all_bin[column])
 
         if fake_details["n_beads"] == n_want:
-            ax[0].plot(all_bin[column], rad_means, label=fake_f, c=cmap.to_rgba(fake_f))
+            if fake_details["contact"] == 0:
+                ax[0].plot(all_bin[column], rad_means, label=fake_f, c=cmap.to_rgba(fake_f))
+            elif fake_details["contact"] == 1:
+                ax[1].plot(all_bin[column], rad_means, label=fake_f, c=cmap.to_rgba(fake_f))
 
     ax[0].legend(title=r"$f$", title_fontsize=20, fontsize=20)
-    ax[0].set_xlabel(r"$r[mm]$", fontsize=25)
+    ax[0].set_ylabel(r"$\phi(r)[mm^{-2}]$", fontsize=25)
+
 
     for i in range(nplots):
+        ax[i].set_title(labs[i],fontsize=25)
         ax[i].tick_params(axis='y', which='major', labelsize=25)
         ax[i].tick_params(axis='x', which='major', labelsize=25)
-
-        ax[i].set_ylabel(r"$\phi(r)[mm^{-2}]$", fontsize=25)
-        ax[i].set_xscale("log")
-        ax[i].set_yscale("log")
+        ax[i].set_xlabel(r"$r[mm]$", fontsize=25)
+        ax[i].set_ylim(0,.003)
+        #ax[i].set_xscale("log")
+        #ax[i].set_yscale("log")
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
 
     fig.savefig(output_dir / f"rad_n{n_want:d}.png", bbox_inches="tight",dpi=300)
 
-def form_n_fig(n_want=5):
-    f_max=6
-    cmap = cmapper(f_max)
-    nplots = 1
+def rad_f_fig(f_want=6):
+    cmap = cmapper(np.max(rgs.n),min=np.min(rgs.n))
+    nplots = 2
 
     fig = plt.figure(figsize=(5 * nplots, 5))
     gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
@@ -328,7 +491,48 @@ def form_n_fig(n_want=5):
         ax.append(fig.add_subplot(gs[:, i:i + 1]))
 
     for column in all_rad:
-        fake_pipeline = AnalysisPipeline("dai_" + column)
+        fake_pipeline = AnalysisPipeline("mar_" + column)
+        fake_details = fake_pipeline.details
+        fake_n = fake_details["n_beads"]
+        rad_means = all_rad[column].iloc[equil:].mean() / (2 * np.pi * all_bin[column])
+
+        if fake_details["functionality"] == f_want:
+            if fake_details["contact"] == 0:
+                ax[0].plot(all_bin[column], rad_means, label=fake_n, c=cmap.to_rgba(fake_n))
+            elif fake_details["contact"] == 1:
+                ax[1].plot(all_bin[column], rad_means, label=fake_n, c=cmap.to_rgba(fake_n))
+
+    ax[0].legend(title=r"$n$", title_fontsize=20, fontsize=20)
+    ax[0].set_ylabel(r"$\phi(r)[mm^{-2}]$", fontsize=25)
+
+
+    for i in range(nplots):
+        ax[i].set_title(labs[i],fontsize=25)
+        ax[i].tick_params(axis='y', which='major', labelsize=25)
+        ax[i].tick_params(axis='x', which='major', labelsize=25)
+        ax[i].set_xlabel(r"$r[mm]$", fontsize=25)
+        ax[i].set_ylim(0,.003)
+        #ax[i].set_xscale("log")
+        #ax[i].set_yscale("log")
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
+
+    fig.savefig(output_dir / f"rad_f{f_want:d}.png", bbox_inches="tight",dpi=300)
+
+
+def form_n_fig(n_want=5):
+    cmap = cmapper(np.max(rgs.f),min=np.min(rgs.f))
+    nplots = 2
+
+    fig = plt.figure(figsize=(5 * nplots, 5))
+    gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
+
+    ax = []
+    for i in range(nplots):
+        ax.append(fig.add_subplot(gs[:, i:i + 1]))
+
+    for column in all_rad:
+        fake_pipeline = AnalysisPipeline("mar_" + column)
         fake_details = fake_pipeline.details
         fake_f = fake_details["functionality"]
         try:
@@ -338,29 +542,90 @@ def form_n_fig(n_want=5):
             continue
         k_vals = np.logspace(-2, 3, num=len(form_means_norm))/diam
         if fake_details["n_beads"] == n_want:
-            ax[0].plot(k_vals, form_means_norm, label=fake_f, c=cmap.to_rgba(fake_f))
+            if fake_details["contact"] == 0:
+                ax[0].plot(k_vals, form_means_norm, label=fake_f, c=cmap.to_rgba(fake_f))
+            elif fake_details["contact"] == 1:
+                ax[1].plot(k_vals, form_means_norm, label=fake_f, c=cmap.to_rgba(fake_f))
 
     ax[0].legend(title=r"$f$", title_fontsize=20, fontsize=20)
-    ax[0].set_xlabel(r"$q[mm^{-1}]$", fontsize=30)
+
+    ax[0].set_ylabel(r"$S(q)/(N-1)$", fontsize=30)
 
     for i in range(nplots):
+        ax[i].set_title(labs[i],fontsize=25)
         ax[i].tick_params(axis='y', which='major', labelsize=25)
         ax[i].tick_params(axis='x', which='major', labelsize=25)
-
-        ax[i].set_ylabel(r"$S(q)/(N-1)$", fontsize=30)
+        ax[i].set_xlabel(r"$q[mm^{-1}]$", fontsize=30)
+        ax[i].set_ylim(5e-3, 1.1)
         ax[i].set_xscale("log")
         ax[i].set_yscale("log")
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
 
     fig.savefig(output_dir / f"form_n{n_want:d}.png", bbox_inches="tight",dpi=300)
+
+def form_f_fig(f_want=6):
+    cmap = cmapper(np.max(rgs.n),min=np.min(rgs.n))
+    nplots = 2
+
+    fig = plt.figure(figsize=(5 * nplots, 5))
+    gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
+
+    ax = []
+    for i in range(nplots):
+        ax.append(fig.add_subplot(gs[:, i:i + 1]))
+
+    for column in all_rad:
+        fake_pipeline = AnalysisPipeline("mar_" + column)
+        fake_details = fake_pipeline.details
+        fake_f = fake_details["functionality"]
+        fake_n = fake_details["n_beads"]
+        try:
+            form_means_norm = all_form[column].iloc[equil:].mean()
+            form_means = all_form[column].iloc[equil:].mean() * (fake_details["functionality"] * fake_n + 1)
+        except:
+            continue
+        k_vals = np.logspace(-2, 3, num=len(form_means_norm))/diam
+        if fake_f == f_want:
+            if fake_details["contact"] == 0:
+                ax[0].plot(k_vals, form_means_norm, label=fake_n, c=cmap.to_rgba(fake_n))
+            elif fake_details["contact"] == 1:
+                ax[1].plot(k_vals, form_means_norm, label=fake_n, c=cmap.to_rgba(fake_n))
+
+    ax[0].legend(title=r"$f$", title_fontsize=20, fontsize=20)
+
+    ax[0].set_ylabel(r"$S(q)/(N-1)$", fontsize=30)
+
+    for i in range(nplots):
+        ax[i].set_title(labs[i],fontsize=25)
+        ax[i].tick_params(axis='y', which='major', labelsize=25)
+        ax[i].tick_params(axis='x', which='major', labelsize=25)
+        ax[i].set_xlabel(r"$q[mm^{-1}]$", fontsize=30)
+        ax[i].set_ylim(2e-3, 1.1)
+        ax[i].set_xscale("log")
+        ax[i].set_yscale("log")
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
+
+    fig.savefig(output_dir / f"form_f{f_want:d}.png", bbox_inches="tight",dpi=300)
 
 
 
 letters = ["a", "b", "c", "d"]
+ms = ["s","o","^","*"]
+colors = ["r", "g", "b", "k"]
+labs = ["no friction", "contact", "rolling"]
 
 R_g_n_fig()
+R_g_f_fig()
+R_g_nf_fig()
 arm_R_g_n_fig()
-asph_n_fig()
+arm_R_g_f_fig()
+arm_R_g_nf_fig()
+asph_f_fig()
 rad_n_fig()
+rad_f_fig()
 form_n_fig()
+form_f_fig()
 
 #plt.show()

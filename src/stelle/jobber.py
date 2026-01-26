@@ -6,8 +6,9 @@ from builder import logtimer
 
 def job_maker(details):
     
-    runtime = 1e9#1e10#5e6
-    dumptime = 1e7#1e8#2e4
+    runtime = 5e9#1e10#5e6
+    dumptime = 1e6#1e8#2e4
+    dumptime_msd = 5e7
     dumptime_angle = 1e4
     restime = 1e8
     
@@ -32,9 +33,9 @@ def job_maker(details):
             #if item.endswith(".lammpstrj") or item.endswith(".restart") or item.endswith("log") or item.endswith("dat")::
             os.remove(os.path.join(dir_name, item))
 
-    logtimer(dumptime, runtime, dir_name + "/" + "logtime.txt")
+    logtimer(dumptime_msd, runtime, dir_name + "/" + "logtime.txt")
     
-    lammps_input=ds.LammpsLangevinInput(daisy, runtime=runtime, restime=restime, dumptime=dumptime, timestep=dt, dumptime_angle=dumptime_angle)
+    lammps_input=ds.LammpsLangevinInput(daisy, runtime=runtime, restime=restime, dumptime=dumptime, timestep=dt, dumptime_angle=dumptime_angle, dumptime_msd=dumptime_msd)
     
     lammps_config=ds.LammpsDatafile(daisy)
     
