@@ -64,7 +64,7 @@ def cmapper(max, cm=mpl.cm.plasma,cmap_mod=1.2,min=0):
 
 col_stat = {}
 col_asph = {}
-col_armrad = {}
+col_armete = {}
 col_rad = {}
 col_form = {}
 col_bin = {}
@@ -113,7 +113,7 @@ if __name__ == '__main__':
                 static = pd.read_parquet(file_pqt)
                 col_stat[sim.name] = static["gyration"]
                 col_asph[sim.name] = static["asphericity"]
-                col_armrad[sim.name] = static["arm_gyration"]
+                col_armete[sim.name] = static["arm_ete"]
                 col_rad[sim.name] = static["rad_density"]
                 col_form[sim.name] = static["form_factor"]
                 rg_f = np.append(rg_f, pipeline.details["functionality"])
@@ -153,7 +153,7 @@ diam=15
 
 all_static = pd.concat([pd.Series(data, name=key) for key, data in col_stat.items()], axis=1)
 all_asphericity = pd.concat([pd.Series(data, name=key) for key, data in col_asph.items()], axis=1)
-all_armgyration = pd.concat([pd.Series(data, name=key) for key, data in col_armrad.items()], axis=1)
+all_armete = pd.concat([pd.Series(data, name=key) for key, data in col_armete.items()], axis=1)
 all_rad = pd.concat([pd.Series(data, name=key) for key, data in col_rad.items()], axis=1) / diam
 all_form = pd.concat([pd.Series(data, name=key) for key, data in col_form.items()], axis=1)
 all_bin = pd.concat([pd.Series(data, name=key) for key, data in col_bin.items()], axis=1) * diam
@@ -178,11 +178,9 @@ rgs["rg_mean"] = all_static.iloc[equil:, :].mean().values*diam
 rgs["rg_std"] = all_static.iloc[equil:, :].std().values*diam
 rgs["asph_mean"] = all_asphericity.iloc[equil:, :].mean().values
 rgs["asph_std"] = all_asphericity.iloc[equil:, :].std().values
-rgs["armrg_mean"] = all_armgyration.iloc[equil:, :].mean().values*diam
-rgs["armrg_std"] = all_armgyration.iloc[equil:, :].std().values*diam
+rgs["armete_mean"] = all_armete.iloc[equil:, :].mean().values*diam
+rgs["armete_std"] = all_armete.iloc[equil:, :].std().values*diam
 rgs["rg_mean_off"] = rgs["rg_mean"] - rgs["rc"]
-rgs["rg_ratio_mean"] = rgs["rg_mean_off"]/rgs["armrg_mean"]
-rgs["rg_ratio_std"] = np.sqrt((rgs["rg_mean_off"]/rgs["armrg_mean"]*rgs["armrg_std"])**2+rgs["rg_mean_off"]**2)/rgs["armrg_mean"]
 #rad_stds=pd.DataFrame()
 
 dt = 1e-4
@@ -295,7 +293,7 @@ def R_g_nf_fig():
     fig.savefig(output_dir / f"R_g_nf.png", bbox_inches="tight",dpi=300)
 
 
-def arm_R_g_n_fig():
+def arm_ete_n_fig():
     nplots = 2
 
     fig = plt.figure(figsize=(5*nplots, 5))
@@ -309,11 +307,11 @@ def arm_R_g_n_fig():
     for i in range(nplots):
         for fval in np.unique(rgs.f):
             sel = rgs[(rgs.f == fval) &  (rgs.contact == i) & (rgs.roll == 0)  & (rgs.brownian == 0)]
-            ax[i].errorbar(sel.n.values, sel.armrg_mean.values, yerr=sel.armrg_std.values, c=cmap.to_rgba(fval), linestyle="",
+            ax[i].errorbar(sel.n.values, sel.armete_mean.values, yerr=sel.armete_std.values, c=cmap.to_rgba(fval), linestyle="",
                            marker="o")
 
 
-    ax[0].set_ylabel(r"$R_g[mm]$", fontsize=30)  #+.5
+    ax[0].set_ylabel(r"$R_{ee}[mm]$", fontsize=30)  #+.5
 
     #ax[0].legend(fontsize=25, frameon=False, loc="lower right")
     for i in range(nplots):
@@ -329,9 +327,9 @@ def arm_R_g_n_fig():
         if i>0:
             ax[i].tick_params(which='both', left=False, labelleft=False)
 
-    fig.savefig(output_dir / f"arm_R_g_n.png", bbox_inches="tight",dpi=300)
+    fig.savefig(output_dir / f"arm_ete_n.png", bbox_inches="tight",dpi=300)
 
-def arm_R_g_f_fig():
+def arm_ete_f_fig():
     nplots = 2
 
     fig = plt.figure(figsize=(5*nplots, 5))
@@ -345,11 +343,11 @@ def arm_R_g_f_fig():
     for i in range(nplots):
         for nval in np.unique(rgs.n):
             sel = rgs[(rgs.n == nval) &  (rgs.contact == i) & (rgs.roll == 0) & (rgs.brownian == 0)]
-            ax[i].errorbar(sel.f.values, sel.armrg_mean.values, yerr=sel.armrg_std.values, c=cmap.to_rgba(nval), linestyle="",
+            ax[i].errorbar(sel.f.values, sel.armete_mean.values, yerr=sel.armete_std.values, c=cmap.to_rgba(nval), linestyle="",
                            marker="o")
 
 
-    ax[0].set_ylabel(r"$R_g[mm]$", fontsize=30)  #+.5
+    ax[0].set_ylabel(r"$R_{ee}[mm]$", fontsize=30)  #+.5
 
     #ax[0].legend(fontsize=25, frameon=False, loc="lower right")
     for i in range(nplots):
@@ -365,9 +363,9 @@ def arm_R_g_f_fig():
         if i>0:
             ax[i].tick_params(which='both', left=False, labelleft=False)
 
-    fig.savefig(output_dir / f"arm_R_g_f.png", bbox_inches="tight",dpi=300)
+    fig.savefig(output_dir / f"arm_ete_f.png", bbox_inches="tight",dpi=300)
 
-def arm_R_g_nf_fig():
+def arm_ete_nf_fig():
     nplots = 1
 
     fig = plt.figure(figsize=(5*nplots, 5))
@@ -380,11 +378,11 @@ def arm_R_g_nf_fig():
     for i in range(nplots):
         for j in [0,1]:
             sel = rgs[(rgs.contact == j) & (rgs.roll == 0) & (rgs.brownian == 0)]
-            ax[i].errorbar(sel.f.values*sel.n.values, sel.armrg_mean.values, yerr=sel.armrg_std.values, c=colors[j], linestyle="",
+            ax[i].errorbar(sel.f.values*sel.n.values, sel.armete_mean.values, yerr=sel.armete_std.values, c=colors[j], linestyle="",
                            marker=ms[j],label=labs[j])
 
 
-    ax[0].set_ylabel(r"$R_g[mm]$", fontsize=30)  #+.5
+    ax[0].set_ylabel(r"$R_{ee}[mm]$", fontsize=30)  #+.5
 
     ax[0].legend(fontsize=25, frameon=False)#, loc="lower right")
     for i in range(nplots):
@@ -399,7 +397,7 @@ def arm_R_g_nf_fig():
         if i>0:
             ax[i].tick_params(which='both', left=False, labelleft=False)
 
-    fig.savefig(output_dir / f"arm_R_g_nf.png", bbox_inches="tight",dpi=300)
+    fig.savefig(output_dir / f"arm_ete_nf.png", bbox_inches="tight",dpi=300)
 
 
 def asph_f_fig():
@@ -538,6 +536,7 @@ def form_n_fig(n_want=5):
         try:
             form_means_norm = all_form[column].iloc[equil:].mean()
             form_means = all_form[column].iloc[equil:].mean() * (fake_f * fake_details["n_beads"] + 1)
+            len(form_means_norm)
         except:
             continue
         k_vals = np.logspace(-2, 3, num=len(form_means_norm))/diam
@@ -583,6 +582,7 @@ def form_f_fig(f_want=6):
         try:
             form_means_norm = all_form[column].iloc[equil:].mean()
             form_means = all_form[column].iloc[equil:].mean() * (fake_details["functionality"] * fake_n + 1)
+            len(form_means_norm)
         except:
             continue
         k_vals = np.logspace(-2, 3, num=len(form_means_norm))/diam
@@ -619,9 +619,9 @@ labs = ["no friction", "contact", "rolling"]
 R_g_n_fig()
 R_g_f_fig()
 R_g_nf_fig()
-arm_R_g_n_fig()
-arm_R_g_f_fig()
-arm_R_g_nf_fig()
+arm_ete_n_fig()
+arm_ete_f_fig()
+arm_ete_nf_fig()
 asph_f_fig()
 rad_n_fig()
 rad_f_fig()

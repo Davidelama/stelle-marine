@@ -25,11 +25,12 @@ if __name__ == '__main__':
         files = list(sim.glob('mar_*.dat.lammpstrj'))
         if len(files) > 0:
             pipeline = AnalysisPipeline(sim, weighted)
+            p_details = pipeline.details
             # avoid re-running previous analyses if results present
             out = output_dir / str(pipeline)
             out_files = list(out.glob('*'))
             files_pqt = list(out.glob('*.pqt'))
-            if len(out_files)>1:
+            if len(out_files)>100:#100 or (p_details["functionality"]!=3) or (p_details["n_beads"] !=3):
                 print(f'---Analysis of {sim} already performed, skipping.')
             else:
                 pipeline.save_static_properties(output_dir)

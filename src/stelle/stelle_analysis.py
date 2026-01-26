@@ -26,12 +26,12 @@ class MarStatProp:
         self.cgtraj.loc[:,"sqrad"] = self.cgtraj.groupby(["timestep", "mol_id"], group_keys=False).apply(cm_dist, center=0)
         self.cgtraj = arm_definer(self.cgtraj, self.details).copy()
         self._gyration = None
-        self._arm_gyration = None
+        self._arm_ete = None
         self._asphericity = None
         self._rad_density = None
         self._form = None
         self.binning = None
-        self.dai_data = pd.merge(pd.merge(pd.merge(pd.merge(self.gyration, self.asphericity,on=["timestep", "mol_id"]), self.rad_density, on=["timestep", "mol_id"]), self.arm_gyration, on=["timestep", "mol_id"]), self.form, on=["timestep", "mol_id"])
+        self.dai_data = pd.merge(pd.merge(pd.merge(pd.merge(self.gyration, self.asphericity,on=["timestep", "mol_id"]), self.rad_density, on=["timestep", "mol_id"]), self.arm_ete, on=["timestep", "mol_id"]), self.form, on=["timestep", "mol_id"])
         self.dai_data.binning = None
         self.dai_data.binning = self.binning
 
@@ -53,6 +53,14 @@ class MarStatProp:
             self._arm_gyration = all_mols.apply(arm_gyr_func)
             self._arm_gyration.rename("arm_gyration", inplace=True)
         return self._arm_gyration
+
+    @property
+    def arm_ete(self):
+        if self._arm_ete is None:
+            all_mols = self.cgtraj.groupby(["timestep", "mol_id"])
+            self._arm_ete = all_mols.apply(arm_ete_func)
+            self._arm_ete.rename("arm_ete", inplace=True)
+        return self._arm_ete
 
     @property
     def asphericity(self):
@@ -99,6 +107,10 @@ def arm_gyr_func(grp):
     arm_sqdist=grp.loc[grp["arm"]!=0].groupby(["arm"], group_keys=False).apply(cm_dist,center=1)
     return (np.sqrt(arm_sqdist.mean().mean()))
 
+def arm_ete_func(grp):
+    arm_ete=grp.loc[grp["arm"]!=0].groupby(["arm"], group_keys=False).apply(ete)
+    return (np.sqrt(arm_ete.mean().mean()))
+
 def form_func(grp):
     vals=50 #50 was the original value
     qrand=30
@@ -130,6 +142,11 @@ def cm_dist(grp, center=0):
     sub = grp[["x", "y"]] - ctr
     grp["sqdist"] = sub.x ** 2 + sub.y ** 2
     return (grp["sqdist"])
+
+def ete(grp):
+    first = grp.loc[grp['at_id'] == grp['at_id'].min()][["x", "y"]]
+    last = grp.loc[grp['at_id'] == grp['at_id'].max()][["x", "y"]]
+    return np.sqrt((first.x-last.x)**2 + (first.y-last.y)**2)
 
 def asph(grp,center=0, pbc_L=0):
     if center == 0:
