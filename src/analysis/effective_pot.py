@@ -31,7 +31,7 @@ def autocorr(x):
 with open('stelle_parameters.json',"r") as f:
     details = json.load(f)
 
-pe=[1,2,4,8]
+pe=[2.3]
 rs=np.array([4,5,6,7,8,9,10,12,14,16,18,20])#([5,6,7,8,10,12,14,16,18,20])#([4,5,7,8,10,12,14,16,18,20])
 eff_force=np.zeros((len(pe),len(rs)))
 eff_force_std=np.zeros((len(pe),len(rs)))

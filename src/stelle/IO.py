@@ -229,7 +229,7 @@ def get_details(name):
             ghost = True
         if "seed" in el:
             seed_start = int(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
-        if "r_int" in el:
+        if "ri" in el:
             r_int = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
             n_mol=2
             r_conf=0.0

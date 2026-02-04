@@ -4,7 +4,7 @@ import os
 import platform
 import matplotlib.pyplot as plt
 import subprocess
-
+import math
 
 class MarStatProp:
     """
@@ -94,6 +94,20 @@ class MarStatProp:
             self._form.rename("form_factor", inplace=True)
         return self._form
 
+class MarDynProp:
+    """
+    Compute and store static properties of a daisy
+    cm_mod: how the center of mass for the gyration radius is calculated
+    cm =: 0->center of core, cm =: 1->geometric cm ,cm =: 2->weighted cm
+    """
+
+    def __init__(self, msd_traj, ang_traj, details):
+        self.msd_traj = msd_traj.copy()
+        self.ang_traj = ang_traj.copy()
+        self.details = details
+        self.msd_data = msd_func(self.msd_traj.copy(), self.details)
+        self.rmsd_data = rmsd_func(self.msd_traj, self.ang_traj, self.details)
+        self.dyn_data = pd.merge(self.msd_data, self.rmsd_data, on=["time"])
 
 
 def gyr_func(grp, weighted=False):
@@ -178,3 +192,118 @@ def arm_definer(cgtraj, details):
     cgtraj.loc[:,"arm"] = (((cgtraj.at_id-1)%Ntot - 1) // details["n_beads"] + 1)+details["functionality"]*(cgtraj.mol_id-1)
     cgtraj.loc[cgtraj.type == 1, "arm"] = 0
     return cgtraj
+
+def rmsd_func(traj, traj_unwrap, details):
+    if details['brownian'] == 0:
+        dt = min(0.001, 0.01 / details["gamma"])
+    else:
+        dt = 0.0001
+
+    traj_unwrap["theta"] = np.arctan2(traj_unwrap["muy"], traj_unwrap["mux"])
+
+    traj_unwrap.reset_index(level='timestep', inplace=True)
+    times_unwrap = pd.unique(traj_unwrap['timestep'])
+    trajlistunwrap = np.array([data["theta"] for _, data in traj_unwrap.groupby(["timestep"])])
+    # plt.plot(times_unwrap,trajlistunwrap[:,0]/np.pi,'b',ls="--")
+    trajlistunwrap = np.unwrap(trajlistunwrap, axis=0)
+    # plt.plot(times_unwrap,trajlistunwrap[:,0]/np.pi,'r',ls="--")
+
+
+    traj["theta"] = np.arctan2(traj["muy"], traj["mux"])
+    tmax = traj.index.max()[1]
+    nmax = int(np.log2(tmax)) + 1
+
+    frames = 2 ** np.arange(nmax)
+
+    msd_c = np.zeros(nmax)
+    msd_c_std = np.zeros(nmax)
+
+    traj.reset_index(level='timestep', inplace=True)
+    times = pd.unique(traj['timestep'])
+    unwrap_idx = np.zeros(len(times))
+    trajlistc = np.array([data[data.type == 1]["theta"] for _, data in traj.groupby(["timestep"])])
+    # plt.plot(times,np.unwrap(trajlistc[:,0])/np.pi,'b',lw=2)
+    for i, time in enumerate(times):
+        idx = find_nearest(times_unwrap, time)
+        trajlistc[i] += np.rint((trajlistunwrap[idx] - trajlistc[i]) / (2 * np.pi)) * np.pi * 2
+
+    maxrot=np.max(np.abs(trajlistunwrap[1:,0]-trajlistunwrap[:-1,0])/np.pi)
+    if maxrot > 0.5:
+        print(f"Dangerously large core rotations: {maxrot}")
+    # plt.plot(times,trajlistc[:,0]/np.pi,'r',lw=2)
+    # plt.show()
+    # plt.plot(times_unwrap[1:],np.abs(trajlistunwrap[1:,0]-trajlistunwrap[:-1,0])/np.pi,'g')
+    # plt.show()
+    utr, utc = np.triu_indices(len(times), 1)
+    diffs = np.abs(times[utr] - times[utc])
+
+    utr, utc = np.triu_indices(len(times), 1)
+    diffs = np.abs(times[utr] - times[utc])
+
+    for i, tval in enumerate(frames):
+        cond = diffs == tval
+        nvals = min(np.sum(cond), tmax // tval)
+
+        msdvalc = (trajlistc[utr[cond], :] - trajlistc[utc[cond], :]) ** 2
+        msd_c[i] = np.mean(msdvalc)
+        msd_c_std[i] = np.std(msdvalc) / np.sqrt(nvals)
+        # msd[i]=np.mean((trajlist[utr[cond],1]-trajlist[utc[cond],1])**2+(trajlist[utr[cond],2]-trajlist[utc[cond],2])**2)
+
+    t = frames * dt
+    results = pd.DataFrame(columns=["time", "angle_msd_core", "angle_msd_core_std"], data=np.c_[t, msd_c, msd_c_std])
+    return results
+
+
+def find_nearest(array,value):
+    idx = np.searchsorted(array, value, side="left")
+    if idx > 0 and (idx == len(array) or math.fabs(value - array[idx-1]) < math.fabs(value - array[idx])):
+        return idx-1
+    else:
+        return idx
+
+def msd_func(traj, details):
+    diam = 15
+    if details['brownian'] == 0:
+        dt = min(0.001, 0.01 / details["gamma"])
+    else:
+        dt = 0.0001
+
+    traj[["x", "y"]] *= diam
+    traj["theta"] = np.arctan2(traj["muy"], traj["mux"])
+    # plt.hist(traj.theta, range=(-np.pi, np.pi), bins=np.linspace(-np.pi, np.pi, 20))
+    # plt.show()
+
+    tmax = traj.index.max()[1]
+    nmax = int(np.log2(tmax)) + 1
+
+    frames = 2 ** np.arange(nmax)
+    msd = np.zeros(nmax)
+    msd_std = np.zeros(nmax)
+
+    msd_c = np.zeros(nmax)
+    msd_c_std = np.zeros(nmax)
+
+    traj.reset_index(level='timestep', inplace=True)
+    times = pd.unique(traj['timestep'])
+    trajlist = np.array([data[data.type != 2][["x", "y"]] for _, data in traj.groupby(["timestep"])])
+    trajlistc = np.array([data[data.type == 1][["x", "y"]] for _, data in traj.groupby(["timestep"])])
+    utr, utc = np.triu_indices(len(times), 1)
+    diffs = np.abs(times[utr] - times[utc])
+
+    for i, tval in enumerate(frames):
+        cond = diffs == tval
+        nvals = min(np.sum(cond), tmax // tval)
+        msdval = np.sum((trajlist[utr[cond], :, :] - trajlist[utc[cond], :, :]) ** 2, axis=2)
+        msd[i] = np.mean(msdval)
+        msd_std[i] = np.std(msdval) / np.sqrt(nvals)
+
+        msdvalc = np.sum((trajlistc[utr[cond], :, :] - trajlistc[utc[cond], :, :]) ** 2, axis=2)
+        msd_c[i] = np.mean(msdvalc)
+        msd_c_std[i] = np.std(msdvalc) / np.sqrt(nvals)
+        # msd[i]=np.mean((trajlist[utr[cond],1]-trajlist[utc[cond],1])**2+(trajlist[utr[cond],2]-trajlist[utc[cond],2])**2)
+
+    t = frames * dt
+    results = pd.DataFrame(columns=["time", "msd_tot", "msd_tot_std", "msd_core", "msd_core_std"],
+                               data=np.c_[t, msd, msd_std, msd_c, msd_c_std])
+
+    return results
