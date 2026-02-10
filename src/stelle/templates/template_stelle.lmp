@@ -133,6 +133,17 @@ else &
 "pair_coeff 2 3 hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}" &
 "pair_coeff 3 3 hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}"
 
+if "(${contact}>0) && (${int_fix}>0)" then &
+"pair_style hybrid/overlay granular lj/expand 1.12246152962189" &
+"pair_coeff 1 1 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 1 2 granular hertz 0.0001 ${en} tangential mindlin_rescale/force 0.0001 ${er} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 1 3 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 2 2 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 2 3 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 3 3 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 1 3 lj/expand ${epsilon} ${sigma} ${Delta_cm}"
+
+
 #----BONDED INTERACTIONS: FENE + WCA --#
 #  E= - 0.5 K R0^2 ln[ 1- ((r-Delta)/R0)^2]
 #     + 4epsilon[ (sigma/(r-Delta))^12 - (sigma/(r-Delta))^6] + epsilon

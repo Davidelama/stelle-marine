@@ -37,6 +37,8 @@ def dcy(x, x0):
 def fifth_root(x, x0):
     return x0 + .206 * x
 
+def sqr_root(x, x0):
+    return x0 + .5 * x
 
 def three_fifth_root(x, x0):
     return x0 + .588 * x
@@ -219,7 +221,8 @@ dt = 1e-4
 
 def R_g_n_fig(ri=0,rf=10,nmol=1):
     nplots = 3
-
+    fmin=8
+    arr = np.array([fmin, 16])
     fig = plt.figure(figsize=(5*nplots, 5))
     gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
 
@@ -240,18 +243,28 @@ def R_g_n_fig(ri=0,rf=10,nmol=1):
             ax[i].errorbar(sel.n.values, sel.rg_mean.values, yerr=sel.rg_std.values, c=cmap.to_rgba(fval), linestyle="",
                            marker="o",label=f"{fval}")
 
+            fcond=sel.n.values>fmin
+            param, pcov = curve_fit(sqr_root, np.log(sel.n.values)[fcond], np.log(sel.rg_mean.values)[fcond],
+                                    sigma=np.log(sel.rg_std.values)[fcond] / sel.rg_mean.values[fcond])
+            perr = np.sqrt(np.diag(pcov))
+            ax[i].plot(arr, np.exp(sqr_root(np.log(arr), *param)), linestyle='--', c=cmap.to_rgba(fval))
+
 
     ax[0].set_ylabel(r"$R_g[mm]$", fontsize=30)  #+.5
 
     ax[0].legend(title=r"$f$", title_fontsize=25, fontsize=25)
+
+    ax[-1].text(.55, .75, r"$\propto N^{1/2}$", fontsize=25, transform=ax[-1].transAxes)
     for i in range(nplots):
         ax[i].set_title(labs[i],fontsize=25)
         ax[i].text(.05,.9,letters[i],fontsize=30, transform=ax[i].transAxes)
-        ax[i].set_ylim(0,100)
+        ax[i].set_ylim(30,100)
+        ax[i].plot(arr, arr ** (1/2) * 20, c="k", ls="--", lw=3)
+
         #ax[i].set_xlim(0,)
         ax[i].set_xlabel(r"$n$", fontsize=30)
-        #ax[i].set_xscale("log")
-        #ax[i].set_yscale("log")
+        ax[i].set_xscale("log")
+        ax[i].set_yscale("log")
         ax[i].tick_params(axis='y', which='major', labelsize=30)
         ax[i].tick_params(axis='x', which='major', labelsize=30)
         if i>0:
@@ -303,6 +316,8 @@ def R_g_f_fig(ri=0,rf=10,nmol=1):
 
 def R_g_nf_fig(ri=0,rf=10,nmol=1):
     nplots = 1
+    fmin = 15
+    arr = np.linspace(fmin, 90)
 
     fig = plt.figure(figsize=(5*nplots, 5))
     gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
@@ -312,7 +327,7 @@ def R_g_nf_fig(ri=0,rf=10,nmol=1):
         ax.append(fig.add_subplot(gs[:, i:i + 1]))
 
     for i in range(nplots):
-        for j in range(3):
+        for j in [2]:#range(3):
             ctc = 0
             rll = 0
             if j > 0:
@@ -323,6 +338,12 @@ def R_g_nf_fig(ri=0,rf=10,nmol=1):
             ax[i].errorbar(sel.f.values*sel.n.values, sel.rg_mean.values, yerr=sel.rg_std.values, c=colors[j], linestyle="",
                            marker=ms[j],label=labs[j])
 
+            fcond=sel.n.values*sel.f.values>fmin
+            param, pcov = curve_fit(sqr_root, np.log(sel.n.values*sel.f.values)[fcond], np.log(sel.rg_mean.values)[fcond],
+                                    sigma=np.log(sel.rg_std.values)[fcond] / sel.rg_mean.values[fcond])
+            perr = np.sqrt(np.diag(pcov))
+            ax[i].plot(arr, np.exp(sqr_root(np.log(arr), *param)), linestyle='--', c=colors[j])
+
 
     ax[0].set_ylabel(r"$R_g[mm]$", fontsize=30)  #+.5
 
@@ -330,7 +351,7 @@ def R_g_nf_fig(ri=0,rf=10,nmol=1):
     for i in range(nplots):
         ax[i].set_xlabel(r"$f\times n$", fontsize=30)
         ax[i].text(.05,.9,letters[i],fontsize=30, transform=ax[i].transAxes)
-        ax[i].set_ylim(0,100)
+        ax[i].set_ylim(30,90)
         #ax[i].set_xlim(0,)
         #ax[i].set_xscale("log")
         #ax[i].set_yscale("log")
@@ -978,7 +999,7 @@ labs = ["no friction", "contact", "rolling"]
 molwant=1
 rfwant=10
 
-"""R_g_n_fig(rf=rfwant, nmol=molwant)
+R_g_n_fig(rf=rfwant, nmol=molwant)
 R_g_f_fig(rf=rfwant, nmol=molwant)
 R_g_nf_fig(rf=rfwant, nmol=molwant)
 arm_ete_n_fig(rf=rfwant, nmol=molwant)
@@ -989,12 +1010,12 @@ rad_n_fig(rf=rfwant, nmol=molwant)
 rad_f_fig(rf=rfwant, nmol=molwant,f_want=3)
 rad_f_fig(rf=rfwant, nmol=molwant)
 form_n_fig(rf=rfwant, nmol=molwant)
-form_f_fig(rf=rfwant, nmol=molwant)"""
-msd_n_fig(rf=0, nmol=molwant)
+form_f_fig(rf=rfwant, nmol=molwant)
+"""msd_n_fig(rf=0, nmol=molwant)
 msd_f_fig(rf=0, nmol=molwant)
 msdc_n_fig(rf=0, nmol=molwant)
 msdc_f_fig(rf=0, nmol=molwant)
 rmsd_n_fig(rf=10, nmol=molwant)
-rmsd_f_fig(rf=10, nmol=molwant)
+rmsd_f_fig(rf=10, nmol=molwant)"""
 
 #plt.show()
