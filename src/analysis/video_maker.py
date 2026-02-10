@@ -20,7 +20,7 @@ with open('stelle_parameters.json',"r") as f:
 
 
 nskip=1#per video di tutto usa 200
-time_limit=1
+time_limit=10
 initial_skip=0
 
 diam=15
@@ -68,7 +68,13 @@ if details['r_conf']!=0:
 
 
 print("Filming:")
-for g, data in traj.groupby(["timestep"]):
+grouped = traj.groupby("timestep")
+timesteps = list(grouped.groups.keys())
+max_steps = int(np.ceil(len(timesteps) / time_limit))
+for i, t in enumerate(timesteps[initial_skip:initial_skip+max_steps]):
+    if i % nskip != 0:
+        continue
+    data = grouped.get_group(t)
     if details['r_conf'] != 0:
         ax.scatter(Cx,Cy,s=S,edgecolors= "blue",color="lightblue")
         ax.scatter(data.x[data.type == 1], data.y[data.type == 1], s=s_core, edgecolors="k", color="w",lw=2)
@@ -85,7 +91,7 @@ for g, data in traj.groupby(["timestep"]):
         ax.scatter(data.x[data.type == 2], data.y[data.type == 2], edgecolors="k",
                    color=cmap.to_rgba(data.p_idx[data.type == 2]), s=3)
         ax.scatter(data.x[data.type == 3], data.y[data.type == 3], edgecolors="k", color=cmap.to_rgba(data.p_idx[data.type == 3]))
-    ax.text(0.01,.95,str(g[0]*dt)+r"$\tau$",color="k",transform=ax.transAxes,fontsize=20)
+    ax.text(0.01,.95,str(t*dt)+r"$\tau$",color="k",transform=ax.transAxes,fontsize=20)
 
     #if i!=0 and i*nskip!=len(t)-1:
     #        vtot=np.sqrt((X[:,(i*nskip+1)]-X[:,(i*nskip-1)])**2+(Y[:,(i*nskip+1)]-Y[:,(i*nskip-1)])**2)

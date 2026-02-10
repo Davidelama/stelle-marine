@@ -52,11 +52,17 @@ S=((big_diam*ax.get_window_extent().width  / L * 72./fig.dpi) ** 2)
 
 
 print("Filming:")
-for g, data in traj.groupby(["timestep"]):
+grouped = traj.groupby("timestep")
+timesteps = list(grouped.groups.keys())
+max_steps = int(np.ceil(len(timesteps) / time_limit))
+for i, t in enumerate(timesteps[initial_skip:initial_skip+max_steps]):
+    if i % nskip != 0:
+        continue
+    data = grouped.get_group(t)
 
     ax.scatter(Cx,Cy,s=S,edgecolors= "blue",color="lightblue")
     ax.scatter(data.x,data.y,s=s,edgecolors= "white",color="k")
-    ax.text(0.01,.95,str(g[0]*dt)+r"$\tau$",color="k",transform=ax.transAxes,fontsize=20)
+    ax.text(0.01,.95,str(t*dt)+r"$\tau$",color="k",transform=ax.transAxes,fontsize=20)
     ax.scatter(data.x + np.cos(data.theta) * diam * .25,
                     data.y + np.sin(data.theta) * diam * .25, s=s * .09, color="white")
 
