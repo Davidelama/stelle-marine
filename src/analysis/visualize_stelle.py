@@ -67,6 +67,8 @@ def cmapper(max, cm=mpl.cm.plasma,cmap_mod=1.2,min=0):
 col_stat = {}
 col_asph = {}
 col_armete = {}
+col_vctc = {}
+col_clrt = {}
 col_rad = {}
 col_form = {}
 col_bin = {}
@@ -115,6 +117,7 @@ if __name__ == '__main__':
         files_pqt = list(sim.glob('*.pqt'))
         files_binning = list(sim.glob('*binning.csv'))
         files_dynamical = list(sim.glob('*dynamical_properties.csv'))
+        files_interaction = list(sim.glob('*interaction_properties.csv'))
         pipeline = AnalysisPipeline("mar_" + sim.name)
         #if not (pipeline.graft in graft_want and pipeline.n_beads in n_want and pipeline.functionality in f_want):
         #    continue
@@ -167,6 +170,12 @@ if __name__ == '__main__':
                 col_rmsd[sim.name] = dyn["angle_msd_core"]
                 col_rmsd_std[sim.name] = dyn["angle_msd_core_std"]
 
+        if len(files_interaction) > 0:
+            for file_interaction in files_interaction:
+                itr = pd.read_csv(file_interaction)
+                col_vctc[sim.name] = itr["contact_ratio"]
+                col_clrt[sim.name] = itr["close_ratio"]
+
         else:
             print(f'---Missing data in {sim}, skipping.')
 
@@ -180,6 +189,8 @@ ndecorr=ttot/tdec
 all_static = pd.concat([pd.Series(data, name=key) for key, data in col_stat.items()], axis=1)
 all_asphericity = pd.concat([pd.Series(data, name=key) for key, data in col_asph.items()], axis=1)
 all_armete = pd.concat([pd.Series(data, name=key) for key, data in col_armete.items()], axis=1)
+all_vctc = pd.concat([pd.Series(data, name=key) for key, data in col_vctc.items()], axis=1)
+all_clrt = pd.concat([pd.Series(data, name=key) for key, data in col_clrt.items()], axis=1)
 all_rad = pd.concat([pd.Series(data, name=key) for key, data in col_rad.items()], axis=1)
 all_form = pd.concat([pd.Series(data, name=key) for key, data in col_form.items()], axis=1)
 all_bin = pd.concat([pd.Series(data, name=key) for key, data in col_bin.items()], axis=1) * diam
@@ -209,6 +220,10 @@ rgs["roll"] = rg_rll.astype(int)
 rgs["brownian"] = rg_bro.astype(int)
 rgs["rg_mean"] = all_static.iloc[equil:, :].mean().values*diam
 rgs["rg_std"] = all_static.iloc[equil:, :].std().values*diam/np.sqrt(ndecorr)
+rgs["v_ctc_mean"] = all_vctc.iloc[equil:, :].mean().values
+rgs["v_ctc_std"] = all_vctc.iloc[equil:, :].std().values/np.sqrt(ndecorr)
+rgs["clrt_mean"] = all_clrt.iloc[equil:, :].mean().values
+rgs["clrt_std"] = all_clrt.iloc[equil:, :].std().values/np.sqrt(ndecorr)
 rgs["asph_mean"] = all_asphericity.iloc[equil:, :].mean().values
 rgs["asph_std"] = all_asphericity.iloc[equil:, :].std().values/np.sqrt(ndecorr)
 rgs["armete_mean"] = all_armete.iloc[equil:, :].mean().values*diam
@@ -527,6 +542,196 @@ def asph_f_fig(ri=0,rf=10,nmol=1):
             ax[i].tick_params(which='both', left=False, labelleft=False)
 
     fig.savefig(output_dir / f"asph_f.png", bbox_inches="tight",dpi=300)
+
+def vctc_n_fig(ri=0,rf=10,nmol=2):
+    nplots = 3
+    fmin=8
+    arr = np.array([fmin, 16])
+    fig = plt.figure(figsize=(5*nplots, 5))
+    gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
+
+    ax = []
+    for i in range(nplots):
+        ax.append(fig.add_subplot(gs[:, i:i + 1]))
+
+    cmap = cmapper(np.max(rgs.f), min=np.min(rgs.f))
+    for i in range(nplots):
+        ctc=0
+        rll=0
+        if i>0:
+            ctc=1
+        if i>1:
+            rll=1
+        for fval in np.unique(rgs.f):
+            sel = rgs[(rgs.f == fval) &  (rgs.contact == ctc) & (rgs.roll == rll)  & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol)]
+            ax[i].errorbar(sel.n.values, sel.v_ctc_mean.values, yerr=sel.v_ctc_std.values, c=cmap.to_rgba(fval), linestyle="",
+                           marker="o",label=f"{fval}")
+
+            """fcond=sel.n.values>fmin
+            param, pcov = curve_fit(sqr_root, np.log(sel.n.values)[fcond], np.log(sel.rg_mean.values)[fcond],
+                                    sigma=np.log(sel.rg_std.values)[fcond] / sel.rg_mean.values[fcond])
+            perr = np.sqrt(np.diag(pcov))
+            ax[i].plot(arr, np.exp(sqr_root(np.log(arr), *param)), linestyle='--', c=cmap.to_rgba(fval))
+"""
+
+    ax[0].set_ylabel(r"$c_v$", fontsize=30)  #+.5
+
+    ax[0].legend(title=r"$f$", title_fontsize=25, fontsize=25)
+
+    #ax[-1].text(.55, .75, r"$\propto N^{1/2}$", fontsize=25, transform=ax[-1].transAxes)
+    for i in range(nplots):
+        ax[i].set_title(labs[i],fontsize=25)
+        ax[i].text(.05,.9,letters[i],fontsize=30, transform=ax[i].transAxes)
+        ax[i].set_ylim(0,0.3)
+        #ax[i].plot(arr, arr ** (1/2) * 20, c="k", ls="--", lw=3)
+
+        #ax[i].set_xlim(0,)
+        ax[i].set_xlabel(r"$n$", fontsize=30)
+        #ax[i].set_xscale("log")
+        #ax[i].set_yscale("log")
+        ax[i].tick_params(axis='y', which='major', labelsize=30)
+        ax[i].tick_params(axis='x', which='major', labelsize=30)
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
+
+    fig.savefig(output_dir / f"c_v_n.png", bbox_inches="tight",dpi=300)
+
+def vctc_f_fig(ri=0,rf=10,nmol=2):
+    nplots = 3
+
+    fig = plt.figure(figsize=(5*nplots, 5))
+    gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
+
+    ax = []
+    for i in range(nplots):
+        ax.append(fig.add_subplot(gs[:, i:i + 1]))
+
+    cmap=cmapper(np.max(rgs.n),min=np.min(rgs.n))
+    for i in range(nplots):
+        ctc=0
+        rll=0
+        if i>0:
+            ctc=1
+        if i>1:
+            rll=1
+        for nval in np.unique(rgs.n):
+            sel = rgs[(rgs.n == nval) &  (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol)]
+            ax[i].errorbar(sel.f.values, sel.v_ctc_mean.values, yerr=sel.v_ctc_std.values, c=cmap.to_rgba(nval), linestyle="",
+                           marker="o",label=f"{nval}")
+
+
+    ax[0].set_ylabel(r"$c_v$", fontsize=30)  #+.5
+
+    ax[0].legend(title=r"$n$", title_fontsize=25, fontsize=25)
+    for i in range(nplots):
+        ax[i].set_title(labs[i],fontsize=25)
+        ax[i].set_xlabel(r"$f$", fontsize=30)
+        ax[i].text(.05,.9,letters[i],fontsize=30, transform=ax[i].transAxes)
+        ax[i].set_ylim(0,0.3)
+        #ax[i].set_xlim(0,)
+        #ax[i].set_xscale("log")
+        #ax[i].set_yscale("log")
+        ax[i].tick_params(axis='y', which='major', labelsize=30)
+        ax[i].tick_params(axis='x', which='major', labelsize=30)
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
+
+    fig.savefig(output_dir / f"c_v_f.png", bbox_inches="tight",dpi=300)
+
+def clrt_n_fig(ri=0,rf=10,nmol=2):
+    nplots = 3
+    fmin=8
+    arr = np.array([fmin, 16])
+    fig = plt.figure(figsize=(5*nplots, 5))
+    gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
+
+    ax = []
+    for i in range(nplots):
+        ax.append(fig.add_subplot(gs[:, i:i + 1]))
+
+    cmap = cmapper(np.max(rgs.f), min=np.min(rgs.f))
+    for i in range(nplots):
+        ctc=0
+        rll=0
+        if i>0:
+            ctc=1
+        if i>1:
+            rll=1
+        for fval in np.unique(rgs.f):
+            sel = rgs[(rgs.f == fval) &  (rgs.contact == ctc) & (rgs.roll == rll)  & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol)]
+            ax[i].errorbar(sel.n.values, sel.clrt_mean.values, yerr=sel.clrt_std.values, c=cmap.to_rgba(fval), linestyle="",
+                           marker="o",label=f"{fval}")
+
+            """fcond=sel.n.values>fmin
+            param, pcov = curve_fit(sqr_root, np.log(sel.n.values)[fcond], np.log(sel.rg_mean.values)[fcond],
+                                    sigma=np.log(sel.rg_std.values)[fcond] / sel.rg_mean.values[fcond])
+            perr = np.sqrt(np.diag(pcov))
+            ax[i].plot(arr, np.exp(sqr_root(np.log(arr), *param)), linestyle='--', c=cmap.to_rgba(fval))
+"""
+
+    ax[0].set_ylabel(r"$r_c$", fontsize=30)  #+.5
+
+    ax[0].legend(title=r"$f$", title_fontsize=25, fontsize=25)
+
+    #ax[-1].text(.55, .75, r"$\propto N^{1/2}$", fontsize=25, transform=ax[-1].transAxes)
+    for i in range(nplots):
+        ax[i].set_title(labs[i],fontsize=25)
+        ax[i].text(.05,.9,letters[i],fontsize=30, transform=ax[i].transAxes)
+        ax[i].set_ylim(0,0.015)
+        #ax[i].plot(arr, arr ** (1/2) * 20, c="k", ls="--", lw=3)
+
+        #ax[i].set_xlim(0,)
+        ax[i].set_xlabel(r"$n$", fontsize=30)
+        #ax[i].set_xscale("log")
+        #ax[i].set_yscale("log")
+        ax[i].tick_params(axis='y', which='major', labelsize=30)
+        ax[i].tick_params(axis='x', which='major', labelsize=30)
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
+
+    fig.savefig(output_dir / f"r_c_n.png", bbox_inches="tight",dpi=300)
+
+def clrt_f_fig(ri=0,rf=10,nmol=2):
+    nplots = 3
+
+    fig = plt.figure(figsize=(5*nplots, 5))
+    gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
+
+    ax = []
+    for i in range(nplots):
+        ax.append(fig.add_subplot(gs[:, i:i + 1]))
+
+    cmap=cmapper(np.max(rgs.n),min=np.min(rgs.n))
+    for i in range(nplots):
+        ctc=0
+        rll=0
+        if i>0:
+            ctc=1
+        if i>1:
+            rll=1
+        for nval in np.unique(rgs.n):
+            sel = rgs[(rgs.n == nval) &  (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol)]
+            ax[i].errorbar(sel.f.values, sel.clrt_mean.values, yerr=sel.clrt_std.values, c=cmap.to_rgba(nval), linestyle="",
+                           marker="o",label=f"{nval}")
+
+
+    ax[0].set_ylabel(r"$r_c$", fontsize=30)  #+.5
+
+    ax[0].legend(title=r"$n$", title_fontsize=25, fontsize=25)
+    for i in range(nplots):
+        ax[i].set_title(labs[i],fontsize=25)
+        ax[i].set_xlabel(r"$f$", fontsize=30)
+        ax[i].text(.05,.9,letters[i],fontsize=30, transform=ax[i].transAxes)
+        ax[i].set_ylim(0,0.015)
+        #ax[i].set_xlim(0,)
+        #ax[i].set_xscale("log")
+        #ax[i].set_yscale("log")
+        ax[i].tick_params(axis='y', which='major', labelsize=30)
+        ax[i].tick_params(axis='x', which='major', labelsize=30)
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
+
+    fig.savefig(output_dir / f"r_c_f.png", bbox_inches="tight",dpi=300)
 
 def rad_n_fig(n_want=5,ri=0,rf=10,nmol=1):
     cmap = cmapper(np.max(rgs.f),min=np.min(rgs.f))
@@ -901,7 +1106,6 @@ def msdc_f_fig(f_want=6,ri=0,rf=10,nmol=1):
 
     fig.savefig(output_dir / f"msdc_f{f_want:d}.png", bbox_inches="tight",dpi=300)
 
-
 def rmsd_n_fig(n_want=5,ri=0,rf=10,nmol=1):
     cmap = cmapper(np.max(rgs.f),min=np.min(rgs.f))
     nplots = 3
@@ -1005,6 +1209,10 @@ R_g_nf_fig(rf=rfwant, nmol=molwant)
 arm_ete_n_fig(rf=rfwant, nmol=molwant)
 arm_ete_f_fig(rf=rfwant, nmol=molwant)
 arm_ete_nf_fig(rf=rfwant, nmol=molwant)
+vctc_n_fig(rf=rfwant, nmol=2)
+vctc_f_fig(rf=rfwant, nmol=2)
+clrt_n_fig(rf=rfwant, nmol=2)
+clrt_f_fig(rf=rfwant, nmol=2)
 asph_f_fig(rf=rfwant, nmol=molwant)
 rad_n_fig(rf=rfwant, nmol=molwant)
 rad_f_fig(rf=rfwant, nmol=molwant,f_want=3)

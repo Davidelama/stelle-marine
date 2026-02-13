@@ -30,9 +30,10 @@ if __name__ == '__main__':
             out = output_dir / str(pipeline)
             out_files = list(out.glob('*'))
             files_pqt = list(out.glob('*.pqt'))
-            if len(out_files)>0:#100 or (p_details["functionality"]!=3) or (p_details["n_beads"] !=3):
+            if len(out_files)>0:# or (p_details["n_mol"]<2) or (p_details["r_int"]>0):# or (p_details["functionality"]!=15) or (p_details["n_beads"] !=3)
                 print(f'---Analysis of {sim} already performed, skipping.')
             else:
+                pipeline.save_interaction_properties(output_dir)
                 pipeline.save_static_properties(output_dir)
                 pipeline.save_dynamical_properties(output_dir)
         else:

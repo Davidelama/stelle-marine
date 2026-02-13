@@ -5,6 +5,8 @@ import platform
 import matplotlib.pyplot as plt
 import subprocess
 import math
+from scipy.spatial import Voronoi
+from scipy.spatial.distance import cdist
 
 class MarStatProp:
     """
@@ -94,6 +96,37 @@ class MarStatProp:
             self._form.rename("form_factor", inplace=True)
         return self._form
 
+class MarItrProp:
+    """
+    Compute and store interaction properties of a daisy
+    cm_mod: how the center of mass for the gyration radius is calculated
+    cm =: 0->center of core, cm =: 1->geometric cm ,cm =: 2->weighted cm
+    """
+
+    def __init__(self, cgtraj, details):
+        self.cgtraj = cgtraj.loc[cgtraj["type"]!=2].copy()
+        self.details = details
+        self.cgtraj = arm_definer(self.cgtraj, self.details).copy()
+        self._contact_ratio = None
+        self._close_ratio = None
+        self.itr_data = pd.merge(self.contact_ratio, self.close_ratio,on=["timestep"])
+
+    @property
+    def contact_ratio(self):
+        if self._contact_ratio is None:
+            all_mols = self.cgtraj.groupby(["timestep"])
+            self._contact_ratio = all_mols.apply(ctc_func, self.details)
+            self._contact_ratio.rename("contact_ratio", inplace=True)
+        return self._contact_ratio
+
+    @property
+    def close_ratio(self):
+        if self._close_ratio is None:
+            all_mols = self.cgtraj.groupby(["timestep"])
+            self._close_ratio = all_mols.apply(clr_func, self.details)
+            self._close_ratio.rename("close_ratio", inplace=True)
+        return self._close_ratio
+
 class MarDynProp:
     """
     Compute and store static properties of a daisy
@@ -144,6 +177,50 @@ def form_func(grp):
         for j in np.arange(qrand):
             form[i, j] = np.abs(np.mean(np.exp(1j * np.dot(sub,qall[i,j])))) ** 2
     return np.mean(form,axis=1)
+
+def ctc_func(grp,details):
+    if details["n_mol"]<2:
+        return 0
+    n_tot = grp.at_id.nunique()
+    points = np.array([grp.x.values, grp.y.values]).transpose()
+    vor = Voronoi(points)
+    r_p = vor.ridge_points
+    neighbors = np.zeros((n_tot, 20), dtype=int) - 1  # [[] for particle in range(n_tot)]
+    n_counter = np.zeros(n_tot, dtype=int)
+    for ridge in r_p:
+        neighbors[ridge[0], n_counter[ridge[0]]] = ridge[1]
+        neighbors[ridge[1], n_counter[ridge[1]]] = ridge[0]
+        n_counter[ridge] += 1
+
+    contact_rate = 0
+    count = 0
+    mids = grp.mol_id.values
+    for part in range(n_tot):
+        for m, part2 in enumerate(neighbors[part][neighbors[part] >= 0]):
+            count += 1
+            if mids[part] != mids[part2]:
+                contact_rate += 1
+    contact_rate = contact_rate / count
+    return contact_rate
+
+def clr_func(grp,details):
+    dist_close = 1.5
+    if details["n_mol"]<2:
+        return 0
+    points = np.array([grp.x.values,grp.y.values]).transpose()
+    rclose=0
+    count=0
+    for j in grp.mol_id.unique():
+        for k in grp.mol_id.unique():
+            if k>=j:
+                continue
+            pointj=points[grp.mol_id==j,:]
+            pointk=points[grp.mol_id==k,:]
+            dist_jk = cdist(pointj, pointk)
+            count+=1
+            rclose+=(np.sum(dist_jk<dist_close)/dist_jk.size-rclose)/count
+    return rclose
+
 
 def cm_dist(grp, center=0):
     if center == 0:

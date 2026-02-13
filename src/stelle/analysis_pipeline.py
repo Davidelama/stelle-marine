@@ -9,6 +9,7 @@ from stelle.IO import get_name
 from stelle.IO import get_details
 from stelle.stelle_analysis import MarStatProp
 from stelle.stelle_analysis import MarDynProp
+from stelle.stelle_analysis import MarItrProp
 
 
 class AnalysisPipeline:
@@ -38,6 +39,7 @@ class AnalysisPipeline:
         self._start_conf = None
         self._cat = None
         self._static = None
+        self._interaction = None
         self._dynamical = None
         self.cm_mod = cm_mod
 
@@ -102,6 +104,13 @@ class AnalysisPipeline:
             self._dynamical = self._dynamical.dyn_data
         return self._dynamical
 
+    @property
+    def interaction_properties(self):
+        if self._interaction is None:
+            self._interaction = MarItrProp(self.traj, self.details)  # self.n_beads*(self.star+1)
+            self._interaction = self._interaction.itr_data
+        return self._interaction
+
     def load_static_properties(self, input_dir):
         fname = self.__str__() + '_static_properties.pqt'
         self._static = pd.read_parquet(input_dir / fname)
@@ -123,3 +132,13 @@ class AnalysisPipeline:
         outdir = self.__mkoutdir(outdir)
         dyn = self.dynamical_properties
         dyn.to_csv(outdir / fname)
+
+    def load_interaction_properties(self, input_dir):
+        fname = self.__str__() + '_interaction_properties.pqt'
+        self._interaction = pd.read_csv(input_dir / fname)
+
+    def save_interaction_properties(self, outdir):
+        fname = self.__str__() + '_interaction_properties.csv'
+        outdir = self.__mkoutdir(outdir)
+        itr = self.interaction_properties
+        itr.to_csv(outdir / fname)
