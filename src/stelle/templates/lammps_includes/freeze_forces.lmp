@@ -1,0 +1,9 @@
+#---Freeze core forces--------------------------------------------#
+variable id1 equal 1
+variable id2 equal ${n_all}+1
+
+group core1 id ${id1}
+group core2 id ${id2}
+
+fix freeze1 core1 setforce 0.0 0.0 0.0
+fix freeze2 core2 setforce 0.0 0.0 0.0

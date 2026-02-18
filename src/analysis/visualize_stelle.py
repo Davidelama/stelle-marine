@@ -368,8 +368,8 @@ def R_g_nf_fig(ri=0,rf=10,nmol=1):
         ax[i].text(.05,.9,letters[i],fontsize=30, transform=ax[i].transAxes)
         ax[i].set_ylim(30,90)
         #ax[i].set_xlim(0,)
-        #ax[i].set_xscale("log")
-        #ax[i].set_yscale("log")
+        ax[i].set_xscale("log")
+        ax[i].set_yscale("log")
         ax[i].tick_params(axis='y', which='major', labelsize=30)
         ax[i].tick_params(axis='x', which='major', labelsize=30)
         if i>0:
@@ -749,7 +749,7 @@ def rad_n_fig(n_want=5,ri=0,rf=10,nmol=1):
         fake_details = fake_pipeline.details
         fake_f = fake_details["functionality"]
         dr=all_bin[column][1]-all_bin[column][0]
-        rad_means = all_rad[column].iloc[equil:].mean() / (2 * np.pi * all_bin[column] * dr)
+        rad_means = all_rad[column].iloc[equil:].mean() / (2 * np.pi * all_bin[column] * dr)*diam**2*np.pi/4
 
         if fake_details["n_beads"] == n_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol:
             if fake_details["contact"] == 0:
@@ -760,7 +760,7 @@ def rad_n_fig(n_want=5,ri=0,rf=10,nmol=1):
                 ax[2].plot(all_bin[column], rad_means, label=fake_f, c=cmap.to_rgba(fake_f))
 
     ax[0].legend(title=r"$f$", title_fontsize=20, fontsize=20)
-    ax[0].set_ylabel(r"$\phi(r)[mm^{-2}]$", fontsize=25)
+    ax[0].set_ylabel(r"$\phi(r)A_p$", fontsize=25)
 
 
     for i in range(nplots):
@@ -768,7 +768,7 @@ def rad_n_fig(n_want=5,ri=0,rf=10,nmol=1):
         ax[i].tick_params(axis='y', which='major', labelsize=25)
         ax[i].tick_params(axis='x', which='major', labelsize=25)
         ax[i].set_xlabel(r"$r[mm]$", fontsize=25)
-        ax[i].set_ylim(0,.015)
+        ax[i].set_ylim(0,3.0)
         ax[i].set_xlim(0, 80)
         #ax[i].set_xscale("log")
         #ax[i].set_yscale("log")
@@ -793,7 +793,7 @@ def rad_f_fig(f_want=6,ri=0,rf=10,nmol=1):
         fake_details = fake_pipeline.details
         fake_n = fake_details["n_beads"]
         dr = all_bin[column][1] - all_bin[column][0]
-        rad_means = all_rad[column].iloc[equil:].mean() / (2 * np.pi * all_bin[column] *dr)
+        rad_means = all_rad[column].iloc[equil:].mean() / (2 * np.pi * all_bin[column] *dr)*diam**2*np.pi/4
 
         if fake_details["functionality"] == f_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol:
             if fake_details["contact"] == 0:
@@ -804,7 +804,7 @@ def rad_f_fig(f_want=6,ri=0,rf=10,nmol=1):
                 ax[2].plot(all_bin[column], rad_means, label=fake_n, c=cmap.to_rgba(fake_n))
 
     ax[0].legend(title=r"$n$", title_fontsize=20, fontsize=20)
-    ax[0].set_ylabel(r"$\phi(r)[mm^{-2}]$", fontsize=25)
+    ax[0].set_ylabel(r"$\phi(r)A_p$", fontsize=25)
 
 
     for i in range(nplots):
@@ -812,7 +812,7 @@ def rad_f_fig(f_want=6,ri=0,rf=10,nmol=1):
         ax[i].tick_params(axis='y', which='major', labelsize=25)
         ax[i].tick_params(axis='x', which='major', labelsize=25)
         ax[i].set_xlabel(r"$r[mm]$", fontsize=25)
-        ax[i].set_ylim(0,.025)
+        ax[i].set_ylim(0,3.0)
         ax[i].set_xlim(0, 80)
         #ax[i].set_xscale("log")
         #ax[i].set_yscale("log")

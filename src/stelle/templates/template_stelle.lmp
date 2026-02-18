@@ -33,7 +33,6 @@ variable n_beadseff equal {{n_beadseff}}
 variable vmove equal {{vmove}}
 variable tmove equal {{tmove}}
 variable dtmove equal {{dtmove}}
-variable t_force_dump equal {{t_force_dump}}
 variable sigma_core equal {{sigma_core}}
 variable damp_rot equal ${damp}*3.3333333
 variable sdt equal ${dt}*0.1
@@ -207,14 +206,16 @@ fix 5 all enforce2d
 
 #--- THERMALIZATION ---------------------------------------#
 if "(${restart}==0)" then "include thermalization.lmp"
+if "!(${restart}>0)" then "reset_timestep 0"
 
 #----OUTPUT DATA ----------------------------------------#
 include output_append.lmp
 include output_msd.lmp
-if  "(${int_fix}>0)" then "include output_forces.lmp"
+include output_forces.lmp
+
+if  "(${int_fix}>0)" then "include freeze_forces.lmp"
 
 #----RUN ------------------------------------------------------#
-if "!(${restart}>0)" then "reset_timestep 0"
 timestep ${dt} # needed as it might change in minimize
 timer timeout ${time} every 1000
 run ${runtime} upto

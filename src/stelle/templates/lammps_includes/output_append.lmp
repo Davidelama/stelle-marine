@@ -14,7 +14,8 @@ thermo ${tdtime}
 thermo_style   custom   step temp epair emol
 #---- Compute orientation
 compute mu all property/atom mux muy
+variable theta atom atan2(c_mu[2],c_mu[1])
 #----Configurations
 restart     ${restime} latest.restart
-dump    1 all custom ${dumptime} ${name}.dat.lammpstrj id mol type xu yu c_mu[1] c_mu[2]
-dump_modify 1  append yes sort id format line "%10d %6d %3d %12.6lf %12.6lf %6.3f %6.3f"
+dump    1 all custom ${dumptime} ${name}.dat.lammpstrj id mol type xu yu v_theta
+dump_modify 1  append yes sort id format line "%10d %6d %3d %12.6lf %12.6lf %12.6lf"

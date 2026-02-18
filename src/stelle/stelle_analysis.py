@@ -15,15 +15,15 @@ class MarStatProp:
     cm =: 0->center of core, cm =: 1->geometric cm ,cm =: 2->weighted cm
     """
 
-    def __init__(self, cgtraj, details, cm_mod=0, n_bins=50):
+    def __init__(self, cgtraj, details, cm_mod=0, n_bins=54, dmax=80.25):
         self.cgtraj = cgtraj.loc[cgtraj["type"]!=2].copy()
         self.details = details
-        self.hlim = self.details["n_beads"]
+        self.dmax = dmax
         self.cm_mod = cm_mod
         self.n_bins = n_bins
         if self.cm_mod==2:
             self.cgtraj.loc[:,"weight"] = np.ones((self.cgtraj.shape[0]))
-            self.cgtraj.loc[self.cgtraj['type'] == 1, 'weight'] = (self.details["r_core"] * 2) ** 3
+            self.cgtraj.loc[self.cgtraj['type'] == 1, 'weight'] = (self.details["r_core"] * 2) ** 2
         self.cgtraj.loc[:,"sqdist"] = self.cgtraj.groupby(["timestep", "mol_id"], group_keys=False).apply(cm_dist,center=self.cm_mod)
         self.cgtraj.loc[:,"sqrad"] = self.cgtraj.groupby(["timestep", "mol_id"], group_keys=False).apply(cm_dist, center=0)
         self.cgtraj = arm_definer(self.cgtraj, self.details).copy()
@@ -68,7 +68,7 @@ class MarStatProp:
     def asphericity(self):
         if self._asphericity is None:
             all_mols = self.cgtraj.groupby(["timestep", "mol_id"])
-            self._asphericity = all_mols.apply(asph, center=self.cm_mod)
+            self._asphericity = all_mols.apply(asph, center=0)
             self._asphericity.rename("asphericity", inplace=True)
         return self._asphericity
 
@@ -76,8 +76,8 @@ class MarStatProp:
     def rad_density(self):
         if self._rad_density is None:
             self.cgtraj["dist"] = self.cgtraj.sqrad.apply(np.sqrt)
-            dmin = self.details["r_core"] / 2 + .5
-            dmax = min(self.cgtraj.dist.max(), np.sqrt(self.hlim * 20) + dmin)
+            dmin = 0#self.details["r_core"] / 2 + .5
+            dmax = self.dmax#min(self.cgtraj.dist.max(), np.sqrt(self.hlim * 20) + dmin)
 
             all_mols = self.cgtraj.groupby(["timestep", "mol_id"])
             self._rad_density = all_mols.dist.apply(function_hist, dmin, dmax, self.n_bins)
@@ -155,7 +155,8 @@ def arm_gyr_func(grp):
     return (np.sqrt(arm_sqdist.mean().mean()))
 
 def arm_ete_func(grp):
-    arm_ete=grp.loc[grp["arm"]!=0].groupby(["arm"], group_keys=False).apply(ete)
+    ctr = grp.loc[grp['at_id'] == 1].head(1)[["x", "y"]]
+    arm_ete=grp.loc[grp["arm"]!=0].groupby(["arm"], group_keys=False).apply(ete,ctr)
     return (np.sqrt(arm_ete.mean().mean()))
 
 def form_func(grp):
@@ -234,10 +235,10 @@ def cm_dist(grp, center=0):
     grp["sqdist"] = sub.x ** 2 + sub.y ** 2
     return (grp["sqdist"])
 
-def ete(grp):
-    first = grp.loc[grp['at_id'] == grp['at_id'].min()][["x", "y"]]
+def ete(grp,ctr):
+    #first = grp.loc[grp['at_id'] == grp['at_id'].min()][["x", "y"]]
     last = grp.loc[grp['at_id'] == grp['at_id'].max()][["x", "y"]]
-    return np.sqrt((first.x-last.x)**2 + (first.y-last.y)**2)
+    return np.sqrt((ctr.x-last.x)**2 + (ctr.y-last.y)**2)
 
 def asph(grp,center=0, pbc_L=0):
     if center == 0:

@@ -9,7 +9,7 @@ home = Path(__file__).resolve().home()
 root_dir = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent  #home / (dir_prj+proj_name)
 sys.path.insert(0, str(root_dir / 'src'))
 
-weighted = False
+cmod = 2 #use weighted center of mass
 
 from stelle.analysis_pipeline import AnalysisPipeline
 
@@ -24,7 +24,7 @@ if __name__ == '__main__':
         print(f"Now analyzing {sim}")
         files = list(sim.glob('mar_*.dat.lammpstrj'))
         if len(files) > 0:
-            pipeline = AnalysisPipeline(sim, weighted)
+            pipeline = AnalysisPipeline(sim, cmod)
             p_details = pipeline.details
             # avoid re-running previous analyses if results present
             out = output_dir / str(pipeline)
