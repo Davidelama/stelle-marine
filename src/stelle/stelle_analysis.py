@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
-import os
-import platform
+from copy import deepcopy
+from scipy.spatial import ConvexHull
+from shapely.geometry import Polygon
 import matplotlib.pyplot as plt
-import subprocess
 import math
 from scipy.spatial import Voronoi
 from scipy.spatial.distance import cdist
@@ -15,7 +15,7 @@ class MarStatProp:
     cm =: 0->center of core, cm =: 1->geometric cm ,cm =: 2->weighted cm
     """
 
-    def __init__(self, cgtraj, details, cm_mod=0, n_bins=54, dmax=80.25):
+    def __init__(self, cgtraj, details, cm_mod=0, n_bins=54, dmax=80.25/15):
         self.cgtraj = cgtraj.loc[cgtraj["type"]!=2].copy()
         self.details = details
         self.dmax = dmax
@@ -103,13 +103,17 @@ class MarItrProp:
     cm =: 0->center of core, cm =: 1->geometric cm ,cm =: 2->weighted cm
     """
 
-    def __init__(self, cgtraj, details):
+    def __init__(self, cgtraj, core_traj, details):
         self.cgtraj = cgtraj.loc[cgtraj["type"]!=2].copy()
+        self.core_traj = core_traj.copy()
         self.details = details
         self.cgtraj = arm_definer(self.cgtraj, self.details).copy()
         self._contact_ratio = None
         self._close_ratio = None
-        self.itr_data = pd.merge(self.contact_ratio, self.close_ratio,on=["timestep"])
+        self._hull_intersection = None
+        self._core_dist_force = None
+        self.itr_data = pd.merge(self.hull_intersection,pd.merge(self.contact_ratio, self.close_ratio,on=["timestep"]),on=["timestep"])
+        self.itr_data.cdf = self.core_dist_force.copy()
 
     @property
     def contact_ratio(self):
@@ -127,6 +131,46 @@ class MarItrProp:
             self._close_ratio.rename("close_ratio", inplace=True)
         return self._close_ratio
 
+    @property
+    def hull_intersection(self):
+        if self._hull_intersection is None:
+            all_mols = self.cgtraj.groupby(["timestep"])
+            self._hull_intersection = all_mols.apply(hull_func, self.details)
+            self._hull_intersection.rename("hull_intersection", inplace=True)
+        return self._hull_intersection
+
+    @property
+    def core_dist_force(self):
+        if self._core_dist_force is None:
+            trj = self.core_traj.copy()
+            trj.reset_index(level='timestep', inplace=True)
+            time=trj["timestep"].unique()
+            cdf=pd.DataFrame({})
+            if self.details["n_mol"]<2:
+                cdf = pd.DataFrame({"timestep": time, "dist": 0, "force": 0, "tag": 0})
+                self._core_dist_force = cdf.set_index(["timestep", "tag"]).sort_index()
+                return self._core_dist_force
+            count=1
+            for j in trj.mol_id.unique():
+                r1 = trj.loc[trj["mol_id"] == j][["x", "y"]].values
+                f1 = trj.loc[trj["mol_id"] == j][["fx", "fy"]].values
+                for k in trj.mol_id.unique():
+                    if k>=j:
+                        continue
+
+                    r2 = trj.loc[trj["mol_id"] == k][["x", "y"]].values
+                    f2 = trj.loc[trj["mol_id"] == k][["fx", "fy"]].values
+                    dr = r2 - r1
+                    df = f2 - f1
+                    dist=np.sqrt(np.einsum('ij,ij->i', dr, dr))
+                    force = np.einsum('ij,ij->i', dr, df) / dist
+                    df = pd.DataFrame({"timestep": time,"dist": dist,"force": force,"tag": count})
+                    df["tag"]=count
+                    cdf=pd.concat([cdf,df],ignore_index=True)
+                    count += 1
+            self._core_dist_force = cdf.set_index(["timestep", "tag"]).sort_index()
+        return self._core_dist_force
+
 class MarDynProp:
     """
     Compute and store static properties of a daisy
@@ -134,12 +178,12 @@ class MarDynProp:
     cm =: 0->center of core, cm =: 1->geometric cm ,cm =: 2->weighted cm
     """
 
-    def __init__(self, msd_traj, ang_traj, details):
+    def __init__(self, msd_traj, core_traj, details):
         self.msd_traj = msd_traj.copy()
-        self.ang_traj = ang_traj.copy()
+        self.core_traj = core_traj.copy()
         self.details = details
         self.msd_data = msd_func(self.msd_traj.copy(), self.details)
-        self.rmsd_data = rmsd_func(self.msd_traj, self.ang_traj, self.details)
+        self.rmsd_data = rmsd_func(self.msd_traj, self.core_traj, self.details)
         self.dyn_data = pd.merge(self.msd_data, self.rmsd_data, on=["time"])
 
 
@@ -222,6 +266,34 @@ def clr_func(grp,details):
             rclose+=(np.sum(dist_jk<dist_close)/dist_jk.size-rclose)/count
     return rclose
 
+def hull_func(grp,details):
+    if details["n_mol"]<2:
+        return 0
+    points = np.array([grp.x.values,grp.y.values]).transpose()
+    hulls=[]
+    polys=[]
+    intersections=[]
+    for j in grp.mol_id.unique():
+        hval=ConvexHull(points[grp.mol_id==j,:])
+        hull_pts=points[grp.mol_id==j,:][hval.vertices]
+        hull_pts=np.vstack([hull_pts, hull_pts[0]])
+        poly = Polygon(hull_pts)
+        hulls+= [hull_pts]
+        polys += [poly]
+        for k in range(j-1):
+            intersections += [polys[k].intersection(polys[j-1])]
+
+    big_poly=deepcopy(polys[0])
+    for h in polys[1:]:
+        big_poly=big_poly.union(h)
+
+    big_its=deepcopy(intersections[0])
+    for h in intersections[1:]:
+        big_its=big_its.union(h)
+
+    return big_its.area/big_poly.area
+
+
 
 def cm_dist(grp, center=0):
     if center == 0:
@@ -277,17 +349,14 @@ def rmsd_func(traj, traj_unwrap, details):
     else:
         dt = 0.0001
 
-    traj_unwrap["theta"] = np.arctan2(traj_unwrap["muy"], traj_unwrap["mux"])
-
     traj_unwrap.reset_index(level='timestep', inplace=True)
     times_unwrap = pd.unique(traj_unwrap['timestep'])
     trajlistunwrap = np.array([data["theta"] for _, data in traj_unwrap.groupby(["timestep"])])
-    # plt.plot(times_unwrap,trajlistunwrap[:,0]/np.pi,'b',ls="--")
+    #plt.plot(times_unwrap,trajlistunwrap[:,0]/np.pi,'b',ls="--")
     trajlistunwrap = np.unwrap(trajlistunwrap, axis=0)
-    # plt.plot(times_unwrap,trajlistunwrap[:,0]/np.pi,'r',ls="--")
+    #plt.plot(times_unwrap,trajlistunwrap[:,0]/np.pi,'r',ls="--")
 
 
-    traj["theta"] = np.arctan2(traj["muy"], traj["mux"])
     tmax = traj.index.max()[1]
     nmax = int(np.log2(tmax)) + 1
 
@@ -300,7 +369,7 @@ def rmsd_func(traj, traj_unwrap, details):
     times = pd.unique(traj['timestep'])
     unwrap_idx = np.zeros(len(times))
     trajlistc = np.array([data[data.type == 1]["theta"] for _, data in traj.groupby(["timestep"])])
-    # plt.plot(times,np.unwrap(trajlistc[:,0])/np.pi,'b',lw=2)
+    #plt.plot(times,np.unwrap(trajlistc[:,0])/np.pi,'b',lw=2)
     for i, time in enumerate(times):
         idx = find_nearest(times_unwrap, time)
         trajlistc[i] += np.rint((trajlistunwrap[idx] - trajlistc[i]) / (2 * np.pi)) * np.pi * 2
@@ -308,12 +377,10 @@ def rmsd_func(traj, traj_unwrap, details):
     maxrot=np.max(np.abs(trajlistunwrap[1:,0]-trajlistunwrap[:-1,0])/np.pi)
     if maxrot > 0.5:
         print(f"Dangerously large core rotations: {maxrot}")
-    # plt.plot(times,trajlistc[:,0]/np.pi,'r',lw=2)
+    #plt.plot(times,trajlistc[:,0]/np.pi,'r',lw=2)
     # plt.show()
-    # plt.plot(times_unwrap[1:],np.abs(trajlistunwrap[1:,0]-trajlistunwrap[:-1,0])/np.pi,'g')
-    # plt.show()
-    utr, utc = np.triu_indices(len(times), 1)
-    diffs = np.abs(times[utr] - times[utc])
+    #plt.plot(times_unwrap[1:],np.abs(trajlistunwrap[1:,0]-trajlistunwrap[:-1,0])/np.pi,'g')
+    #plt.show()
 
     utr, utc = np.triu_indices(len(times), 1)
     diffs = np.abs(times[utr] - times[utc])
@@ -340,14 +407,11 @@ def find_nearest(array,value):
         return idx
 
 def msd_func(traj, details):
-    diam = 15
     if details['brownian'] == 0:
         dt = min(0.001, 0.01 / details["gamma"])
     else:
         dt = 0.0001
 
-    traj[["x", "y"]] *= diam
-    traj["theta"] = np.arctan2(traj["muy"], traj["mux"])
     # plt.hist(traj.theta, range=(-np.pi, np.pi), bins=np.linspace(-np.pi, np.pi, 20))
     # plt.show()
 

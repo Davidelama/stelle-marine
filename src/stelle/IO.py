@@ -2,19 +2,69 @@ import numpy as np
 import pandas as pd
 from copy import copy
 import re
+import os
 
-def lammpsdump_reader(file, cols=('at_id', 'mol_id', 'type', 'x', 'y', 'mux','muy')):
+
+def clean_timestep_file(input_path, output_path):
+    if not os.path.exists(input_path):
+        print(f"Error: {input_path} not found.")
+        return
+
+    blocks = {}
+    current_block = []
+    current_ts = None
+
+    with open(input_path, 'r') as f:
+        lines = f.readlines()
+
+    for i, line in enumerate(lines):
+        # Look for the word TIMESTEP anywhere in the line
+        if "TIMESTEP" in line.upper():
+            # If we were already building a block, save the previous one before starting new
+            if current_ts is not None:
+                blocks[current_ts] = "".join(current_block)
+
+            # Start new block
+            current_block = [line]
+
+            # The actual numerical value is on the NEXT line
+            if i + 1 < len(lines):
+                current_ts = lines[i + 1].strip()
+        else:
+            # Append lines to the current block we are building
+            if current_ts is not None:
+                current_block.append(line)
+
+    # Save the final block in the file
+    if current_ts is not None:
+        blocks[current_ts] = "".join(current_block)
+
+    # Output the results
+    if not blocks:
+        print("Still no blocks found. Please check if 'TIMESTEP' is spelled correctly in the file.")
+        return
+
+    with open(output_path, 'w') as f:
+        # Sort keys as floats so 100 comes after 20
+        for ts in sorted(blocks.keys(), key=float):
+            f.write(blocks[ts])
+
+    #print(f"Done! Saved {len(blocks)} unique blocks to {output_path}")
+
+
+def lammpsdump_reader(file, cols=('at_id', 'mol_id', 'type', 'x', 'y', 'theta')):
     """
     Reads the LAMMPSDUMP files (LAMMPS Trajectories) and stores the results
     in a pandas DataFrame
     """
+    clean_timestep_file(file,"temp.dat")
     ts = 'TIMESTEP'
     nbr = 'NUMBER'
     crd = 'ATOMS id'
     n_cols = len(cols)
     timesteps = []
     confs = []
-    with open(file, 'r') as f:
+    with open("temp.dat", 'r') as f:
         line = f.readline()
         while line:
             if ts in line:
@@ -27,6 +77,7 @@ def lammpsdump_reader(file, cols=('at_id', 'mol_id', 'type', 'x', 'y', 'mux','mu
                 coords = np.zeros((n_atoms, n_cols))
                 for i in range(n_atoms):
                     line = f.readline().split()
+                    #print(timesteps[-1])
                     coords[i] = np.array(line)
                 confs.append(coords)
             line = f.readline()
@@ -35,7 +86,7 @@ def lammpsdump_reader(file, cols=('at_id', 'mol_id', 'type', 'x', 'y', 'mux','mu
     n_frames = confs.shape[0]
     confs = confs.reshape((confs.shape[0] * confs.shape[1], confs.shape[2]))
     data = pd.DataFrame(confs, columns=cols)
-    for lab in ["x", "y", "z"]:
+    for lab in ["x", "y", "z","theta"]:
         if lab in cols:
             data[[lab]] = data[[lab]].astype(float)
     for lab in ["at_id", "type", "mol_id"]:
@@ -44,13 +95,14 @@ def lammpsdump_reader(file, cols=('at_id', 'mol_id', 'type', 'x', 'y', 'mux','mu
     data['timestep'] = np.repeat(np.array(timesteps), n_atoms)
     data['frame'] = np.repeat(np.arange(n_frames), n_atoms)
     data.set_index(['frame', 'timestep'], inplace=True)
+    os.remove("temp.dat")
     return data[list(cols)]
 
 def lammpsdump_writer(filename: str, data: pd.DataFrame, boxlen):
     """
     Write a lammpsdump file to be visualized in VMD
     """
-    assert {'at_id', 'mol_id', 'type', 'x', 'y', 'mux', 'muy'} <= set(data.columns)
+    assert {'at_id', 'mol_id', 'type', 'x', 'y', 'theta'} <= set(data.columns)
     ts_str = "ITEM: TIMESTEP\n{:d}\n"
     n_atn_str = "ITEM: NUMBER OF ATOMS\n{:d}\n"
     boxlen_str = f"ITEM: BOX BOUNDS pp pp pp\n" + 3 * f"{-boxlen:.16e} {boxlen:.16e}\n"
@@ -66,9 +118,9 @@ def lammpsdump_writer(filename: str, data: pd.DataFrame, boxlen):
             fout.write(coord_str)
             data.reset_index()
             for index, row in data.iterrows():
-                fout.write(at_str.format(int(row['at_id']),int(row['mol_id']),int(row['type']), row['x'], row['y'], row['mux'], row['muy']))
+                fout.write(at_str.format(int(row['at_id']),int(row['mol_id']),int(row['type']), row['x'], row['y'], row['theta']))
 
-def reconstruct_traj(filelist, cols=('at_id', 'mol_id', 'type', 'x', 'y', 'mux', 'muy')):
+def reconstruct_traj(filelist, cols=('at_id', 'mol_id', 'type', 'x', 'y', 'theta')):
     """
     Collate a set of pandas traj
     files into a unique trajectory, sorting according to timestep and dropping duplicates.
@@ -93,6 +145,58 @@ def reconstruct_traj(filelist, cols=('at_id', 'mol_id', 'type', 'x', 'y', 'mux',
     traj.reset_index(level=1, inplace=True)
     # DO NOT drop duplicates on float values, only on integer/strings
     traj = traj.drop_duplicates(subset=['timestep', 'at_id'])
+    traj.set_index(['timestep'], append=True, inplace=True)
+    return traj
+
+def reconstruct_cores(filelist, cols=('mol_id', 'x', 'y', 'theta', 'fx', 'fy')):
+    """
+    Reads the print file of LAMMPS
+    """
+    data = []
+    for f in filelist:
+        n_cols = len(cols)
+        timesteps = []
+        confs = []
+        with open(f, 'r') as f:
+            line = f.readline()
+            sp=line.split()
+
+            while line:
+                if len(sp)==3:
+                    timesteps.append(int(sp[0]))
+                    n_mol=int(sp[1])
+                    coords = np.zeros((n_mol, n_cols))
+                    for i in range(n_mol):
+                        line = f.readline().split()
+                        coords[i] = np.array(line[:1]+line[2:])
+                    confs.append(coords)
+                line = f.readline()
+                sp = line.split()
+        confs = np.array(confs)
+        n_frames = confs.shape[0]
+        n_mols = confs.shape[1]
+        confs = confs.reshape((confs.shape[0] * confs.shape[1], confs.shape[2]))
+        dataf = pd.DataFrame(confs, columns=cols)
+        for lab in ["x", "y", "z","theta", "fx", "fy"]:
+            if lab in cols:
+                dataf[[lab]] = dataf[[lab]].astype(float)
+        for lab in ["mol_id"]:
+            if lab in cols:
+                dataf[[lab]] = dataf[[lab]].astype(int)
+        dataf['timestep'] = np.repeat(np.array(timesteps), n_mols)
+        dataf['frame'] = np.repeat(np.arange(n_frames), n_mols)
+        dataf.set_index(['frame', 'timestep'], inplace=True)
+        data+=[dataf]
+    ts = [d.index[-1][1] for d in data]
+    data_sorted = [d for _, d in sorted(zip(ts, data))]
+    shifts = np.array([d.index[-1][0] for d in data_sorted])
+    # shifts -= shifts[0]
+    for d, s in zip(data_sorted[1:], shifts[:-1]):
+        d.index.set_levels(d.index.levels[0] + s, level='frame', inplace=True)
+    traj = pd.concat(data_sorted)
+    traj.reset_index(level=1, inplace=True)
+    # DO NOT drop duplicates on float values, only on integer/strings
+    traj = traj.drop_duplicates(subset=['timestep', 'mol_id'])
     traj.set_index(['timestep'], append=True, inplace=True)
     return traj
 

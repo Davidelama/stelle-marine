@@ -41,9 +41,8 @@ name="../../data/01_raw/stelle/"+IO.get_name(details)+"/"+IO.get_name(details)+"
 print(name)
 print("Reading data:")
 
-traj = IO.reconstruct_traj([name], cols=('at_id', 'mol_id', 'type', 'x', 'y','mux','muy'))
+traj = IO.reconstruct_traj([name], cols=('at_id', 'mol_id', 'type', 'x', 'y','theta'))
 traj[["x","y"]]*=diam
-traj["theta"]=np.arctan2(traj["muy"],traj["mux"])*2
 ntot=(1+details["functionality"]*(details["n_beads"]+1))*details["n_mol"]
 traj["p_idx"]=((np.arange(len(traj))%ntot)-traj["mol_id"])//(details["n_beads"]+1)
 traj.loc[traj.type==1,"p_idx"]=-1

@@ -33,9 +33,8 @@ name="../../data/01_raw/single/"+IO.get_name(details)+"/"+IO.get_name(details)+"
 print(name)
 print("Reading data:")
 
-traj = IO.reconstruct_traj([name], cols=('at_id', 'type', 'x', 'y','mux','muy'))
+traj = IO.reconstruct_traj([name], cols=('at_id', 'type', 'x', 'y','theta'))
 traj[["x","y"]]*=diam
-traj["theta"]=np.arctan2(traj["mux"],traj["muy"])
 #plt.hist(traj.theta, range=(-np.pi, np.pi), bins=np.linspace(-np.pi, np.pi, 20))
 #plt.show()
 

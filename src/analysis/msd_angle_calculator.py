@@ -17,11 +17,11 @@ with open('stelle_parameters.json',"r") as f:
     details = json.load(f)
 
 
-name_unwrap="../../data/01_raw/stelle/"+IO.get_name(details)+"/"+IO.get_name(details)+"_angle_unwrap.lammpstrj"
-traj_unwrap = IO.reconstruct_traj([name_unwrap], cols=('at_id','mux','muy'))
+name_unwrap="../../data/01_raw/stelle/"+IO.get_name(details)+"/"+IO.get_name(details)+"_cores.dat"
+traj_unwrap = IO.reconstruct_cores([name_unwrap], cols=('mol_id', 'x', 'y', 'theta', 'fx', 'fy'))
 
 name="../../data/01_raw/stelle/"+IO.get_name(details)+"/"+IO.get_name(details)+"_msd.lammpstrj"
-traj = IO.reconstruct_traj([name], cols=('at_id', 'type', 'x', 'y','mux','muy'))
+traj = IO.reconstruct_traj([name], cols=('at_id', 'type', 'x', 'y','theta'))
 
 results = rmsd_func(traj, traj_unwrap,details)
 results.to_csv("../../data/02_processed/msd/"+IO.get_name(details)+"_angle_msd.txt", sep=' ', index=False)

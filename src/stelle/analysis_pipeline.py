@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 from stelle.IO import reconstruct_traj
+from stelle.IO import reconstruct_cores
 from stelle.IO import get_name
 from stelle.IO import get_details
 from stelle.stelle_analysis import MarStatProp
@@ -35,7 +36,7 @@ class AnalysisPipeline:
         self.pref = "mar"
         self._traj = None
         self._msd_traj = None
-        self._ang_traj = None
+        self._core_traj = None
         self._start_conf = None
         self._cat = None
         self._static = None
@@ -69,14 +70,14 @@ class AnalysisPipeline:
     @property
     def msd_traj(self):
         if self._msd_traj is None:
-            self._msd_traj = reconstruct_traj(self.simdir.glob(f'{self.pref}*_msd.lammpstrj'), cols=('at_id', 'type', 'x', 'y','mux','muy'))
+            self._msd_traj = reconstruct_traj(self.simdir.glob(f'{self.pref}*_msd.lammpstrj'), cols=('at_id', 'type', 'x', 'y','theta'))
         return self._msd_traj
 
     @property
-    def ang_traj(self):
-        if self._ang_traj is None:
-            self._ang_traj = reconstruct_traj(self.simdir.glob(f'{self.pref}*_angle_unwrap.lammpstrj'), cols=('at_id','mux','muy'))
-        return self._ang_traj
+    def core_traj(self):
+        if self._core_traj is None:
+            self._core_traj = reconstruct_cores(self.simdir.glob(f'{self.pref}*_cores.dat'), cols=('mol_id', 'x', 'y', 'theta', 'fx', 'fy'))
+        return self._core_traj
 
     @property
     def start_conf(self):
@@ -100,20 +101,22 @@ class AnalysisPipeline:
     @property
     def dynamical_properties(self):
         if self._dynamical is None:
-            self._dynamical = MarDynProp(self.msd_traj, self.ang_traj, self.details)  #self.n_beads*(self.star+1)
+            self._dynamical = MarDynProp(self.msd_traj, self.core_traj, self.details)  #self.n_beads*(self.star+1)
             self._dynamical = self._dynamical.dyn_data
         return self._dynamical
 
     @property
     def interaction_properties(self):
         if self._interaction is None:
-            self._interaction = MarItrProp(self.traj, self.details)  # self.n_beads*(self.star+1)
+            self._interaction = MarItrProp(self.traj, self.core_traj, self.details)  # self.n_beads*(self.star+1)
             self._interaction = self._interaction.itr_data
         return self._interaction
 
     def load_static_properties(self, input_dir):
         fname = self.__str__() + '_static_properties.pqt'
+        bname = self.__str__() + '_static_properties_binning.csv'
         self._static = pd.read_parquet(input_dir / fname)
+        self._static.binning = pd.read_csv(input_dir / bname)
 
     def save_static_properties(self, outdir):
         fname = self.__str__() + '_static_properties.pqt'
@@ -124,7 +127,7 @@ class AnalysisPipeline:
         stat.binning.to_csv(outdir / bname)
 
     def load_dynamical_properties(self, input_dir):
-        fname = self.__str__() + '_dynamical_properties.pqt'
+        fname = self.__str__() + '_dynamical_properties.csv'
         self._dynamical = pd.read_csv(input_dir / fname)
 
     def save_dynamical_properties(self, outdir):
@@ -134,11 +137,15 @@ class AnalysisPipeline:
         dyn.to_csv(outdir / fname)
 
     def load_interaction_properties(self, input_dir):
-        fname = self.__str__() + '_interaction_properties.pqt'
+        cname = self.__str__() + '_cdf_properties.pqt'
+        fname = self.__str__() + '_interaction_properties.csv'
         self._interaction = pd.read_csv(input_dir / fname)
+        self._interaction.cdf = pd.read_parquet(input_dir / cname)
 
     def save_interaction_properties(self, outdir):
+        cname = self.__str__() + '_cdf_properties.pqt'
         fname = self.__str__() + '_interaction_properties.csv'
         outdir = self.__mkoutdir(outdir)
         itr = self.interaction_properties
         itr.to_csv(outdir / fname)
+        itr.cdf.to_parquet(outdir / cname)

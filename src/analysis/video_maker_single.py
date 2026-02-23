@@ -13,7 +13,7 @@ with open('single_parameters.json',"r") as f:
     details = json.load(f)
 
 
-nskip=1#per video di tutto usa 200
+nskip=10#per video di tutto usa 200
 time_limit=1
 initial_skip=0
 diam=15
@@ -32,9 +32,8 @@ name="../../data/01_raw/single/"+IO.get_name(details)+"/"+IO.get_name(details)+"
 print(name)
 print("Reading data:")
 
-traj = IO.reconstruct_traj([name], cols=('at_id', 'type', 'x', 'y','mux','muy'))
+traj = IO.reconstruct_traj([name], cols=('at_id', 'type', 'x', 'y','theta'))
 traj[["x","y"]]*=diam
-traj["theta"]=np.arctan2(traj["muy"],traj["mux"])
 #plt.hist(traj.theta, range=(-np.pi, np.pi), bins=np.linspace(-np.pi, np.pi, 20))
 #plt.show()
 

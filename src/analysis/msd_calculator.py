@@ -31,7 +31,7 @@ with open('stelle_parameters.json',"r") as f:
 
 name="../../data/01_raw/stelle/"+IO.get_name(details)+"/"+IO.get_name(details)+"_msd.lammpstrj"
 
-traj = IO.reconstruct_traj([name], cols=('at_id', 'type', 'x', 'y','mux','muy'))
+traj = IO.reconstruct_traj([name], cols=('at_id', 'type', 'x', 'y','theta'))
 results = msd_func(traj,details)
 results.to_csv("../../data/02_processed/msd/"+IO.get_name(details)+"_msd.txt", sep=' ', index=False)
 
