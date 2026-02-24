@@ -1326,7 +1326,7 @@ def cdists_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
         counts, bins = np.histogram(all_cdists[column], bins=40, range=(10, 250))
         bm = (bins[1:] + bins[:-1]) / 2
         bd = (bins[1:] - bins[:-1])
-        gr = counts /(2 * np.pi * bm * bd)
+        gr = counts /(2 * np.pi * bm * bd * len(all_cdists[column]))*diam**2*np.pi/4
 
         if fake_details["n_beads"] == n_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe:
             if fake_details["contact"] == 0:
@@ -1337,7 +1337,7 @@ def cdists_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
                 ax[2].plot(bm,gr, label=fake_f, color=cmap.to_rgba(fake_f))
 
     ax[0].legend(title=r"$f$", title_fontsize=20, fontsize=20)
-    ax[0].set_ylabel(r"$g(r)$", fontsize=25)
+    ax[0].set_ylabel(r"$g(r)A_p$", fontsize=25)
 
 
     for i in range(nplots):
@@ -1345,8 +1345,8 @@ def cdists_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
         ax[i].tick_params(axis='y', which='major', labelsize=25)
         ax[i].tick_params(axis='x', which='major', labelsize=25)
         ax[i].set_xlabel(r"$r[mm]$", fontsize=25)
-        #ax[i].set_ylim(0,3.0)
-        #ax[i].set_xlim(0, 80)
+        ax[i].set_ylim(0,1.2e-3)
+        ax[i].set_xlim(0, 250)
         #ax[i].set_xscale("log")
         #ax[i].set_yscale("log")
         if i>0:
@@ -1372,7 +1372,7 @@ def cdists_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
         counts, bins = np.histogram(all_cdists[column], bins=40, range=(10, 250))
         bm = (bins[1:] + bins[:-1]) / 2
         bd = (bins[1:] - bins[:-1])
-        gr = counts /(2 * np.pi * bm * bd)
+        gr = counts /(2 * np.pi * bm * bd * len(all_cdists[column]))*diam**2*np.pi/4
 
         if fake_details["functionality"] == f_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe:
             if fake_details["contact"] == 0:
@@ -1384,7 +1384,7 @@ def cdists_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
                 ax[2].plot(bm,gr, label=fake_n, color=cmap.to_rgba(fake_n))
 
     ax[0].legend(title=r"$n$", title_fontsize=20, fontsize=20)
-    ax[0].set_ylabel(r"$g(r)$", fontsize=25)
+    ax[0].set_ylabel(r"$g(r)A_p$", fontsize=25)
 
 
     for i in range(nplots):
@@ -1392,8 +1392,8 @@ def cdists_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
         ax[i].tick_params(axis='y', which='major', labelsize=25)
         ax[i].tick_params(axis='x', which='major', labelsize=25)
         ax[i].set_xlabel(r"$r[mm]$", fontsize=25)
-        #ax[i].set_ylim(0,3.0)
-        #ax[i].set_xlim(0, 80)
+        ax[i].set_ylim(0,1.2e-3)
+        ax[i].set_xlim(0, 250)
         #ax[i].set_xscale("log")
         #ax[i].set_yscale("log")
         if i>0:
