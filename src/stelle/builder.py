@@ -805,10 +805,10 @@ def pos_init(details,centers,Lx,Ly):
 
         conf_red=0
         if r_conf > 0:
-            conf_red = Lx*Ly*(1- np.pi/4)
+            conf_red = Lx*Ly- (Lx-r_pass)*(Ly-r_pass)*np.pi/4
 
-        N_partx = int(np.ceil(N_partx * Lx / np.sqrt(Lx * Lx - r_star * r_star * np.pi * n_mol-conf_red)))
-        N_party = int(np.ceil(N_party * Ly / np.sqrt(Ly * Ly - r_star * r_star * np.pi * n_mol-conf_red)))
+        N_partx = int(np.ceil(N_partx * Lx / np.sqrt(Lx * Lx - (r_star+r_pass)**2 * np.pi * n_mol-conf_red)))
+        N_party = int(np.ceil(N_party * Ly / np.sqrt(Ly * Ly - (r_star+r_pass)**2 * np.pi * n_mol-conf_red)))
 
         dx = Lx / N_partx
         dy = Ly / N_party
@@ -832,8 +832,8 @@ def pos_init(details,centers,Lx,Ly):
 #scp -r clicks.tar.gz davide.breoni@hpc2.unitn.it:~/stelle/src
 
 def pos_test():
-    details = {"n_beads": 10, "n_mol": 4, "functionality": 5,
-               "r_conf": 10, "r_bond": 17/15, "r_cbond": (10-1.5)/15, "d_pass": 0.1, "r_pass": 5/15}
+    details = {"n_beads": 7, "n_mol": 1, "functionality": 3,
+               "r_conf": 10, "r_bond": 17/15, "r_cbond": (10-1.5)/15, "d_pass": 0.07, "r_pass": 5/15}
 
     L = (details["r_cbond"] + (details["n_beads"] + 1) * details["r_bond"]) * 2 * int(
         np.ceil(details["n_mol"] ** (1 / 2)))
@@ -856,7 +856,6 @@ def pos_test():
     Ly=L
     coor = pos_init(details,centers[:,:2],Lx,Ly)
     big_diam = details['r_conf']*2
-    bigger_diam = L
     diam = details['r_pass']*2
     dstar = details["r_cbond"]+details["r_bond"]*details["n_beads"] *2
 
@@ -865,14 +864,17 @@ def pos_test():
     ax.set_ylabel("y[mm]", fontsize=20)
     ax.set_aspect(1)
     ax.tick_params(axis='both', which='major', labelsize=20)
-    ax.set_xlim(0 - Lx / 2, 0 + Lx / 2)
-    ax.set_ylim(0 - Ly / 2, 0 + Ly / 2)
-    s = ((diam * ax.get_window_extent().width / Lx * 72. / fig.dpi) ** 2)
-    sbig = ((bigger_diam * ax.get_window_extent().width / Lx * 72. / fig.dpi) ** 2)
-    sstar = ((dstar * ax.get_window_extent().width / Lx * 72. / fig.dpi) ** 2)
+    if details['r_conf'] != 0:
+        Lv=L*np.sqrt(2)
+    bigger_diam = Lv
+    ax.set_xlim(0 - Lv / 2, 0 + Lv / 2)
+    ax.set_ylim(0 - Lv / 2, 0 + Lv / 2)
+    s = ((diam * ax.get_window_extent().width / Lv * 72. / fig.dpi) ** 2)
+    sbig = ((bigger_diam * ax.get_window_extent().width / Lv * 72. / fig.dpi) ** 2)
+    sstar = ((dstar * ax.get_window_extent().width / Lv * 72. / fig.dpi) ** 2)
     ax.scatter(0, 0, s=sbig, edgecolors="blue", color="yellow")
     if details['r_conf'] != 0:
-        S = ((big_diam * ax.get_window_extent().width / Lx * 72. / fig.dpi) ** 2)
+        S = ((big_diam * ax.get_window_extent().width / Lv * 72. / fig.dpi) ** 2)
         ax.scatter(0, 0, s=S, edgecolors="blue", color="lightblue")
     for c in centers:
         ax.scatter(c[0], c[1], s=sstar, edgecolors="blue", color="green")
@@ -882,4 +884,4 @@ def pos_test():
     plt.show()
 
 
-"pos_test()"
+#pos_test()
