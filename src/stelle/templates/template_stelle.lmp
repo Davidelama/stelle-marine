@@ -34,9 +34,11 @@ variable vmove equal {{vmove}}
 variable tmove equal {{tmove}}
 variable dtmove equal {{dtmove}}
 variable sigma_core equal {{sigma_core}}
+variable sigma_pass equal {{sigma_pass}}
 variable damp_rot equal ${damp}*3.3333333
 variable sdt equal ${dt}*0.1
 variable contact equal {{contact}}
+variable passives equal {{passives}}
 #---
 print "-> Seed: ${seed}"
 print "-> Stopping after walltime: ${time}"
@@ -58,11 +60,15 @@ print "----------------------"
 
 #LJ
 variable temp equal {{temp}}
+variable temp_pass equal {{temp_pass}}
 variable sigma equal 1.0
 variable rcutoff equal {{rcutoff}}
 variable epsilon equal {{epsilon}}
 variable Delta_cc equal {{Delta_cc}}
 variable Delta_cm equal {{Delta_cm}}
+variable Delta_pc equal {{Delta_pc}}
+variable Delta_pm equal {{Delta_pm}}
+variable Delta_pp equal {{Delta_pp}}
 
 #LANGEVIN
 variable temp_start equal {{temp}}
@@ -116,7 +122,7 @@ angle_coeff 1 {{bending}}
 #
 
 if "${contact}==0" then &
-"pair_style  lj/expand 1.12246152962189" &
+"pair_style  lj/expand ${rcutoff}" &
 "pair_coeff 1 1 ${epsilon} ${sigma} ${Delta_cc}" &
 "pair_coeff 1 2 0.0 0.0 0.0" &
 "pair_coeff 1 3 ${epsilon} ${sigma} ${Delta_cm}" &
@@ -133,7 +139,7 @@ else &
 "pair_coeff 3 3 hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}"
 
 if "(${contact}>0) && (${int_fix}>0)" then &
-"pair_style hybrid/overlay granular lj/expand 1.12246152962189" &
+"pair_style hybrid/overlay granular lj/expand ${rcutoff}" &
 "pair_coeff 1 1 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}" &
 "pair_coeff 1 2 granular hertz 0.0001 ${en} tangential mindlin_rescale/force 0.0001 ${er} ${mu} damping viscoelastic {{rolling}}" &
 "pair_coeff 1 3 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}" &
@@ -142,6 +148,24 @@ if "(${contact}>0) && (${int_fix}>0)" then &
 "pair_coeff 3 3 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}" &
 "pair_coeff 1 3 lj/expand ${epsilon} ${sigma} ${Delta_cm}"
 
+if "(${contact}==0) && (${passives}>0)" then &
+"pair_coeff 1 4 ${epsilon} ${sigma} ${Delta_pc}" &
+"pair_coeff 2 4 0.0 0.0 0.0" &
+"pair_coeff 3 4 ${epsilon} ${sigma} ${Delta_pm}" &
+"pair_coeff 4 4 ${epsilon} ${sigma} ${Delta_pp}"
+
+if "(${contact}>0) && (${passives}>0)" then &
+"pair_coeff 1 4 hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 2 4 hertz 0.0001 ${en} tangential mindlin_rescale/force 0.0001 ${er} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 3 4 hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 4 4 hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}"
+
+if "(${contact}>0) && (${int_fix}>0) && (${passives}>0)" then &
+"pair_coeff 1 4 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 2 4 granular hertz 0.0001 ${en} tangential mindlin_rescale/force 0.0001 ${er} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 3 4 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 4 4 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${er} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 1 4 lj/expand ${epsilon} ${sigma} ${Delta_pc}"
 
 #----BONDED INTERACTIONS: FENE + WCA --#
 #  E= - 0.5 K R0^2 ln[ 1- ((r-Delta)/R0)^2]
@@ -176,6 +200,8 @@ if "${ghost}>0" then "neigh_modify exclude molecule/inter all"
 #group ends id 1 512
 
 include grafting.lmp
+if "${passives} > 0" &
+then "include passives.lmp"
 
 #---BALANCING -------------------------------------------------#
 comm_style brick
@@ -199,7 +225,6 @@ if "(${restart}>0) && (${conf}>0)" then "include confinement_restart.lmp"
 if "(${restart}==0) && (${int_fix}>0)" then "include int_fix.lmp"
 
 #--- ACTIVITY --------------------------------------------#
-group active type 3
 fix 6 active propel/self dipole ${peclet}
 unfix 5
 fix 5 all enforce2d

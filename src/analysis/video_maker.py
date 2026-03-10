@@ -26,6 +26,7 @@ initial_skip=0
 diam=15
 if details['r_conf']!=0:
     diam_core=details["r_core"]*2*diam
+    diam_pass = details["r_pass"] * 2 * diam
     big_diam=details['r_conf']*diam*2
     L=big_diam*1.1
     Cx=0
@@ -42,10 +43,12 @@ print(name)
 print("Reading data:")
 
 traj = IO.reconstruct_traj([name], cols=('at_id', 'mol_id', 'type', 'x', 'y','theta'))
+npass = len(traj[traj.type==4])
 traj[["x","y"]]*=diam
 ntot=(1+details["functionality"]*(details["n_beads"]+1))*details["n_mol"]
-traj["p_idx"]=((np.arange(len(traj))%ntot)-traj["mol_id"])//(details["n_beads"]+1)
+traj.loc[traj.type<4,"p_idx"]=((np.arange(len(traj)-npass)%ntot)-traj.loc[traj.type<4,"mol_id"])//(details["n_beads"]+1)
 traj.loc[traj.type==1,"p_idx"]=-1
+traj.loc[traj.type==4,"p_idx"]=-1
 
 #plt.hist(traj.theta, range=(-np.pi, np.pi), bins=np.linspace(-np.pi, np.pi, 20))
 #plt.show()
@@ -64,6 +67,7 @@ if details['r_conf']!=0:
     s2 = ((diam * ax.get_window_extent().width * .2 / L * 72. / fig.dpi) ** 2)
     s_core = ((diam_core*ax.get_window_extent().width  / L * 72./fig.dpi) ** 2)
     S=((big_diam*ax.get_window_extent().width  / L * 72./fig.dpi) ** 2)
+    s_pass = ((diam_pass*ax.get_window_extent().width  / L * 72./fig.dpi) ** 2)
 
 
 print("Filming:")
@@ -83,6 +87,9 @@ for i, t in enumerate(timesteps[initial_skip:initial_skip+max_steps]):
         ax.scatter(data.x[data.type==3],data.y[data.type==3],s=s,edgecolors= cmap.to_rgba(data.p_idx[data.type==3]),color="w",lw=2)
         ax.scatter(data.x[data.type == 3] + np.cos(data.theta[data.type == 3]) * diam * .25,
                    data.y[data.type == 3] + np.sin(data.theta[data.type == 3]) * diam * .25, s=s * .09, color="k")
+        if details['d_pass'] != 0:
+            ax.scatter(data.x[data.type == 4], data.y[data.type == 4], s=s_pass,
+                       edgecolors="k", color="w", lw=2)
     else:
         ax.scatter(data.x[data.type == 1], data.y[data.type == 1], edgecolors="k", color="w",s=50)
         for f in range(0,details["functionality"]*details["n_mol"]):
@@ -90,6 +97,8 @@ for i, t in enumerate(timesteps[initial_skip:initial_skip+max_steps]):
         ax.scatter(data.x[data.type == 2], data.y[data.type == 2], edgecolors="k",
                    color=cmap.to_rgba(data.p_idx[data.type == 2]), s=3)
         ax.scatter(data.x[data.type == 3], data.y[data.type == 3], edgecolors="k", color=cmap.to_rgba(data.p_idx[data.type == 3]))
+        if details['d_pass'] != 0:
+            ax.scatter(data.x[data.type == 4], data.y[data.type == 4], edgecolors="k", color=cmap.to_rgba(data.p_idx[data.type == 3]))
     ax.text(0.01,.95,str(t*dt)+r"$\tau$",color="k",transform=ax.transAxes,fontsize=20)
 
     #if i!=0 and i*nskip!=len(t)-1:

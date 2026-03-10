@@ -11,6 +11,8 @@ import numpy as np
 import pandas as pd
 from shutil import copy2
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
+from matplotlib import pyplot as plt
+from scipy.spatial.distance import cdist
 from scipy.spatial.transform import Rotation as R
 from datetime import datetime, timedelta
 from IO import lammpsdat_reader
@@ -110,9 +112,9 @@ class DaisyBuilder:
         lcell=self.L/lmols
         o=0
         p=0
-
+        centers=np.zeros((n_mol,3))
         for i in range(n_mol):
-            cent = [(lcell-self.L)*.5 + lcell*o,(lcell-self.L)*.5 + lcell*p,0]
+            centers[i,:] = np.array([(lcell-self.L)*.5 + lcell*o,(lcell-self.L)*.5 + lcell*p,0])
             if o == lmols-1:
                 o = 0
                 if p == lmols - 1:
@@ -122,7 +124,7 @@ class DaisyBuilder:
             else:
                 o += 1
 
-            star = build_daisy(self.details, mol=i, last=n_tot, center=cent)
+            star = build_daisy(self.details, mol=i, last=n_tot, center=centers[i,:])
             bonds, angles = add_topology(star, self.details, last=n_tot, last_b=nb_tot, last_a=na_tot)
 
             system = pd.concat([system, star])
@@ -132,6 +134,20 @@ class DaisyBuilder:
             n_tot += len(star)
             nb_tot += len(bonds)
             na_tot += len(angles)
+
+        if self.details["d_pass"] > 0:
+            pass_df = pd.DataFrame({}, columns=['at_type', 'p_idx', 'x', 'y', 'z'])
+            pass_df[["x", "y"]] = pos_init(self.details, centers[:,:2], self.L, self.L)
+            pass_df["z"]=0.0
+            pass_df["at_type"]=4
+            pass_df["p_idx"]=0
+            pass_df['mol_idx'] = n_mol + 1
+            pass_df = pass_df.astype({"at_type": int, "p_idx": int, "mol_idx": int})
+            pass_df['at_idx'] = pass_df.index + n_tot + 1
+            pass_df = pass_df[['at_idx', 'mol_idx', 'at_type', 'x', 'y', 'z', 'p_idx']]
+
+
+            system = pd.concat([system, pass_df])
 
         #system["at_idx"] = np.arange(1, len(system) + 1)
         #system_bonds["at_idx"] = np.arange(1, len(system_bonds) + 1)
@@ -192,19 +208,23 @@ class PBSParams:
         return f'{hours}:{minutes:02d}:{seconds:02d}'
 
 class SLURMParams:
-    def __init__(self, scriptname="stelle.builder", name='sim', nnodes=1, ncores=32, partition='boost_usr_prod', project='INF25_biophys', qos='normal',  fin='in.lmp', hours=23, minutes=50, delta=120):
-        """PBS job submitter
+    def __init__(self, scriptname="stelle.builder", name='sim', nnodes=1, ncores=32, partition='boost_usr_prod', project='INF26_biophys', qos='normal',  fin='in.lmp', hours=23, minutes=50, delta=120):
+        """SLURM job submitter
 
         Parameters
         ----------
-        n_cpus : int
-           number of cpus requested
+        nnodes : int
+           number of nodes requested
         hours : int
             number of hours requested
         minutes : int
             minutes requested in addition to the hours
-        queue : str
-            name of queue requested
+        partition : str
+            name of partition requested
+        project : str
+            name of project requested
+        qos : str
+            name of quality of service requested
         name : str
             name of job
         delta : float
@@ -366,6 +386,7 @@ class LammpsLangevinInput:
         
         """
         mass=1
+        mass_pass=mass*(daisy.details["r_pass"]/.5)**3
         radius=.5
         inertia=2/5*mass*radius**2
         self.timestep = timestep
@@ -389,7 +410,11 @@ class LammpsLangevinInput:
         self.equitime = 500000 + self.n_beadseff*50000
         self.Delta_cm = self.details["r_core"] - .5 #r_core+r_monomer-1
         self.Delta_cc = self.details["r_core"] * 2 - 1 #r_core+r_core-1
+        self.Delta_pc = self.details["r_core"] + self.details["r_pass"] - 1 #r_core+r_passive-1
+        self.Delta_pm = self.details["r_pass"] -.5 #r_passive+r_monomer-1
+        self.Delta_pp = self.details["r_pass"] * 2 - 1  # r_passive+r_passive-1
         self.sigma_core = self.details["r_core"]*2
+        self.sigma_pass = self.details["r_pass"] * 2
         self.scriptname = scriptname
         self.brownian = int(self.details["brownian"])
         self.r_cbond = self.details["r_cbond"]
@@ -401,13 +426,18 @@ class LammpsLangevinInput:
         self.epsilon = 10.0 * self.details["gamma"]
         self.temp = self.details["Dt"] * self.details["gamma"]
         self.Tr = self.details["Dr"] * self.details["gamma"]
+        self.temp_pass = self.details["Dt_pass"] * self.details["gamma"]
+        self.passives = int(self.details["d_pass"]>0)
         if self.brownian == 0:
             self.temp *= mass
             self.Tr *= inertia
+            self.temp_pass *= mass_pass
         if self.details["Dt"] == 0:
             self.temp = 0.000001
         if self.details["Dr"] == 0:
             self.Tr = 0.000001
+        if self.details["Dt_pass"] == 0:
+            self.temp_pass = 0.000001
         self.contact = int(self.details["contact"])
         self.rolling=""
         if self.details["rolling"]:
@@ -457,7 +487,7 @@ class LammpsDatafile:
     template_lmp_data = 'template_lmp_input.dat'
     template_dump_input = 'template_dump_input.dump'
 
-    def __init__(self, daisy: Daisy, scriptname="stelle.builder", delta_box=10):
+    def __init__(self, daisy: Daisy, scriptname="stelle.builder"):
         """Write Lammps input files to simulate a daisy system.
 
         Parameters
@@ -471,7 +501,7 @@ class LammpsDatafile:
         """
         self.daisy = daisy
         self.scriptname = scriptname
-        self._box = LammpsDatafile.box_builder(self.daisy, delta=delta_box)
+        self._box = LammpsDatafile.box_builder(self.daisy)
         self._lammps_data = None
 
     @property
@@ -485,7 +515,7 @@ class LammpsDatafile:
         return self._lammps_data
 
     @staticmethod
-    def box_builder(daisy: Daisy, delta=10):
+    def box_builder(daisy: Daisy):
         """Build a cubic box around a daisy.
 
         Parameters
@@ -524,6 +554,7 @@ class LammpsDatafile:
         system["diameter"] = 1.0
         system.loc[system["at_type"] == 2,"diameter"] = 0.001
         system.loc[system["at_type"] == 1, "diameter"] = self.daisy.details["r_core"]*2
+        system.loc[system["at_type"] == 4, "diameter"] = self.daisy.details["r_pass"]*2
         m_pin=0.001
         m_bead=1.0
         if self.daisy.details["r_int"]>0:
@@ -545,6 +576,8 @@ class LammpsDatafile:
         max_at_types = max(system.at_type)
         mass_lines = np.arange(1,max_at_types+1).astype(str)
         m_array = ['{0:.1f}'.format(self.daisy.m_core)] + [str(m_pin)] + [str(m_bead)] * (max_at_types - 2)
+        if self.daisy.details["d_pass"]>0:
+            m_array[3]=str(m_bead*(self.daisy.details["r_pass"]/.5)**3)
         for i in range(max_at_types):
             mass_lines[i] = mass_lines[i] + ' ' + m_array[i]
         
@@ -618,7 +651,7 @@ def build_petal(details: dict, theta: float) -> np.array:
     return coor
 
 
-def build_daisy(details: dict, mol=0, last=0, center=[0,0,0]) -> pd.DataFrame: #rc_float
+def build_daisy(details: dict, mol=0, last=0, center=np.array([0,0,0])) -> pd.DataFrame: #rc_float
     """
     Build a daisy with "nbeads" beads per petal, "functionality" petals and core radius "r_core"
     """
@@ -745,4 +778,108 @@ def logtimer(dump, tot,fileout):
     tvec[-1] = tot + 1
     np.savetxt(fileout, tvec, fmt='%d')
 
+
+def pos_init(details,centers,Lx,Ly):
+    d_pass = details["d_pass"]
+    r_pass = details["r_pass"]
+    r_conf = details["r_conf"]
+    n_mol = details["n_mol"]
+    r_star=details["r_cbond"]+details["r_bond"]*details["n_beads"]
+    if r_conf > 0:
+        N_part= int(np.floor(d_pass * (r_conf / r_pass)**2))
+        Lx*=np.sqrt(2)
+        Ly*=np.sqrt(2)
+    else:
+        N_part = int(np.floor(d_pass * Lx * Ly / (r_pass*r_pass*np.pi)))
+    coor=np.zeros((N_part,2))
+    rate = Lx/Ly
+    if (N_part==1):
+        coor[0] = np.random.uniform(-Lx * .5, Lx * .5)
+        coor[1] = np.random.uniform(-Ly * .5, Ly * .5)
+        while (np.max(cdist([coor],centers)<r_star+r_pass)>0 or np.max(cdist([coor],[[0,0]])>Lx/2-r_pass)>0):
+            coor[0] = np.random.uniform(-Lx * .5, Lx * .5)
+            coor[1] = np.random.uniform(-Ly * .5, Ly * .5)
+    else:
+        N_partx = np.ceil(np.sqrt(N_part * rate))
+        N_party = np.ceil(np.sqrt(N_part / rate))
+
+        conf_red=0
+        if r_conf > 0:
+            conf_red = Lx*Ly*(1- np.pi/4)
+
+        N_partx = int(np.ceil(N_partx * Lx / np.sqrt(Lx * Lx - r_star * r_star * np.pi * n_mol-conf_red)))
+        N_party = int(np.ceil(N_party * Ly / np.sqrt(Ly * Ly - r_star * r_star * np.pi * n_mol-conf_red)))
+
+        dx = Lx / N_partx
+        dy = Ly / N_party
+
+        count = -1
+        while(count<N_part):
+            for i in range(N_partx):
+                for j in range(N_partx):
+                    count+=1
+                    if (count>=N_part):
+                        break
+                    coor[count, 0] = (dx - Lx) * .5 + dx * i
+                    coor[count, 1] = (dy - Ly) * .5 + dy * j
+                    if (np.max(cdist([coor[count]],centers)<r_star+r_pass)>0 or np.max(cdist([coor[count]],[[0,0]])>Lx/2-r_pass)>0):
+                        if dx>Lx/2 and dy>Ly/2:
+                            print("Not enough space!")
+                            return 0
+                        count-=1
+                        continue
+    return coor
 #scp -r clicks.tar.gz davide.breoni@hpc2.unitn.it:~/stelle/src
+
+def pos_test():
+    details = {"n_beads": 10, "n_mol": 4, "functionality": 5,
+               "r_conf": 10, "r_bond": 17/15, "r_cbond": (10-1.5)/15, "d_pass": 0.1, "r_pass": 5/15}
+
+    L = (details["r_cbond"] + (details["n_beads"] + 1) * details["r_bond"]) * 2 * int(
+        np.ceil(details["n_mol"] ** (1 / 2)))
+    lmols = int(np.ceil(details["n_mol"] ** (1 / 2)))
+    lcell = L / lmols
+    o = 0
+    p = 0
+    centers = np.zeros((details["n_mol"], 3))
+    for i in range(details["n_mol"]):
+        centers[i, :] = np.array([(lcell - L) * .5 + lcell * o, (lcell - L) * .5 + lcell * p, 0])
+        if o == lmols - 1:
+            o = 0
+            if p == lmols - 1:
+                p = 0
+            else:
+                p += 1
+        else:
+            o += 1
+    Lx=L
+    Ly=L
+    coor = pos_init(details,centers[:,:2],Lx,Ly)
+    big_diam = details['r_conf']*2
+    bigger_diam = L
+    diam = details['r_pass']*2
+    dstar = details["r_cbond"]+details["r_bond"]*details["n_beads"] *2
+
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8, 8))
+    ax.set_xlabel("x[mm]", fontsize=20)
+    ax.set_ylabel("y[mm]", fontsize=20)
+    ax.set_aspect(1)
+    ax.tick_params(axis='both', which='major', labelsize=20)
+    ax.set_xlim(0 - Lx / 2, 0 + Lx / 2)
+    ax.set_ylim(0 - Ly / 2, 0 + Ly / 2)
+    s = ((diam * ax.get_window_extent().width / Lx * 72. / fig.dpi) ** 2)
+    sbig = ((bigger_diam * ax.get_window_extent().width / Lx * 72. / fig.dpi) ** 2)
+    sstar = ((dstar * ax.get_window_extent().width / Lx * 72. / fig.dpi) ** 2)
+    ax.scatter(0, 0, s=sbig, edgecolors="blue", color="yellow")
+    if details['r_conf'] != 0:
+        S = ((big_diam * ax.get_window_extent().width / Lx * 72. / fig.dpi) ** 2)
+        ax.scatter(0, 0, s=S, edgecolors="blue", color="lightblue")
+    for c in centers:
+        ax.scatter(c[0], c[1], s=sstar, edgecolors="blue", color="green")
+
+
+    ax.scatter(coor[:,0],coor[:,1], s=s, edgecolors="k", color="w", lw=2)
+    plt.show()
+
+
+"pos_test()"

@@ -1,10 +1,10 @@
 #!/bin/bash
-ns=(014) # (090)#
-fs=(003)  #(010 030 060 100 150) # (020 060 120 200 300)#
+ns=(009) # (090)#
+fs=(006)  #(010 030 060 100 150) # (020 060 120 200 300)#
 rcs=(0.67)
 ris=(4.0) #(4.0 5.0 6.0 7.0 8.0 9.0  10.0 12.0 14.0 16.0 18.0 20.0)
 mols=(001) #008
-suffixes=("_mols003_pe2.3_rf10.0_Dt0.010_Dr0.800_gm100_ctc_rll") #mol pe rf bro Dt Dr gm ri
+suffixes=("_mols004_pe2.3_rf10.0_Dt0.010_Dr0.800_gm100_dp0.010_rp0.333_Dp0.015_ctc_rll") #mol pe rf bro Dt Dr gm ri
 for n in "${ns[@]}";
 do
 for f in "${fs[@]}";

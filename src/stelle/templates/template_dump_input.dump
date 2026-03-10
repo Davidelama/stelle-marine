@@ -6,7 +6,7 @@ ITEM: BOX BOUNDS pp pp pp
 {{xlo}} {{xhi}}
 {{ylo}} {{yhi}}
 {{zlo}} {{zhi}}
-ITEM: ATOMS id mol type xu yu zu
+ITEM: ATOMS id type xu yu zu mol
 {% for a in atoms -%}
     {{ a }}
 {% endfor %}

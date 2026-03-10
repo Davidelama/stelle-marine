@@ -135,3 +135,21 @@ This project simulates the behavior of star polymers in 2D using the LAMMPS mole
    - **Range**: `0` or `1`.
    - **Note**: This can only be activated if **contact friction** is activated
 
+### 19. **Passive Density (`d_pass`)**
+
+   - If set `>1`, introduces **passive particles** in the system.
+   - **Example**: `d_pass = 0.01` introduces particles with packing fraction 0.01.
+   - **Range**: between `0` and `1`.
+
+### 20. **Passive Radius (`r_pass`)**
+
+   - If `d_pass>1`, defines the radius of the **passive particles**, in terms of the active particle diameter `sigma`.
+   - **Example**: `r_pass = 5/sigma`.
+   - **Range**: `>0`.
+
+### 19. **Passive Traslational Diffusion Coefficient (`Dt_pass`)**
+
+   - If `d_pass>1`, defines the traslational diffusion coefficent of the **passive particles**.
+   - **Example**: `Dt_pass = 0.015`.
+   - **Range**: `>0`.
+

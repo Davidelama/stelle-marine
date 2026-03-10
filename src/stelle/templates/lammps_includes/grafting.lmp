@@ -1,13 +1,16 @@
 #---rigid body evolution --------------------------------------------#
-group free type 3
+group active type 3
+group passive type 4
+group free union active passive
 group cores type 1
+group stars subtract all passive
 
 group grafted subtract all free
 
 
 if "${brownian} > 0" &
-then "fix 3 free brownian/sphere ${temp_end} ${seed} gamma_t ${damp} gamma_r 1.0 rotation_temp ${Tr}" &
-else "fix 2 free nve/sphere update dipole" &
-"fix 3 free langevin/trot ${temp_start} ${temp_end} ${damp} ${seed} omega yes trot ${Tr} ${Tr} ${damp_rot}"
+then "fix 3 active brownian/sphere ${temp_end} ${seed} gamma_t ${damp} gamma_r 1.0 rotation_temp ${Tr}" &
+else "fix 2 active nve/sphere update dipole" &
+"fix 3 active langevin/trot ${temp_start} ${temp_end} ${damp} ${seed} omega yes trot ${Tr} ${Tr} ${damp_rot}"
 
 fix 4 grafted rigid molecule langevin ${temp_start} ${temp_end} ${damp} ${seed}

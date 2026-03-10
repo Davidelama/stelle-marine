@@ -1,0 +1,7 @@
+#---passives evolution --------------------------------------------#
+group passive type 4
+
+if "${brownian} > 0" &
+then "fix 30 passive brownian/sphere ${temp_pass} ${seed} gamma_t ${damp} gamma_r 1.0 rotation_temp ${Tr}" &
+else "fix 20 passive nve/sphere update dipole" &
+"fix 30 passive langevin/trot ${temp_pass} ${temp_pass} ${damp} ${seed} omega yes trot ${Tr} ${Tr} ${damp_rot}"

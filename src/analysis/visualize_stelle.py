@@ -611,7 +611,7 @@ def vctc_n_fig(ri=0,rf=10,nmol=2,pe=2.3):
         if i>0:
             ax[i].tick_params(which='both', left=False, labelleft=False)
 
-    fig.savefig(output_dir / f"c_v_n_pe{pe}.png", bbox_inches="tight",dpi=300)
+    fig.savefig(output_dir / f"c_v_n_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
 def vctc_f_fig(ri=0,rf=10,nmol=2,pe=2.3):
     nplots = 3
@@ -653,7 +653,7 @@ def vctc_f_fig(ri=0,rf=10,nmol=2,pe=2.3):
         if i>0:
             ax[i].tick_params(which='both', left=False, labelleft=False)
 
-    fig.savefig(output_dir / f"c_v_f_pe{pe}.png", bbox_inches="tight",dpi=300)
+    fig.savefig(output_dir / f"c_v_f_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
 def clrt_n_fig(ri=0,rf=10,nmol=2,pe=2.3):
     nplots = 3
@@ -706,7 +706,7 @@ def clrt_n_fig(ri=0,rf=10,nmol=2,pe=2.3):
         if i>0:
             ax[i].tick_params(which='both', left=False, labelleft=False)
 
-    fig.savefig(output_dir / f"r_c_n_pe{pe}.png", bbox_inches="tight",dpi=300)
+    fig.savefig(output_dir / f"r_c_n_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
 def clrt_f_fig(ri=0,rf=10,nmol=2,pe=2.3):
     nplots = 3
@@ -748,7 +748,7 @@ def clrt_f_fig(ri=0,rf=10,nmol=2,pe=2.3):
         if i>0:
             ax[i].tick_params(which='both', left=False, labelleft=False)
 
-    fig.savefig(output_dir / f"r_c_f_pe{pe}.png", bbox_inches="tight",dpi=300)
+    fig.savefig(output_dir / f"r_c_f_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
 def chull_n_fig(ri=0,rf=10,nmol=2,pe=2.3):
     nplots = 3
@@ -801,7 +801,7 @@ def chull_n_fig(ri=0,rf=10,nmol=2,pe=2.3):
         if i>0:
             ax[i].tick_params(which='both', left=False, labelleft=False)
 
-    fig.savefig(output_dir / f"c_h_n_pe{pe}.png", bbox_inches="tight",dpi=300)
+    fig.savefig(output_dir / f"c_h_n_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
 def chull_f_fig(ri=0,rf=10,nmol=2,pe=2.3):
     nplots = 3
@@ -843,7 +843,7 @@ def chull_f_fig(ri=0,rf=10,nmol=2,pe=2.3):
         if i>0:
             ax[i].tick_params(which='both', left=False, labelleft=False)
 
-    fig.savefig(output_dir / f"c_h_f_pe{pe}.png", bbox_inches="tight",dpi=300)
+    fig.savefig(output_dir / f"c_h_f_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
 def rad_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
     cmap = cmapper(np.max(rgs.f),min=np.min(rgs.f))
@@ -1307,7 +1307,7 @@ def rmsd_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
 
     fig.savefig(output_dir / f"rmsd_f{f_want:d}_pe{pe}.png", bbox_inches="tight",dpi=300)
 
-def cdists_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
+def cdists_n_fig(n_want=5,ri=0,rf=10,nmol=2,pe=2.3):
     cmap = cmapper(np.max(rgs.f),min=np.min(rgs.f))
     nplots = 3
 
@@ -1352,9 +1352,9 @@ def cdists_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
         if i>0:
             ax[i].tick_params(which='both', left=False, labelleft=False)
 
-    fig.savefig(output_dir / f"cdists_n{n_want:d}_pe{pe}.png", bbox_inches="tight",dpi=300)
+    fig.savefig(output_dir / f"cdists_n{n_want:d}_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
-def cdists_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
+def cdists_f_fig(f_want=6,ri=0,rf=10,nmol=2,pe=2.3):
     cmap = cmapper(np.max(rgs.n),min=np.min(rgs.n))
     nplots = 3
 
@@ -1399,7 +1399,7 @@ def cdists_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
         if i>0:
             ax[i].tick_params(which='both', left=False, labelleft=False)
 
-    fig.savefig(output_dir / f"cdists_f{f_want:d}_pe{pe}.png", bbox_inches="tight",dpi=300)
+    fig.savefig(output_dir / f"cdists_f{f_want:d}_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
 
 
@@ -1422,6 +1422,12 @@ clrt_n_fig(rf=rfwant, nmol=2)
 clrt_f_fig(rf=rfwant, nmol=2)
 chull_n_fig(rf=rfwant, nmol=2)
 chull_f_fig(rf=rfwant, nmol=2)
+vctc_n_fig(rf=rfwant, nmol=4)
+vctc_f_fig(rf=rfwant, nmol=4)
+clrt_n_fig(rf=rfwant, nmol=4)
+clrt_f_fig(rf=rfwant, nmol=4)
+chull_n_fig(rf=rfwant, nmol=4)
+chull_f_fig(rf=rfwant, nmol=4)
 asph_f_fig(rf=rfwant, nmol=molwant)
 rad_n_fig(rf=rfwant, nmol=molwant)
 rad_f_fig(rf=rfwant, nmol=molwant,f_want=3)
@@ -1431,6 +1437,9 @@ form_f_fig(rf=rfwant, nmol=molwant)
 cdists_n_fig(rf=rfwant, nmol=2)
 cdists_f_fig(rf=rfwant, nmol=2,f_want=3)
 cdists_f_fig(rf=rfwant, nmol=2,f_want=6)
+cdists_n_fig(rf=rfwant, nmol=4)
+cdists_f_fig(rf=rfwant, nmol=4,f_want=3)
+cdists_f_fig(rf=rfwant, nmol=4,f_want=6)
 
 R_g_n_fig(rf=rfwant, nmol=molwant,pe=0)
 R_g_f_fig(rf=rfwant, nmol=molwant,pe=0)
@@ -1444,6 +1453,12 @@ clrt_n_fig(rf=rfwant, nmol=2,pe=0)
 clrt_f_fig(rf=rfwant, nmol=2,pe=0)
 chull_n_fig(rf=rfwant, nmol=2,pe=0)
 chull_f_fig(rf=rfwant, nmol=2,pe=0)
+vctc_n_fig(rf=rfwant, nmol=4,pe=0)
+vctc_f_fig(rf=rfwant, nmol=4,pe=0)
+clrt_n_fig(rf=rfwant, nmol=4,pe=0)
+clrt_f_fig(rf=rfwant, nmol=4,pe=0)
+chull_n_fig(rf=rfwant, nmol=4,pe=0)
+chull_f_fig(rf=rfwant, nmol=4,pe=0)
 asph_f_fig(rf=rfwant, nmol=molwant,pe=0)
 rad_n_fig(rf=rfwant, nmol=molwant,pe=0)
 rad_f_fig(rf=rfwant, nmol=molwant,f_want=3,pe=0)
@@ -1453,6 +1468,9 @@ form_f_fig(rf=rfwant, nmol=molwant,pe=0)
 cdists_n_fig(rf=rfwant, nmol=2,pe=0)
 cdists_f_fig(rf=rfwant, nmol=2,f_want=3,pe=0)
 cdists_f_fig(rf=rfwant, nmol=2,f_want=6,pe=0)
+cdists_n_fig(rf=rfwant, nmol=4,pe=0)
+cdists_f_fig(rf=rfwant, nmol=4,f_want=3,pe=0)
+cdists_f_fig(rf=rfwant, nmol=4,f_want=6,pe=0)
 
 """msd_n_fig(rf=0, nmol=molwant)
 msd_f_fig(rf=0, nmol=molwant)

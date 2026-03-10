@@ -5,6 +5,6 @@ variable vy  atom y
 variable vfx atom fx
 variable vfy atom fy
 
-compute molchunk all chunk/atom molecule
+compute molchunk stars chunk/atom molecule
 
 fix coreout cores ave/chunk ${dumptime_angle} 1 ${dumptime_angle} molchunk v_vx v_vy v_theta v_vfx v_vfy append ${name}_cores.dat
