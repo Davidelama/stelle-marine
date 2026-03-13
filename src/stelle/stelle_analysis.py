@@ -4,6 +4,7 @@ from copy import deepcopy
 from scipy.spatial import ConvexHull
 from shapely.geometry import Polygon
 import matplotlib.pyplot as plt
+from scipy.spatial import Delaunay
 import math
 from scipy.spatial import Voronoi
 from scipy.spatial.distance import cdist
@@ -16,7 +17,7 @@ class MarStatProp:
     """
 
     def __init__(self, cgtraj, details, cm_mod=0, n_bins=54, dmax=80.25/15):
-        self.cgtraj = cgtraj.loc[cgtraj["type"]!=2].copy()
+        self.cgtraj = cgtraj.loc[cgtraj["type"] %2 ==1].copy()
         self.details = details
         self.dmax = dmax
         self.cm_mod = cm_mod
@@ -104,7 +105,7 @@ class MarItrProp:
     """
 
     def __init__(self, cgtraj, core_traj, details):
-        self.cgtraj = cgtraj.loc[cgtraj["type"]!=2].copy()
+        self.cgtraj = cgtraj.loc[cgtraj["type"] %2 ==1].copy()
         self.core_traj = core_traj.copy()
         self.details = details
         self.cgtraj = arm_definer(self.cgtraj, self.details).copy()
@@ -186,6 +187,26 @@ class MarDynProp:
         self.rmsd_data = rmsd_func(self.msd_traj, self.core_traj, self.details)
         self.dyn_data = pd.merge(self.msd_data, self.rmsd_data, on=["time"])
 
+class MarCapProp:
+    """
+    Compute and store static properties of a daisy
+    cm_mod: how the center of mass for the gyration radius is calculated
+    cm =: 0->center of core, cm =: 1->geometric cm ,cm =: 2->weighted cm
+    """
+
+    def __init__(self, cgtraj, details):
+        self.cgtraj = cgtraj.loc[cgtraj["type"]!=2].copy()
+        self.details = details
+        self._hull_cap_rat = None
+        self.cap_data =self.hull_cap_rat.copy()
+
+    @property
+    def hull_cap_rat(self):
+        if self._hull_cap_rat is None:
+            all_mols = self.cgtraj.groupby(["timestep"])
+            self._hull_cap_rat = all_mols.apply(hcr_func, self.details)
+            self._hull_cap_rat.rename("hull_cap_rat", inplace=True)
+        return self._hull_cap_rat
 
 def gyr_func(grp, weighted=False):
     if weighted:
@@ -292,6 +313,21 @@ def hull_func(grp,details):
         big_its=big_its.union(h)
 
     return big_its.area/big_poly.area
+
+def hcr_func(grp,details):
+    if details["d_pass"]==0:
+        return 0
+    stars = grp.loc[grp.type != 4]
+    passives = grp.loc[grp.type == 4]
+    points = np.array([stars.x.values,stars.y.values]).transpose()
+    pass_points = np.array([passives.x.values,passives.y.values]).transpose()
+    cap_set=set()
+    for j in stars.mol_id.unique():
+        tri = Delaunay(points[stars.mol_id==j,:])
+        inside = tri.find_simplex(pass_points) >= 0
+        cap_set=set(np.where(inside)[0]) | cap_set
+
+    return len(cap_set)/len(passives)
 
 
 

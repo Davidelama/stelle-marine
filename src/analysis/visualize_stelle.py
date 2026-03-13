@@ -18,6 +18,14 @@ plt.rcParams["text.usetex"]= True
 plt.rc('font',**{'family':'serif','serif':['Times']})
 cmap_mod=1.2
 
+def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
+    return np.abs(a-b) <= np.max(rel_tol * np.max(np.abs(a), np.abs(b)), abs_tol)
+
+def autocorr(x):
+    corr = np.correlate(x, x, mode='full')
+    result = corr[corr.size//2:]
+    return result/result[0]
+
 def without_keys(d, keys):
     return {x: d[x] for x in d if x not in keys}
 
@@ -82,6 +90,7 @@ col_rmsd = {}
 col_rmsd_std = {}
 col_cdists = {}
 col_cforces = {}
+col_hcr = {}
 rg_f = np.array([])
 rg_rc = np.array([])
 rg_n = np.array([])
@@ -97,6 +106,9 @@ rg_gm = np.array([])
 rg_ctc = np.array([])
 rg_rll = np.array([])
 rg_bro = np.array([])
+rg_dpass = np.array([])
+rg_rpass = np.array([])
+rg_Dtpass = np.array([])
 rg_seed = np.array([])
 rg_dts = np.array([])
 rgs = pd.DataFrame()
@@ -122,7 +134,10 @@ if __name__ == '__main__':
         files_binning = list(sim.glob('*binning.csv'))
         files_dynamical = list(sim.glob('*dynamical_properties.csv'))
         files_interaction = list(sim.glob('*interaction_properties.csv'))
+        files_capture = list(sim.glob('*capture_properties.csv'))
         pipeline = AnalysisPipeline("mar_" + sim.name)
+        if pipeline.details["r_int"]>0 and pipeline.details["d_pass"]==0:
+            continue
         #if not (pipeline.graft in graft_want and pipeline.n_beads in n_want and pipeline.functionality in f_want):
         #    continue
         if len(files_pqt) > 0:
@@ -149,6 +164,9 @@ if __name__ == '__main__':
                 rg_ctc = np.append(rg_ctc, pipeline.details["contact"])
                 rg_rll = np.append(rg_rll, pipeline.details["rolling"])
                 rg_bro = np.append(rg_bro, pipeline.details["brownian"])
+                rg_dpass = np.append(rg_dpass, pipeline.details["d_pass"])
+                rg_rpass = np.append(rg_rpass, pipeline.details["r_pass"])
+                rg_Dtpass = np.append(rg_Dtpass, pipeline.details["Dt_pass"])
                 rg_dts = np.append(rg_dts, np.shape(static["gyration"]))
                 if np.shape(static["gyration"])[0] < 00:
                     print(sim.name)
@@ -181,11 +199,16 @@ if __name__ == '__main__':
                 col_clrt[sim.name] = itr["close_ratio"]
                 col_chull[sim.name] = itr["hull_intersection"]
 
-        if len(files_cdf) > 0:
+        """if len(files_cdf) > 0:
             for file_cdf in files_cdf:
                 cdf = pd.read_parquet(file_cdf)
                 col_cdists[sim.name] = cdf["dist"]
-                col_cforces[sim.name] = cdf["force"]
+                col_cforces[sim.name] = cdf["force"]"""
+
+        if len(files_capture) > 0:
+            for file_capture in files_capture:
+                cap = pd.read_csv(file_capture)
+                col_hcr[sim.name] = cap["hull_cap_rat"]
 
 
         else:
@@ -214,8 +237,9 @@ all_msdc = pd.concat([pd.Series(data, name=key) for key, data in col_msdc.items(
 all_msdc_std = pd.concat([pd.Series(data, name=key) for key, data in col_msdc_std.items()], axis=1) * diam**2
 all_rmsd = pd.concat([pd.Series(data, name=key) for key, data in col_rmsd.items()], axis=1)
 all_rmsd_std = pd.concat([pd.Series(data, name=key) for key, data in col_rmsd_std.items()], axis=1)
-all_cdists = pd.concat([pd.Series(data, name=key) for key, data in col_cdists.items()], axis=1) * diam
-all_cforces = pd.concat([pd.Series(data, name=key) for key, data in col_cforces.items()], axis=1) * diam
+#all_cdists = pd.concat([pd.Series(data, name=key) for key, data in col_cdists.items()], axis=1) * diam
+#all_cforces = pd.concat([pd.Series(data, name=key) for key, data in col_cforces.items()], axis=1) * diam
+all_hcr = pd.concat([pd.Series(data, name=key) for key, data in col_hcr.items()], axis=1)
 
 rgs["f"] = rg_f.astype(int)
 rgs["n"] = rg_n.astype(int)
@@ -233,6 +257,9 @@ rgs["gamma"] = rg_gm
 rgs["contact"] = rg_ctc.astype(int)
 rgs["roll"] = rg_rll.astype(int)
 rgs["brownian"] = rg_bro.astype(int)
+rgs["d_pass"] = rg_dpass
+rgs["r_pass"] = rg_rpass
+rgs["Dt_pass"] = rg_Dtpass
 rgs["rg_mean"] = all_static.iloc[equil:, :].mean().values*diam
 rgs["rg_std"] = all_static.iloc[equil:, :].std().values*diam/np.sqrt(ndecorr)
 rgs["v_ctc_mean"] = all_vctc.iloc[equil:, :].mean().values
@@ -251,7 +278,7 @@ rgs["rg_mean_off"] = rgs["rg_mean"] - rgs["rc"]
 dt = 1e-4
 
 
-def R_g_n_fig(ri=0,rf=10,nmol=1,pe=2.3):
+def R_g_n_fig(ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     nplots = 3
     fmin=8
     arr = np.array([fmin, 16])
@@ -271,7 +298,7 @@ def R_g_n_fig(ri=0,rf=10,nmol=1,pe=2.3):
         if i>1:
             rll=1
         for fval in np.unique(rgs.f):
-            sel = rgs[(rgs.peclet == pe) & (rgs.f == fval) &  (rgs.contact == ctc) & (rgs.roll == rll)  & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol)]
+            sel = rgs[(rgs.peclet == pe) & (rgs.f == fval) &  (rgs.contact == ctc) & (rgs.roll == rll)  & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol) & (rgs.d_pass == dpass)]
             ax[i].errorbar(sel.n.values, sel.rg_mean.values, yerr=sel.rg_std.values, c=cmap.to_rgba(fval), linestyle="",
                            marker="o",label=f"{fval}")
 
@@ -304,7 +331,7 @@ def R_g_n_fig(ri=0,rf=10,nmol=1,pe=2.3):
 
     fig.savefig(output_dir / f"R_g_n_pe{pe}.png", bbox_inches="tight",dpi=300)
 
-def R_g_f_fig(ri=0,rf=10,nmol=1, pe=2.3):
+def R_g_f_fig(ri=0,rf=10,nmol=1, pe=2.3,dpass=0):
     nplots = 3
 
     fig = plt.figure(figsize=(5*nplots, 5))
@@ -323,7 +350,7 @@ def R_g_f_fig(ri=0,rf=10,nmol=1, pe=2.3):
         if i>1:
             rll=1
         for nval in np.unique(rgs.n):
-            sel = rgs[(rgs.peclet == pe) & (rgs.n == nval) &  (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol)]
+            sel = rgs[(rgs.peclet == pe) & (rgs.n == nval) &  (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol) & (rgs.d_pass == dpass)]
             ax[i].errorbar(sel.f.values, sel.rg_mean.values, yerr=sel.rg_std.values, c=cmap.to_rgba(nval), linestyle="",
                            marker="o",label=f"{nval}")
 
@@ -346,7 +373,7 @@ def R_g_f_fig(ri=0,rf=10,nmol=1, pe=2.3):
 
     fig.savefig(output_dir / f"R_g_f_pe{pe}.png", bbox_inches="tight",dpi=300)
 
-def R_g_nf_fig(ri=0,rf=10,nmol=1,pe=2.3):
+def R_g_nf_fig(ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     nplots = 1
     fmin = 15
     arr = np.linspace(fmin, 90)
@@ -366,7 +393,7 @@ def R_g_nf_fig(ri=0,rf=10,nmol=1,pe=2.3):
                 ctc = 1
             if j > 1:
                 rll = 1
-            sel = rgs[(rgs.peclet == pe) & (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol)]
+            sel = rgs[(rgs.peclet == pe) & (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol)] & (rgs.d_pass == dpass)
             ax[i].errorbar(sel.f.values*sel.n.values, sel.rg_mean.values, yerr=sel.rg_std.values, c=colors[j], linestyle="",
                            marker=ms[j],label=labs[j])
 
@@ -394,7 +421,7 @@ def R_g_nf_fig(ri=0,rf=10,nmol=1,pe=2.3):
 
     fig.savefig(output_dir / f"R_g_nf_pe{pe}.png", bbox_inches="tight",dpi=300)
 
-def arm_ete_n_fig(ri=0,rf=10,nmol=1,pe=2.3):
+def arm_ete_n_fig(ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     nplots = 3
 
     fig = plt.figure(figsize=(5*nplots, 5))
@@ -413,7 +440,7 @@ def arm_ete_n_fig(ri=0,rf=10,nmol=1,pe=2.3):
         if i>1:
             rll=1
         for fval in np.unique(rgs.f):
-            sel = rgs[(rgs.peclet == pe) & (rgs.f == fval) &  (rgs.contact == ctc) & (rgs.roll == rll)  & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol)]
+            sel = rgs[(rgs.peclet == pe) & (rgs.f == fval) &  (rgs.contact == ctc) & (rgs.roll == rll)  & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol) & (rgs.d_pass == dpass)]
             ax[i].errorbar(sel.n.values, sel.armete_mean.values, yerr=sel.armete_std.values, c=cmap.to_rgba(fval), linestyle="",
                            marker="o",label=f"{fval}")
 
@@ -436,7 +463,7 @@ def arm_ete_n_fig(ri=0,rf=10,nmol=1,pe=2.3):
 
     fig.savefig(output_dir / f"arm_ete_n_pe{pe}.png", bbox_inches="tight",dpi=300)
 
-def arm_ete_f_fig(ri=0,rf=10,nmol=1,pe=2.3):
+def arm_ete_f_fig(ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     nplots = 3
 
     fig = plt.figure(figsize=(5*nplots, 5))
@@ -455,7 +482,7 @@ def arm_ete_f_fig(ri=0,rf=10,nmol=1,pe=2.3):
         if i>1:
             rll=1
         for nval in np.unique(rgs.n):
-            sel = rgs[(rgs.peclet == pe) & (rgs.n == nval) &  (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol)]
+            sel = rgs[(rgs.peclet == pe) & (rgs.n == nval) &  (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol) & (rgs.d_pass == dpass)]
             ax[i].errorbar(sel.f.values, sel.armete_mean.values, yerr=sel.armete_std.values, c=cmap.to_rgba(nval), linestyle="",
                            marker="o",label=f"{nval}")
 
@@ -478,7 +505,7 @@ def arm_ete_f_fig(ri=0,rf=10,nmol=1,pe=2.3):
 
     fig.savefig(output_dir / f"arm_ete_f_pe{pe}.png", bbox_inches="tight",dpi=300)
 
-def arm_ete_nf_fig(ri=0,rf=10,nmol=1,pe=2.3):
+def arm_ete_nf_fig(ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     nplots = 1
 
     fig = plt.figure(figsize=(5*nplots, 5))
@@ -496,7 +523,7 @@ def arm_ete_nf_fig(ri=0,rf=10,nmol=1,pe=2.3):
                 ctc = 1
             if j > 1:
                 rll = 1
-            sel = rgs[(rgs.peclet == pe) & (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol)]
+            sel = rgs[(rgs.peclet == pe) & (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol) & (rgs.d_pass == dpass)]
             ax[i].errorbar(sel.f.values*sel.n.values, sel.armete_mean.values, yerr=sel.armete_std.values, c=colors[j], linestyle="",
                            marker=ms[j],label=labs[j])
 
@@ -518,7 +545,7 @@ def arm_ete_nf_fig(ri=0,rf=10,nmol=1,pe=2.3):
 
     fig.savefig(output_dir / f"arm_ete_nf_pe{pe}.png", bbox_inches="tight",dpi=300)
 
-def asph_f_fig(ri=0,rf=10,nmol=1,pe=2.3):
+def asph_f_fig(ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     nplots = 3
 
     fig = plt.figure(figsize=(5*nplots, 5))
@@ -537,7 +564,7 @@ def asph_f_fig(ri=0,rf=10,nmol=1,pe=2.3):
         if i>1:
             rll=1
         for nval in np.unique(rgs.n):
-            sel = rgs[(rgs.peclet == pe) & (rgs.n == nval) &  (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol)]
+            sel = rgs[(rgs.peclet == pe) & (rgs.n == nval) &  (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol) & (rgs.d_pass == dpass)]
             ax[i].errorbar(sel.f.values, sel.asph_mean.values, yerr=sel.asph_std.values, c=cmap.to_rgba(nval), linestyle="",
                            marker="o",label=f"{nval}")
 
@@ -560,7 +587,7 @@ def asph_f_fig(ri=0,rf=10,nmol=1,pe=2.3):
 
     fig.savefig(output_dir / f"asph_f_pe{pe}.png", bbox_inches="tight",dpi=300)
 
-def vctc_n_fig(ri=0,rf=10,nmol=2,pe=2.3):
+def vctc_n_fig(ri=0,rf=10,nmol=2,pe=2.3,dpass=0):
     nplots = 3
     fmin=8
     arr = np.array([fmin, 16])
@@ -580,7 +607,7 @@ def vctc_n_fig(ri=0,rf=10,nmol=2,pe=2.3):
         if i>1:
             rll=1
         for fval in np.unique(rgs.f):
-            sel = rgs[(rgs.peclet == pe) & (rgs.f == fval) &  (rgs.contact == ctc) & (rgs.roll == rll)  & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol)]
+            sel = rgs[(rgs.peclet == pe) & (rgs.f == fval) &  (rgs.contact == ctc) & (rgs.roll == rll)  & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol) & (rgs.d_pass == dpass)]
             ax[i].errorbar(sel.n.values, sel.v_ctc_mean.values, yerr=sel.v_ctc_std.values, c=cmap.to_rgba(fval), linestyle="",
                            marker="o",label=f"{fval}")
 
@@ -613,7 +640,7 @@ def vctc_n_fig(ri=0,rf=10,nmol=2,pe=2.3):
 
     fig.savefig(output_dir / f"c_v_n_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
-def vctc_f_fig(ri=0,rf=10,nmol=2,pe=2.3):
+def vctc_f_fig(ri=0,rf=10,nmol=2,pe=2.3,dpass=0):
     nplots = 3
 
     fig = plt.figure(figsize=(5*nplots, 5))
@@ -632,7 +659,7 @@ def vctc_f_fig(ri=0,rf=10,nmol=2,pe=2.3):
         if i>1:
             rll=1
         for nval in np.unique(rgs.n):
-            sel = rgs[(rgs.peclet == pe) & (rgs.n == nval) &  (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol)]
+            sel = rgs[(rgs.peclet == pe) & (rgs.n == nval) &  (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol) & (rgs.d_pass == dpass)]
             ax[i].errorbar(sel.f.values, sel.v_ctc_mean.values, yerr=sel.v_ctc_std.values, c=cmap.to_rgba(nval), linestyle="",
                            marker="o",label=f"{nval}")
 
@@ -655,7 +682,7 @@ def vctc_f_fig(ri=0,rf=10,nmol=2,pe=2.3):
 
     fig.savefig(output_dir / f"c_v_f_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
-def clrt_n_fig(ri=0,rf=10,nmol=2,pe=2.3):
+def clrt_n_fig(ri=0,rf=10,nmol=2,pe=2.3,dpass=0):
     nplots = 3
     fmin=8
     arr = np.array([fmin, 16])
@@ -675,7 +702,7 @@ def clrt_n_fig(ri=0,rf=10,nmol=2,pe=2.3):
         if i>1:
             rll=1
         for fval in np.unique(rgs.f):
-            sel = rgs[(rgs.peclet == pe) & (rgs.f == fval) &  (rgs.contact == ctc) & (rgs.roll == rll)  & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol)]
+            sel = rgs[(rgs.peclet == pe) & (rgs.f == fval) &  (rgs.contact == ctc) & (rgs.roll == rll)  & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol) & (rgs.d_pass == dpass)]
             ax[i].errorbar(sel.n.values, sel.clrt_mean.values, yerr=sel.clrt_std.values, c=cmap.to_rgba(fval), linestyle="",
                            marker="o",label=f"{fval}")
 
@@ -708,7 +735,7 @@ def clrt_n_fig(ri=0,rf=10,nmol=2,pe=2.3):
 
     fig.savefig(output_dir / f"r_c_n_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
-def clrt_f_fig(ri=0,rf=10,nmol=2,pe=2.3):
+def clrt_f_fig(ri=0,rf=10,nmol=2,pe=2.3,dpass=0):
     nplots = 3
 
     fig = plt.figure(figsize=(5*nplots, 5))
@@ -727,7 +754,7 @@ def clrt_f_fig(ri=0,rf=10,nmol=2,pe=2.3):
         if i>1:
             rll=1
         for nval in np.unique(rgs.n):
-            sel = rgs[(rgs.peclet == pe) & (rgs.n == nval) &  (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol)]
+            sel = rgs[(rgs.peclet == pe) & (rgs.n == nval) &  (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol) & (rgs.d_pass == dpass)]
             ax[i].errorbar(sel.f.values, sel.clrt_mean.values, yerr=sel.clrt_std.values, c=cmap.to_rgba(nval), linestyle="",
                            marker="o",label=f"{nval}")
 
@@ -750,7 +777,7 @@ def clrt_f_fig(ri=0,rf=10,nmol=2,pe=2.3):
 
     fig.savefig(output_dir / f"r_c_f_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
-def chull_n_fig(ri=0,rf=10,nmol=2,pe=2.3):
+def chull_n_fig(ri=0,rf=10,nmol=2,pe=2.3,dpass=0):
     nplots = 3
     fmin=8
     arr = np.array([fmin, 16])
@@ -770,7 +797,7 @@ def chull_n_fig(ri=0,rf=10,nmol=2,pe=2.3):
         if i>1:
             rll=1
         for fval in np.unique(rgs.f):
-            sel = rgs[(rgs.peclet == pe) & (rgs.f == fval) &  (rgs.contact == ctc) & (rgs.roll == rll)  & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol)]
+            sel = rgs[(rgs.peclet == pe) & (rgs.f == fval) &  (rgs.contact == ctc) & (rgs.roll == rll)  & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol) & (rgs.d_pass == dpass)]
             ax[i].errorbar(sel.n.values, sel.chull_mean.values, yerr=sel.chull_std.values, c=cmap.to_rgba(fval), linestyle="",
                            marker="o",label=f"{fval}")
 
@@ -803,7 +830,7 @@ def chull_n_fig(ri=0,rf=10,nmol=2,pe=2.3):
 
     fig.savefig(output_dir / f"c_h_n_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
-def chull_f_fig(ri=0,rf=10,nmol=2,pe=2.3):
+def chull_f_fig(ri=0,rf=10,nmol=2,pe=2.3,dpass=0):
     nplots = 3
 
     fig = plt.figure(figsize=(5*nplots, 5))
@@ -822,7 +849,7 @@ def chull_f_fig(ri=0,rf=10,nmol=2,pe=2.3):
         if i>1:
             rll=1
         for nval in np.unique(rgs.n):
-            sel = rgs[(rgs.peclet == pe) & (rgs.n == nval) &  (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol)]
+            sel = rgs[(rgs.peclet == pe) & (rgs.n == nval) &  (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol) & (rgs.d_pass == dpass)]
             ax[i].errorbar(sel.f.values, sel.chull_mean.values, yerr=sel.chull_std.values, c=cmap.to_rgba(nval), linestyle="",
                            marker="o",label=f"{nval}")
 
@@ -845,7 +872,7 @@ def chull_f_fig(ri=0,rf=10,nmol=2,pe=2.3):
 
     fig.savefig(output_dir / f"c_h_f_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
-def rad_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
+def rad_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     cmap = cmapper(np.max(rgs.f),min=np.min(rgs.f))
     nplots = 3
 
@@ -863,7 +890,7 @@ def rad_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
         dr=all_bin[column][1]-all_bin[column][0]
         rad_means = all_rad[column].iloc[equil:].mean() / (2 * np.pi * all_bin[column] * dr)*diam**2*np.pi/4
 
-        if fake_details["n_beads"] == n_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe:
+        if fake_details["n_beads"] == n_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] == dpass:
             if fake_details["contact"] == 0:
                 ax[0].plot(all_bin[column], rad_means, label=fake_f, c=cmap.to_rgba(fake_f))
             elif fake_details["contact"] == 1 and fake_details["rolling"] == 0:
@@ -889,7 +916,7 @@ def rad_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
 
     fig.savefig(output_dir / f"rad_n{n_want:d}_pe{pe}.png", bbox_inches="tight",dpi=300)
 
-def rad_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
+def rad_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     cmap = cmapper(np.max(rgs.n),min=np.min(rgs.n))
     nplots = 3
 
@@ -907,7 +934,7 @@ def rad_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
         dr = all_bin[column][1] - all_bin[column][0]
         rad_means = all_rad[column].iloc[equil:].mean() / (2 * np.pi * all_bin[column] *dr)*diam**2*np.pi/4
 
-        if fake_details["functionality"] == f_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe:
+        if fake_details["functionality"] == f_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] == dpass:
             if fake_details["contact"] == 0:
                 ax[0].plot(all_bin[column], rad_means, label=fake_n, c=cmap.to_rgba(fake_n))
             elif fake_details["contact"] == 1 and fake_details["rolling"] == 0:
@@ -933,7 +960,7 @@ def rad_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
 
     fig.savefig(output_dir / f"rad_f{f_want:d}_pe{pe}.png", bbox_inches="tight",dpi=300)
 
-def form_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
+def form_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     cmap = cmapper(np.max(rgs.f),min=np.min(rgs.f))
     nplots = 3
 
@@ -955,7 +982,7 @@ def form_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
         except:
             continue
         k_vals = np.logspace(-2, 3, num=len(form_means_norm))/diam
-        if fake_details["n_beads"] == n_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe:
+        if fake_details["n_beads"] == n_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] == dpass:
             if fake_details["contact"] == 0:
                 ax[0].plot(k_vals, form_means_norm, label=fake_f, c=cmap.to_rgba(fake_f))
             elif fake_details["contact"] == 1 and fake_details["rolling"] == 0:
@@ -980,7 +1007,7 @@ def form_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
 
     fig.savefig(output_dir / f"form_n{n_want:d}.png", bbox_inches="tight",dpi=300)
 
-def form_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
+def form_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     cmap = cmapper(np.max(rgs.n),min=np.min(rgs.n))
     nplots = 3
 
@@ -1003,7 +1030,7 @@ def form_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
         except:
             continue
         k_vals = np.logspace(-2, 3, num=len(form_means_norm))/diam
-        if fake_f == f_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe:
+        if fake_f == f_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] == dpass:
             if fake_details["contact"] == 0:
                 ax[0].plot(k_vals, form_means_norm, label=fake_n, c=cmap.to_rgba(fake_n))
             elif fake_details["contact"] == 1 and fake_details["rolling"] == 0:
@@ -1028,7 +1055,7 @@ def form_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
 
     fig.savefig(output_dir / f"form_f{f_want:d}_pe{pe}.png", bbox_inches="tight",dpi=300)
 
-def msd_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
+def msd_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     cmap = cmapper(np.max(rgs.f),min=np.min(rgs.f))
     nplots = 3
 
@@ -1047,7 +1074,7 @@ def msd_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
         msd = all_msd[column]
         msd_std = all_msd_std[column]
 
-        if fake_details["n_beads"] == n_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe:
+        if fake_details["n_beads"] == n_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] == dpass:
             if fake_details["contact"] == 0:
                 ax[0].errorbar(time, msd,yerr=msd_std, label=fake_f, c=cmap.to_rgba(fake_f))
             elif fake_details["contact"] == 1 and fake_details["rolling"] == 0:
@@ -1075,7 +1102,7 @@ def msd_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
 
     fig.savefig(output_dir / f"msd_n{n_want:d}_pe{pe}.png", bbox_inches="tight",dpi=300)
 
-def msd_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
+def msd_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     cmap = cmapper(np.max(rgs.n),min=np.min(rgs.n))
     nplots = 3
 
@@ -1095,7 +1122,7 @@ def msd_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
         msd = all_msd[column]
         msd_std = all_msd_std[column]
 
-        if fake_f == f_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe:
+        if fake_f == f_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] == dpass:
             if fake_details["contact"] == 0:
                 ax[0].errorbar(time, msd,yerr=msd_std, label=fake_n, c=cmap.to_rgba(fake_n))
             elif fake_details["contact"] == 1 and fake_details["rolling"] == 0:
@@ -1123,7 +1150,7 @@ def msd_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
 
     fig.savefig(output_dir / f"msd_f{f_want:d}_pe{pe}.png", bbox_inches="tight",dpi=300)
 
-def msdc_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
+def msdc_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     cmap = cmapper(np.max(rgs.f),min=np.min(rgs.f))
     nplots = 3
 
@@ -1142,7 +1169,7 @@ def msdc_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
         msd = all_msdc[column]
         msd_std = all_msdc_std[column]
 
-        if fake_details["n_beads"] == n_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe:
+        if fake_details["n_beads"] == n_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] == dpass:
             if fake_details["contact"] == 0:
                 ax[0].errorbar(time, msd,yerr=msd_std, label=fake_f, c=cmap.to_rgba(fake_f))
             elif fake_details["contact"] == 1 and fake_details["rolling"] == 0:
@@ -1170,7 +1197,7 @@ def msdc_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
 
     fig.savefig(output_dir / f"msdc_n{n_want:d}_pe{pe}.png", bbox_inches="tight",dpi=300)
 
-def msdc_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
+def msdc_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     cmap = cmapper(np.max(rgs.n),min=np.min(rgs.n))
     nplots = 3
 
@@ -1190,7 +1217,7 @@ def msdc_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
         msd = all_msdc[column]
         msd_std = all_msdc_std[column]
 
-        if fake_f == f_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe:
+        if fake_f == f_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] == dpass:
             if fake_details["contact"] == 0:
                 ax[0].errorbar(time, msd,yerr=msd_std, label=fake_n, c=cmap.to_rgba(fake_n))
             elif fake_details["contact"] == 1 and fake_details["rolling"] == 0:
@@ -1218,7 +1245,7 @@ def msdc_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
 
     fig.savefig(output_dir / f"msdc_f{f_want:d}_pe{pe}.png", bbox_inches="tight",dpi=300)
 
-def rmsd_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
+def rmsd_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     cmap = cmapper(np.max(rgs.f),min=np.min(rgs.f))
     nplots = 3
 
@@ -1237,7 +1264,7 @@ def rmsd_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
         msd = all_rmsd[column]
         msd_std = all_rmsd_std[column]
 
-        if fake_details["n_beads"] == n_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe:
+        if fake_details["n_beads"] == n_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] == dpass:
             if fake_details["contact"] == 0:
                 ax[0].errorbar(time, msd,yerr=msd_std, label=fake_f, c=cmap.to_rgba(fake_f))
             elif fake_details["contact"] == 1 and fake_details["rolling"] == 0:
@@ -1262,7 +1289,7 @@ def rmsd_n_fig(n_want=5,ri=0,rf=10,nmol=1,pe=2.3):
 
     fig.savefig(output_dir / f"rmsd_n{n_want:d}_pe{pe}.png", bbox_inches="tight",dpi=300)
 
-def rmsd_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
+def rmsd_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     cmap = cmapper(np.max(rgs.n),min=np.min(rgs.n))
     nplots = 3
 
@@ -1282,7 +1309,7 @@ def rmsd_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
         msd = all_rmsd[column]
         msd_std = all_rmsd_std[column]
 
-        if fake_f == f_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe:
+        if fake_f == f_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] == dpass:
             if fake_details["contact"] == 0:
                 ax[0].errorbar(time, msd,yerr=msd_std, label=fake_n, c=cmap.to_rgba(fake_n))
             elif fake_details["contact"] == 1 and fake_details["rolling"] == 0:
@@ -1307,7 +1334,7 @@ def rmsd_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3):
 
     fig.savefig(output_dir / f"rmsd_f{f_want:d}_pe{pe}.png", bbox_inches="tight",dpi=300)
 
-def cdists_n_fig(n_want=5,ri=0,rf=10,nmol=2,pe=2.3):
+def cdists_n_fig(n_want=5,ri=0,rf=10,nmol=2,pe=2.3,dpass=0):
     cmap = cmapper(np.max(rgs.f),min=np.min(rgs.f))
     nplots = 3
 
@@ -1328,7 +1355,7 @@ def cdists_n_fig(n_want=5,ri=0,rf=10,nmol=2,pe=2.3):
         bd = (bins[1:] - bins[:-1])
         gr = counts /(2 * np.pi * bm * bd * len(all_cdists[column]))*diam**2*np.pi/4
 
-        if fake_details["n_beads"] == n_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe:
+        if fake_details["n_beads"] == n_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] == dpass:
             if fake_details["contact"] == 0:
                 ax[0].plot(bm,gr, label=fake_f, color=cmap.to_rgba(fake_f))
             elif fake_details["contact"] == 1 and fake_details["rolling"] == 0:
@@ -1354,7 +1381,7 @@ def cdists_n_fig(n_want=5,ri=0,rf=10,nmol=2,pe=2.3):
 
     fig.savefig(output_dir / f"cdists_n{n_want:d}_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
-def cdists_f_fig(f_want=6,ri=0,rf=10,nmol=2,pe=2.3):
+def cdists_f_fig(f_want=6,ri=0,rf=10,nmol=2,pe=2.3,dpass=0):
     cmap = cmapper(np.max(rgs.n),min=np.min(rgs.n))
     nplots = 3
 
@@ -1374,7 +1401,7 @@ def cdists_f_fig(f_want=6,ri=0,rf=10,nmol=2,pe=2.3):
         bd = (bins[1:] - bins[:-1])
         gr = counts /(2 * np.pi * bm * bd * len(all_cdists[column]))*diam**2*np.pi/4
 
-        if fake_details["functionality"] == f_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe:
+        if fake_details["functionality"] == f_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] == dpass:
             if fake_details["contact"] == 0:
 
                 ax[0].plot(bm,gr, label=fake_n, color=cmap.to_rgba(fake_n))
@@ -1401,6 +1428,211 @@ def cdists_f_fig(f_want=6,ri=0,rf=10,nmol=2,pe=2.3):
 
     fig.savefig(output_dir / f"cdists_f{f_want:d}_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
+def effpot_calc(nmol=2,pe=2.3,n_want=15,aut_thresh=.01):
+
+
+    fs = np.sort(rgs.f.unique())
+    ris = np.sort(rgs.r_int.unique()).astype(int)
+
+
+
+    eff_force = np.ones((len(fs),len(ris),3))*np.nan
+    eff_force_std = np.ones((len(fs),len(ris), 3))*np.nan
+    for column in all_cforces:
+
+        fake_pipeline = AnalysisPipeline("mar_" + column)
+        fake_details = fake_pipeline.details
+        if fake_details["r_conf"] == 0 and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] == 0 and fake_details["n_beads"] == n_want:
+            m = np.argwhere(fs == fake_details["functionality"])[0][0]
+            k=np.argwhere(ris==int(fake_details["r_int"]*diam))[0][0]
+
+            if fake_details["contact"]==0 and fake_details["rolling"]==0:
+                i=0
+            elif fake_details["contact"]==1 and fake_details["rolling"]==0:
+                i=1
+            else:
+                i=2
+            eff_force[m,k,i]=np.mean(all_cforces[column])
+            #corr_time=np.argmax(autocorr(all_cforces[column]-eff_force[j,m,k,i])<aut_thresh)
+            #eff_force_std[j,m,k,i]=np.std(all_cdists[column])/np.sqrt(len(all_cforces[column])/corr_time)
+
+    np.savetxt(output_dir / f"effpots//effpot_ri_n{n_want}_pe{pe}_m{nmol}.txt", ris, fmt='%d')
+    np.savetxt(output_dir / f"effpots//effpot_f_n{n_want}_pe{pe}_m{nmol}.txt", fs, fmt='%d')
+    np.save(output_dir / f"effpots//effpot_vals_n{n_want}_pe{pe}_m{nmol}.npy",eff_force)
+    np.save(output_dir / f"effpots//effpot_std_n{n_want}_pe{pe}_m{nmol}.npy", eff_force_std)
+
+
+def effpot_fig(n_want=15, nmol=2, pe=2.3):
+
+    fs=np.loadtxt(output_dir / f"effpots//effpot_f_n{n_want}_pe{pe}_m{nmol}.txt")
+    ris=np.loadtxt(output_dir / f"effpots//effpot_ri_n{n_want}_pe{pe}_m{nmol}.txt")
+    forces=np.load(output_dir / f"effpots//effpot_vals_n{n_want}_pe{pe}_m{nmol}.npy")
+    forces_std = np.load(output_dir / f"effpots//effpot_std_n{n_want}_pe{pe}_m{nmol}.npy")
+
+    nplots = 3
+    cmap = cmapper(len(fs))
+    fig = plt.figure(figsize=(5 * nplots, 5))
+    gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
+
+    ax = []
+    for i in range(nplots):
+        ax.append(fig.add_subplot(gs[:, i:i + 1]))
+
+
+    ax[0].set_ylabel(r"$F$", fontsize=25)
+
+    for i in range(nplots):
+        for j in range(len(fs)):
+            ax[i].errorbar(ris,forces[j,:,i],yerr=forces_std[j,:,i], color=cmap.to_rgba(j),label=fs[j])
+
+    ax[0].legend(title=r"f", title_fontsize=20, fontsize=20)
+
+
+    for i in range(nplots):
+        ax[i].set_title(labs[i],fontsize=25)
+        ax[i].tick_params(axis='y', which='major', labelsize=25)
+        ax[i].tick_params(axis='x', which='major', labelsize=25)
+        ax[i].set_xlabel(r"$r[mm]$", fontsize=25)
+        #ax[i].set_ylim(0,1.2e-3)
+        #ax[i].set_xlim(0, 250)
+        #ax[i].set_xscale("log")
+        #ax[i].set_yscale("log")
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
+
+    fig.savefig(output_dir / f"effpot_n{n_want:d}_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
+
+def hcr_n_fig(nmol=1,rf=10,pe=2.3,n_want=11):
+
+    ns = np.sort(rgs.n.unique())
+    fs = np.sort(rgs.f.unique())
+    dpass = np.sort(rgs.d_pass.unique())
+
+
+
+    hcr = np.ones((len(ns),len(fs),len(dpass), 3))*np.nan
+    hcr_std = np.ones((len(ns),len(fs),len(dpass), 3))*np.nan
+    for column in all_hcr:
+
+        fake_pipeline = AnalysisPipeline("mar_" + column)
+        fake_details = fake_pipeline.details
+        if fake_details["r_conf"] == rf and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] > 0:
+            m = np.argwhere(fs == fake_details["functionality"])[0][0]
+            k=np.argwhere(ns==fake_details["n_beads"])[0][0]
+            j = np.argwhere(np.abs(dpass- fake_details["d_pass"])<1e-8)[0][0]
+
+            if fake_details["contact"]==0 and fake_details["rolling"]==0:
+                i=0
+            elif fake_details["contact"]==1 and fake_details["rolling"]==0:
+                i=1
+            else:
+                i=2
+            hcr[k,m,j,i]=np.mean(all_hcr[column])
+            hcr_std[k,m,j,i]=np.std(all_hcr[column])/np.sqrt(ndecorr)
+            #corr_time=np.argmax(autocorr(all_cforces[column]-eff_force[j,m,k,i])<aut_thresh)
+            #eff_force_std[j,m,k,i]=np.std(all_cdists[column])/np.sqrt(len(all_cforces[column])/corr_time)
+
+    nplots = 3
+    cmap = cmapper(len(fs))
+    fig = plt.figure(figsize=(5 * nplots, 5))
+    gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
+
+    ax = []
+    for i in range(nplots):
+        ax.append(fig.add_subplot(gs[:, i:i + 1]))
+
+
+    ax[0].set_ylabel(r"hcr", fontsize=25)
+
+    for i in range(nplots):
+        for j in range(len(fs)):
+            if np.isnan(hcr[ns==n_want,j,:,i][0]).all():
+                continue
+            ax[i].errorbar(dpass,hcr[ns==n_want,j,:,i][0],yerr=hcr_std[ns==n_want,j,:,i][0], color=cmap.to_rgba(j),label=fs[j], linestyle="",
+                           marker="o")
+
+    ax[0].legend(title=r"f", title_fontsize=20, fontsize=20)
+
+
+    for i in range(nplots):
+        ax[i].set_title(labs[i],fontsize=25)
+        ax[i].tick_params(axis='y', which='major', labelsize=25)
+        ax[i].tick_params(axis='x', which='major', labelsize=25)
+        ax[i].set_xlabel(r"$\phi$", fontsize=25)
+        ax[i].set_ylim(0,0.125)
+        #ax[i].set_xlim(0, 250)
+        #ax[i].set_xscale("log")
+        #ax[i].set_yscale("log")
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
+
+    fig.savefig(output_dir / f"hcr_n{n_want}_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
+
+def hcr_f_fig(nmol=1,rf=10,pe=2.3,f_want=6):
+
+    ns = np.sort(rgs.n.unique())
+    fs = np.sort(rgs.f.unique())
+    dpass = np.sort(rgs.d_pass.unique())
+
+
+
+    hcr = np.ones((len(ns),len(fs),len(dpass), 3))*np.nan
+    hcr_std = np.ones((len(ns),len(fs),len(dpass), 3))*np.nan
+    for column in all_hcr:
+
+        fake_pipeline = AnalysisPipeline("mar_" + column)
+        fake_details = fake_pipeline.details
+        if fake_details["r_conf"] == rf and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] > 0:
+            m = np.argwhere(fs == fake_details["functionality"])[0][0]
+            k=np.argwhere(ns==fake_details["n_beads"])[0][0]
+            j = np.argwhere(np.abs(dpass- fake_details["d_pass"])<1e-8)[0][0]
+
+            if fake_details["contact"]==0 and fake_details["rolling"]==0:
+                i=0
+            elif fake_details["contact"]==1 and fake_details["rolling"]==0:
+                i=1
+            else:
+                i=2
+            hcr[k,m,j,i]=np.mean(all_hcr[column])
+            hcr_std[k,m,j,i]=np.std(all_hcr[column])/np.sqrt(ndecorr)
+            #corr_time=np.argmax(autocorr(all_cforces[column]-eff_force[j,m,k,i])<aut_thresh)
+            #eff_force_std[j,m,k,i]=np.std(all_cdists[column])/np.sqrt(len(all_cforces[column])/corr_time)
+
+    nplots = 3
+    cmap = cmapper(len(fs))
+    fig = plt.figure(figsize=(5 * nplots, 5))
+    gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
+
+    ax = []
+    for i in range(nplots):
+        ax.append(fig.add_subplot(gs[:, i:i + 1]))
+
+
+    ax[0].set_ylabel(r"hcr", fontsize=25)
+
+    for i in range(nplots):
+        for j in range(len(ns)):
+            if np.isnan(hcr[j,fs==f_want,:,i][0]).all():
+                continue
+            ax[i].errorbar(dpass,hcr[j,fs==f_want,:,i][0],yerr=hcr_std[j,fs==f_want,:,i][0], color=cmap.to_rgba(j),label=ns[j], linestyle="",
+                           marker="o")
+
+    ax[0].legend(title=r"n", title_fontsize=20, fontsize=20)
+
+
+    for i in range(nplots):
+        ax[i].set_title(labs[i],fontsize=25)
+        ax[i].tick_params(axis='y', which='major', labelsize=25)
+        ax[i].tick_params(axis='x', which='major', labelsize=25)
+        ax[i].set_xlabel(r"$\phi$", fontsize=25)
+        ax[i].set_ylim(0,0.2)
+        #ax[i].set_xlim(0, 250)
+        #ax[i].set_xscale("log")
+        #ax[i].set_yscale("log")
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
+
+    fig.savefig(output_dir / f"hcr_f{f_want}_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
 
 letters = ["a", "b", "c", "d"]
@@ -1410,7 +1642,15 @@ labs = ["no friction", "contact", "rolling"]
 molwant=1
 rfwant=10
 
-R_g_n_fig(rf=rfwant, nmol=molwant)
+#effpot_calc()
+#effpot_fig()
+hcr_f_fig()
+hcr_f_fig(pe=0)
+hcr_f_fig(f_want=3)
+hcr_f_fig(f_want=3,pe=0)
+plt.show()
+
+"""R_g_n_fig(rf=rfwant, nmol=molwant)
 R_g_f_fig(rf=rfwant, nmol=molwant)
 R_g_nf_fig(rf=rfwant, nmol=molwant)
 arm_ete_n_fig(rf=rfwant, nmol=molwant)
@@ -1470,7 +1710,7 @@ cdists_f_fig(rf=rfwant, nmol=2,f_want=3,pe=0)
 cdists_f_fig(rf=rfwant, nmol=2,f_want=6,pe=0)
 cdists_n_fig(rf=rfwant, nmol=4,pe=0)
 cdists_f_fig(rf=rfwant, nmol=4,f_want=3,pe=0)
-cdists_f_fig(rf=rfwant, nmol=4,f_want=6,pe=0)
+cdists_f_fig(rf=rfwant, nmol=4,f_want=6,pe=0)"""
 
 """msd_n_fig(rf=0, nmol=molwant)
 msd_f_fig(rf=0, nmol=molwant)

@@ -11,6 +11,7 @@ from stelle.IO import get_details
 from stelle.stelle_analysis import MarStatProp
 from stelle.stelle_analysis import MarDynProp
 from stelle.stelle_analysis import MarItrProp
+from stelle.stelle_analysis import MarCapProp
 
 
 class AnalysisPipeline:
@@ -42,6 +43,7 @@ class AnalysisPipeline:
         self._static = None
         self._interaction = None
         self._dynamical = None
+        self._capture = None
         self.cm_mod = cm_mod
 
     def __str__(self):
@@ -112,6 +114,13 @@ class AnalysisPipeline:
             self._interaction = self._interaction.itr_data
         return self._interaction
 
+    @property
+    def capture_properties(self):
+        if self._capture is None:
+            self._capture = MarCapProp(self.traj, self.details)  # self.n_beads*(self.star+1)
+            self._capture = self._capture.cap_data
+        return self._capture
+
     def load_static_properties(self, input_dir):
         fname = self.__str__() + '_static_properties.pqt'
         bname = self.__str__() + '_static_properties_binning.csv'
@@ -149,3 +158,13 @@ class AnalysisPipeline:
         itr = self.interaction_properties
         itr.to_csv(outdir / fname)
         itr.cdf.to_parquet(outdir / cname)
+
+    def load_capture_properties(self, input_dir):
+        fname = self.__str__() + '_capture_properties.csv'
+        self._capture = pd.read_csv(input_dir / fname)
+
+    def save_capture_properties(self, outdir):
+        fname = self.__str__() + '_capture_properties.csv'
+        outdir = self.__mkoutdir(outdir)
+        cap = self.capture_properties
+        cap.to_csv(outdir / fname)

@@ -98,7 +98,7 @@ for i, t in enumerate(timesteps[initial_skip:initial_skip+max_steps]):
                    color=cmap.to_rgba(data.p_idx[data.type == 2]), s=3)
         ax.scatter(data.x[data.type == 3], data.y[data.type == 3], edgecolors="k", color=cmap.to_rgba(data.p_idx[data.type == 3]))
         if details['d_pass'] != 0:
-            ax.scatter(data.x[data.type == 4], data.y[data.type == 4], edgecolors="k", color=cmap.to_rgba(data.p_idx[data.type == 3]))
+            ax.scatter(data.x[data.type == 4], data.y[data.type == 4], edgecolors="k", color="w")
     ax.text(0.01,.95,str(t*dt)+r"$\tau$",color="k",transform=ax.transAxes,fontsize=20)
 
     #if i!=0 and i*nskip!=len(t)-1:

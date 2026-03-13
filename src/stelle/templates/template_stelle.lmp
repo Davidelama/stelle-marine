@@ -238,7 +238,6 @@ include output_append.lmp
 include output_msd.lmp
 include output_forces.lmp
 
-if  "(${int_fix}>0)" then "include freeze_forces.lmp"
 
 #----RUN ------------------------------------------------------#
 timestep ${dt} # needed as it might change in minimize

@@ -36,5 +36,6 @@ if __name__ == '__main__':
                 pipeline.save_interaction_properties(output_dir)
                 pipeline.save_static_properties(output_dir)
                 pipeline.save_dynamical_properties(output_dir)
+                pipeline.save_capture_properties(output_dir)
         else:
             print(f'---Missing data in {sim}, skipping.')

@@ -1,9 +1,10 @@
 #---Output of forces--------------------------------------------#
+fix save_forces cores store/force
 
 variable vx  atom x
 variable vy  atom y
-variable vfx atom fx
-variable vfy atom fy
+variable vfx atom f_save_forces[1]
+variable vfy atom f_save_forces[2]
 
 compute molchunk stars chunk/atom molecule
 
