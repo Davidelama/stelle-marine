@@ -180,7 +180,7 @@ class MarDynProp:
     """
 
     def __init__(self, msd_traj, core_traj, details):
-        self.msd_traj = msd_traj.copy()
+        self.msd_traj = msd_traj.loc[msd_traj["type"] %2 ==1].copy()
         self.core_traj = core_traj.copy()
         self.details = details
         self.msd_data = msd_func(self.msd_traj.copy(), self.details)

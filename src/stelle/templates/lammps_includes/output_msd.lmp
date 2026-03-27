@@ -8,5 +8,5 @@ if              "$f <= $(step)" then &
 variable        s equal next(f)
 
 
-dump            2 stars custom ${dumptime_msd} ${name}_msd.lammpstrj id type xu yu v_theta
+dump            2 all custom ${dumptime_msd} ${name}_msd.lammpstrj id type xu yu v_theta
 dump_modify     2 first yes every v_s append yes sort id format line "%10d %3d %12.6lf %12.6lf %12.6lf"

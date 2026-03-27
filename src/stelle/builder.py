@@ -386,9 +386,18 @@ class LammpsLangevinInput:
         
         """
         mass=1
-        mass_pass=mass*(daisy.details["r_pass"]/.5)**3
-        radius=.5
-        inertia=2/5*mass*radius**2
+        radius = .5
+        inertia = 2 / 5 * mass * radius ** 2
+
+        mass_pass = mass * (daisy.details["r_pass"]/radius)**3
+        inpass= 2/5 * mass_pass * daisy.details["r_pass"]**2
+        gpass= 30 * mass_pass
+        grotpass= 9.5 * inpass
+        Drotpass = 4.4
+        self.tau_pass=1/gpass
+        self.tau_rot_pass=1/grotpass
+
+
         self.timestep = timestep
         self.runtime = int(runtime)
         self.details = daisy.details
@@ -426,12 +435,14 @@ class LammpsLangevinInput:
         self.epsilon = 10.0 * self.details["gamma"]
         self.temp = self.details["Dt"] * self.details["gamma"]
         self.Tr = self.details["Dr"] * self.details["gamma"]
-        self.temp_pass = self.details["Dt_pass"] * self.details["gamma"]
+        self.temp_pass = self.details["Dt_pass"] * gpass
+        self.trot_pass = Drotpass * grotpass
         self.passives = int(self.details["d_pass"]>0)
         if self.brownian == 0:
             self.temp *= mass
             self.Tr *= inertia
             self.temp_pass *= mass_pass
+            self.trot_pass *= inpass
         if self.details["Dt"] == 0:
             self.temp = 0.000001
         if self.details["Dr"] == 0:

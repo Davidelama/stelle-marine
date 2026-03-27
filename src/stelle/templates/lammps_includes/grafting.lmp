@@ -6,6 +6,7 @@ group cores type 1
 group stars subtract all passive
 
 group grafted subtract all free
+fix save_forces cores store/force
 
 
 if "${brownian} > 0" &

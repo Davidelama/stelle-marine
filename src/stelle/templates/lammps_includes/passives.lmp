@@ -2,6 +2,6 @@
 group passive type 4
 
 if "${brownian} > 0" &
-then "fix 30 passive brownian/sphere ${temp_pass} ${seed} gamma_t ${damp} gamma_r 1.0 rotation_temp ${Tr}" &
+then "fix 30 passive brownian/sphere ${temp_pass} ${seed} gamma_t ${damp_pass} gamma_r ${damp_rot_pass} rotation_temp ${trot_pass}" &
 else "fix 20 passive nve/sphere update dipole" &
-"fix 30 passive langevin/trot ${temp_pass} ${temp_pass} ${damp} ${seed} omega yes trot ${Tr} ${Tr} ${damp_rot}"
+"fix 30 passive langevin/trot ${temp_pass} ${temp_pass} ${damp_pass} ${seed} omega yes trot ${trot_pass} ${trot_pass} ${damp_rot_pass}"

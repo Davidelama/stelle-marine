@@ -20,7 +20,7 @@ with open('stelle_parameters.json',"r") as f:
 
 
 nskip=1#per video di tutto usa 200
-time_limit=10
+time_limit=1
 initial_skip=0
 
 diam=15
@@ -99,7 +99,7 @@ for i, t in enumerate(timesteps[initial_skip:initial_skip+max_steps]):
         ax.scatter(data.x[data.type == 3], data.y[data.type == 3], edgecolors="k", color=cmap.to_rgba(data.p_idx[data.type == 3]))
         if details['d_pass'] != 0:
             ax.scatter(data.x[data.type == 4], data.y[data.type == 4], edgecolors="k", color="w")
-    ax.text(0.01,.95,str(t*dt)+r"$\tau$",color="k",transform=ax.transAxes,fontsize=20)
+    ax.text(0.01,.95,f"{t*dt:.2f}"+r"$ \tau$",color="k",transform=ax.transAxes,fontsize=20)
 
     #if i!=0 and i*nskip!=len(t)-1:
     #        vtot=np.sqrt((X[:,(i*nskip+1)]-X[:,(i*nskip-1)])**2+(Y[:,(i*nskip+1)]-Y[:,(i*nskip-1)])**2)
@@ -110,7 +110,7 @@ for i, t in enumerate(timesteps[initial_skip:initial_skip+max_steps]):
 
     
 
-animation = camera.animate(80) #the argument is ms/frame
+animation = camera.animate(50) #the argument is ms/frame
 animation.save("../../data/03_analyzed/video/"+IO.get_name(details)+".mp4")
 
         

@@ -57,10 +57,14 @@ print "----------------------"
 # J Chem Phys 92, 5057 (1990)                                                 #
 #-----------------------------------------------------------------------------#
 #---- PARAMETERS ----------------------#
+#PASSIVES
+variable temp_pass equal {{temp_pass}}
+variable trot_pass equal {{trot_pass}}
+variable damp_pass equal {{tau_pass}}
+variable damp_rot_pass equal {{tau_rot_pass}}*3.3333333
 
 #LJ
 variable temp equal {{temp}}
-variable temp_pass equal {{temp_pass}}
 variable sigma equal 1.0
 variable rcutoff equal {{rcutoff}}
 variable epsilon equal {{epsilon}}

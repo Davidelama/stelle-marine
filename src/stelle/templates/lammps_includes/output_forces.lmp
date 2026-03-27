@@ -1,5 +1,4 @@
 #---Output of forces--------------------------------------------#
-fix save_forces cores store/force
 
 variable vx  atom x
 variable vy  atom y

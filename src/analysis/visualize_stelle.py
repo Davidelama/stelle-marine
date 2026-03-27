@@ -6,6 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
+from numpy.ma.extras import column_stack
 from scipy.optimize import curve_fit
 from matplotlib import gridspec
 from scipy.integrate import simps
@@ -136,7 +137,7 @@ if __name__ == '__main__':
         files_interaction = list(sim.glob('*interaction_properties.csv'))
         files_capture = list(sim.glob('*capture_properties.csv'))
         pipeline = AnalysisPipeline("mar_" + sim.name)
-        if pipeline.details["r_int"]>0 and pipeline.details["d_pass"]==0:
+        if pipeline.details["r_int"]==0:# and pipeline.details["d_pass"]>0 and pipeline.details["n_mol"]==1:
             continue
         #if not (pipeline.graft in graft_want and pipeline.n_beads in n_want and pipeline.functionality in f_want):
         #    continue
@@ -199,11 +200,11 @@ if __name__ == '__main__':
                 col_clrt[sim.name] = itr["close_ratio"]
                 col_chull[sim.name] = itr["hull_intersection"]
 
-        """if len(files_cdf) > 0:
+        if len(files_cdf) > 0:
             for file_cdf in files_cdf:
                 cdf = pd.read_parquet(file_cdf)
                 col_cdists[sim.name] = cdf["dist"]
-                col_cforces[sim.name] = cdf["force"]"""
+                col_cforces[sim.name] = cdf["force"]
 
         if len(files_capture) > 0:
             for file_capture in files_capture:
@@ -237,8 +238,8 @@ all_msdc = pd.concat([pd.Series(data, name=key) for key, data in col_msdc.items(
 all_msdc_std = pd.concat([pd.Series(data, name=key) for key, data in col_msdc_std.items()], axis=1) * diam**2
 all_rmsd = pd.concat([pd.Series(data, name=key) for key, data in col_rmsd.items()], axis=1)
 all_rmsd_std = pd.concat([pd.Series(data, name=key) for key, data in col_rmsd_std.items()], axis=1)
-#all_cdists = pd.concat([pd.Series(data, name=key) for key, data in col_cdists.items()], axis=1) * diam
-#all_cforces = pd.concat([pd.Series(data, name=key) for key, data in col_cforces.items()], axis=1) * diam
+all_cdists = pd.concat([pd.Series(data, name=key) for key, data in col_cdists.items()], axis=1) * diam
+all_cforces = pd.concat([pd.Series(data, name=key) for key, data in col_cforces.items()], axis=1) * diam
 all_hcr = pd.concat([pd.Series(data, name=key) for key, data in col_hcr.items()], axis=1)
 
 rgs["f"] = rg_f.astype(int)
@@ -758,6 +759,8 @@ def clrt_f_fig(ri=0,rf=10,nmol=2,pe=2.3,dpass=0):
             ax[i].errorbar(sel.f.values, sel.clrt_mean.values, yerr=sel.clrt_std.values, c=cmap.to_rgba(nval), linestyle="",
                            marker="o",label=f"{nval}")
 
+
+            np.savetxt(output_dir / f"rc//rc_n{nval}_m{nmol}_pe{pe}_set{i}.txt", column_stack((sel.f.values,sel.clrt_mean.values,sel.clrt_std.values)))
 
     ax[0].set_ylabel(r"$r_c$", fontsize=30)  #+.5
 
@@ -1453,8 +1456,11 @@ def effpot_calc(nmol=2,pe=2.3,n_want=15,aut_thresh=.01):
             else:
                 i=2
             eff_force[m,k,i]=np.mean(all_cforces[column])
-            #corr_time=np.argmax(autocorr(all_cforces[column]-eff_force[j,m,k,i])<aut_thresh)
-            #eff_force_std[j,m,k,i]=np.std(all_cdists[column])/np.sqrt(len(all_cforces[column])/corr_time)
+            #plt.plot(autocorr((all_cforces[column]-eff_force[m,k,i])[:10000]))
+            #plt.axhline(aut_thresh, linestyle='--', color='k')
+            #plt.show()
+            corr_time=np.argmax(autocorr((all_cforces[column]-eff_force[m,k,i])[:10000])<aut_thresh)
+            eff_force_std[m,k,i]=np.std(all_cdists[column])/np.sqrt(len(all_cforces[column])/corr_time)
 
     np.savetxt(output_dir / f"effpots//effpot_ri_n{n_want}_pe{pe}_m{nmol}.txt", ris, fmt='%d')
     np.savetxt(output_dir / f"effpots//effpot_f_n{n_want}_pe{pe}_m{nmol}.txt", fs, fmt='%d')
@@ -1489,11 +1495,12 @@ def effpot_fig(n_want=15, nmol=2, pe=2.3):
 
 
     for i in range(nplots):
+        ax[i].axhline(0, c="k", ls="--", lw=2)
         ax[i].set_title(labs[i],fontsize=25)
         ax[i].tick_params(axis='y', which='major', labelsize=25)
         ax[i].tick_params(axis='x', which='major', labelsize=25)
         ax[i].set_xlabel(r"$r[mm]$", fontsize=25)
-        #ax[i].set_ylim(0,1.2e-3)
+        ax[i].set_ylim(-4e3,7e3)
         #ax[i].set_xlim(0, 250)
         #ax[i].set_xscale("log")
         #ax[i].set_yscale("log")
@@ -1531,6 +1538,12 @@ def hcr_n_fig(nmol=1,rf=10,pe=2.3,n_want=11):
             hcr_std[k,m,j,i]=np.std(all_hcr[column])/np.sqrt(ndecorr)
             #corr_time=np.argmax(autocorr(all_cforces[column]-eff_force[j,m,k,i])<aut_thresh)
             #eff_force_std[j,m,k,i]=np.std(all_cdists[column])/np.sqrt(len(all_cforces[column])/corr_time)
+
+    np.savetxt(output_dir / f"hcr//hcr_dpass_pe{pe}_m{nmol}.txt", dpass, fmt='%d')
+    np.savetxt(output_dir / f"hcr//hcr_f_pe{pe}_m{nmol}.txt", fs, fmt='%d')
+    np.savetxt(output_dir / f"hcr//hcr_n_pe{pe}_m{nmol}.txt", ns, fmt='%d')
+    np.save(output_dir / f"hcr//hcr_vals_pe{pe}_m{nmol}.npy",hcr)
+    np.save(output_dir / f"hcr//hcr_std_pe{pe}_m{nmol}.npy", hcr_std)
 
     nplots = 3
     cmap = cmapper(len(fs))
@@ -1598,6 +1611,12 @@ def hcr_f_fig(nmol=1,rf=10,pe=2.3,f_want=6):
             #corr_time=np.argmax(autocorr(all_cforces[column]-eff_force[j,m,k,i])<aut_thresh)
             #eff_force_std[j,m,k,i]=np.std(all_cdists[column])/np.sqrt(len(all_cforces[column])/corr_time)
 
+    np.savetxt(output_dir / f"hcr//hcr_dpass_pe{pe}_m{nmol}.txt", dpass, fmt='%d')
+    np.savetxt(output_dir / f"hcr//hcr_f_pe{pe}_m{nmol}.txt", fs, fmt='%d')
+    np.savetxt(output_dir / f"hcr//hcr_n_pe{pe}_m{nmol}.txt", ns, fmt='%d')
+    np.save(output_dir / f"hcr//hcr_vals_pe{pe}_m{nmol}.npy",hcr)
+    np.save(output_dir / f"hcr//hcr_std_pe{pe}_m{nmol}.npy", hcr_std)
+
     nplots = 3
     cmap = cmapper(len(fs))
     fig = plt.figure(figsize=(5 * nplots, 5))
@@ -1642,12 +1661,20 @@ labs = ["no friction", "contact", "rolling"]
 molwant=1
 rfwant=10
 
-#effpot_calc()
-#effpot_fig()
-hcr_f_fig()
+"""clrt_f_fig(rf=rfwant, nmol=2)
+clrt_f_fig(rf=rfwant, nmol=2,pe=0)
+clrt_f_fig(rf=rfwant, nmol=4)
+clrt_f_fig(rf=rfwant, nmol=4,pe=0)
+plt.show()"""
+
+effpot_calc()
+effpot_calc(pe=0)
+effpot_fig()
+effpot_fig(pe=0)
+"""hcr_f_fig()
 hcr_f_fig(pe=0)
 hcr_f_fig(f_want=3)
-hcr_f_fig(f_want=3,pe=0)
+hcr_f_fig(f_want=3,pe=0)"""
 plt.show()
 
 """R_g_n_fig(rf=rfwant, nmol=molwant)
