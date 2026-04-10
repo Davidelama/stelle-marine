@@ -123,7 +123,7 @@ if __name__ == '__main__':
     output_dir.mkdir(parents=True, exist_ok=True)
     for sim in sorted(input_dir.glob('*')):
         #print(sim.name)
-        if sim.name == "old" or sim.name==".DS_Store":
+        if sim.name == "old" or sim.name==".DS_Store" or sim.name=="passives_old.zip":
             continue
         outdir = output_dir / sim
         indir = input_dir / sim
@@ -137,7 +137,7 @@ if __name__ == '__main__':
         files_interaction = list(sim.glob('*interaction_properties.csv'))
         files_capture = list(sim.glob('*capture_properties.csv'))
         pipeline = AnalysisPipeline("mar_" + sim.name)
-        if pipeline.details["r_int"]==0:# and pipeline.details["d_pass"]>0 and pipeline.details["n_mol"]==1:
+        if pipeline.details["r_int"]>0:# and pipeline.details["d_pass"]>0 and pipeline.details["n_mol"]==1:
             continue
         #if not (pipeline.graft in graft_want and pipeline.n_beads in n_want and pipeline.functionality in f_want):
         #    continue
@@ -200,11 +200,11 @@ if __name__ == '__main__':
                 col_clrt[sim.name] = itr["close_ratio"]
                 col_chull[sim.name] = itr["hull_intersection"]
 
-        if len(files_cdf) > 0:
+        """if len(files_cdf) > 0:
             for file_cdf in files_cdf:
                 cdf = pd.read_parquet(file_cdf)
                 col_cdists[sim.name] = cdf["dist"]
-                col_cforces[sim.name] = cdf["force"]
+                col_cforces[sim.name] = cdf["force"]"""
 
         if len(files_capture) > 0:
             for file_capture in files_capture:
@@ -238,8 +238,8 @@ all_msdc = pd.concat([pd.Series(data, name=key) for key, data in col_msdc.items(
 all_msdc_std = pd.concat([pd.Series(data, name=key) for key, data in col_msdc_std.items()], axis=1) * diam**2
 all_rmsd = pd.concat([pd.Series(data, name=key) for key, data in col_rmsd.items()], axis=1)
 all_rmsd_std = pd.concat([pd.Series(data, name=key) for key, data in col_rmsd_std.items()], axis=1)
-all_cdists = pd.concat([pd.Series(data, name=key) for key, data in col_cdists.items()], axis=1) * diam
-all_cforces = pd.concat([pd.Series(data, name=key) for key, data in col_cforces.items()], axis=1) * diam
+"""all_cdists = pd.concat([pd.Series(data, name=key) for key, data in col_cdists.items()], axis=1) * diam
+all_cforces = pd.concat([pd.Series(data, name=key) for key, data in col_cforces.items()], axis=1) * diam"""
 all_hcr = pd.concat([pd.Series(data, name=key) for key, data in col_hcr.items()], axis=1)
 
 rgs["f"] = rg_f.astype(int)
@@ -1644,7 +1644,7 @@ def hcr_f_fig(nmol=1,rf=10,pe=2.3,f_want=6):
         ax[i].tick_params(axis='y', which='major', labelsize=25)
         ax[i].tick_params(axis='x', which='major', labelsize=25)
         ax[i].set_xlabel(r"$\phi$", fontsize=25)
-        ax[i].set_ylim(0,0.2)
+        ax[i].set_ylim(0,0.25)
         #ax[i].set_xlim(0, 250)
         #ax[i].set_xscale("log")
         #ax[i].set_yscale("log")
@@ -1667,13 +1667,13 @@ clrt_f_fig(rf=rfwant, nmol=4)
 clrt_f_fig(rf=rfwant, nmol=4,pe=0)
 plt.show()"""
 
-effpot_calc()
+"""effpot_calc()
 effpot_calc(pe=0)
 effpot_fig()
-effpot_fig(pe=0)
-"""hcr_f_fig()
-hcr_f_fig(pe=0)
+effpot_fig(pe=0)"""
+hcr_f_fig()
 hcr_f_fig(f_want=3)
+"""hcr_f_fig(pe=0)
 hcr_f_fig(f_want=3,pe=0)"""
 plt.show()
 

@@ -6,9 +6,9 @@ from builder import logtimer
 
 def job_maker(details):
     
-    runtime = 1e6#2e9#1e10#5e6# #cannot be larger than 2e9!
-    dumptime = 2e4#1e6#1e8#2e4#
-    dumptime_msd = 5e4#2e7#5e4#
+    runtime = 2e9#2e9#5e6# #cannot be larger than 2e9!
+    dumptime = 1e6#1e6#2e4#
+    dumptime_msd = 2e7#2e7#5e4#
     dumptime_angle = 1e4#1e4#2e1#
     restime = 1e8
     

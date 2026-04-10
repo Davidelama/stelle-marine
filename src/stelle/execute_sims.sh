@@ -4,7 +4,7 @@ fs=(003)  #(010 030 060 100 150) # (020 060 120 200 300)#
 rcs=(0.67)
 ris=(4.0) #(4.0 5.0 6.0 7.0 8.0 9.0  10.0 12.0 14.0 16.0 18.0 20.0)
 mols=(001) #008
-suffixes=("_pe2.3_rf10.0_Dt0.010_Dr0.800_gm100_dp0.050_rp0.333_Dp0.015_ctc_rll") #mol pe rf bro Dt Dr gm ri
+suffixes=("_pe2.3_rf10.0_Dt0.010_Dr0.800_gm100_dp0.100_rp0.333_Dp0.015_ctc_rll") #mol pe rf bro Dt Dr gm ri
 for n in "${ns[@]}";
 do
 for f in "${fs[@]}";
@@ -16,7 +16,7 @@ do
 for suffix in "${suffixes[@]}";
 do
 
-name=mar_n"$n"_f"$f"_rc"$rc"_rb1.13_rcb0.57"$suffix" #; #_mols"$mols"_ri"$ri"
+name=mar_n014_f006_rc0.67_rb1.13_rcb0.57_pe2.3_rf10.0_Dt0.010_Dr0.800_gm100_dp0.100_rp0.333_Dp0.015_ctc_rll #mar_n"$n"_f"$f"_rc"$rc"_rb1.13_rcb0.57"$suffix" #; #_mols"$mols"_ri"$ri"
 echo executing $name;
 #mkdir ../../data/01_raw/cycles/"$name"
 cd ../../data/01_raw/stelle/"$name"

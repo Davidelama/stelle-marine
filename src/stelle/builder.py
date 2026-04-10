@@ -451,8 +451,10 @@ class LammpsLangevinInput:
             self.temp_pass = 0.000001
         self.contact = int(self.details["contact"])
         self.rolling=""
+        self.rollingpass = ""
         if self.details["rolling"]:
             self.rolling = "rolling sds ${kn} ${en} 1.0"
+            self.rollingpass = "rolling sds ${knp} ${enp} 10.0"
         self.dtmove = timestep
         self.tmove = 1e5#10*int(1/timestep)
         self.t_force_dump = 1e4
@@ -807,7 +809,10 @@ def pos_init(details,centers,Lx,Ly):
     if (N_part==1):
         coor[0] = np.random.uniform(-Lx * .5, Lx * .5)
         coor[1] = np.random.uniform(-Ly * .5, Ly * .5)
-        while (np.max(cdist([coor],centers)<r_star+r_pass)>0 or np.max(cdist([coor],[[0,0]])>Lx/2-r_pass)>0):
+        cond_in = (np.max(cdist([coor],centers)<r_star+r_pass)>0 or np.max(cdist([coor],[[0,0]])>Lx/2-r_pass)>0)
+        if r_conf == 0:
+            cond_in = np.max(cdist([coor],centers)<r_star+r_pass)>0
+        while cond_in:
             coor[0] = np.random.uniform(-Lx * .5, Lx * .5)
             coor[1] = np.random.uniform(-Ly * .5, Ly * .5)
     else:
@@ -833,7 +838,11 @@ def pos_init(details,centers,Lx,Ly):
                         break
                     coor[count, 0] = (dx - Lx) * .5 + dx * i
                     coor[count, 1] = (dy - Ly) * .5 + dy * j
-                    if (np.max(cdist([coor[count]],centers)<r_star+r_pass)>0 or np.max(cdist([coor[count]],[[0,0]])>Lx/2-r_pass)>0):
+                    cond_in = (np.max(cdist([coor[count]], centers) < r_star + r_pass) > 0 or np.max(
+                        cdist([coor[count]], [[0, 0]]) > Lx / 2 - r_pass) > 0)
+                    if r_conf == 0:
+                        cond_in=(np.max(cdist([coor[count]],centers)<r_star+r_pass)>0)
+                    if cond_in:
                         if dx>Lx/2 and dy>Ly/2:
                             print("Not enough space!")
                             return 0
@@ -844,7 +853,7 @@ def pos_init(details,centers,Lx,Ly):
 
 def pos_test():
     details = {"n_beads": 7, "n_mol": 1, "functionality": 3,
-               "r_conf": 10, "r_bond": 17/15, "r_cbond": (10-1.5)/15, "d_pass": 0.07, "r_pass": 5/15}
+               "r_conf": 0, "r_bond": 17/15, "r_cbond": (10-1.5)/15, "d_pass": 0.07, "r_pass": 5/15}
 
     L = (details["r_cbond"] + (details["n_beads"] + 1) * details["r_bond"]) * 2 * int(
         np.ceil(details["n_mol"] ** (1 / 2)))
@@ -875,6 +884,7 @@ def pos_test():
     ax.set_ylabel("y[mm]", fontsize=20)
     ax.set_aspect(1)
     ax.tick_params(axis='both', which='major', labelsize=20)
+    Lv=L
     if details['r_conf'] != 0:
         Lv=L*np.sqrt(2)
     bigger_diam = Lv

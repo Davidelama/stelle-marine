@@ -13,7 +13,9 @@ if "${contact}==0" then &
 "fix wallm active wall/region Cyl lj126 ${sigma_wall} ${sigma_wall} ${rcutoff_wall}" &
 "fix wallc cores wall/region Cyl lj126 ${sigma_wall_cores} ${sigma_wall_cores} ${rcutoff_wall_cores}" &
 else &
-"fix wall all wall/gran/region granular hertz ${kn} ${en} tangential mindlin_rescale/force ${ktwall} ${er} ${muwall} damping viscoelastic {{rolling}} region Cyl"
+"fix walls stars wall/gran/region granular hertz ${kn} ${en} tangential mindlin_rescale/force ${ktwall} ${er} ${muwall} damping viscoelastic {{rolling}} region Cyl" &
+"fix wallp passive wall/gran/region granular hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktwall} ${erp} ${muwall} damping viscoelastic {{rollingpass}} region Cyl"
+
 fix  9 grafted spring/rg 10.0 0 #${end_radius}
 
 if "(${contact}==0) && (${passives}>0)" then &
@@ -31,7 +33,8 @@ if "${contact}==0" then &
 "unfix wallm" &
 "unfix wallc" &
 else &
-"unfix wall"
+"unfix walls" &
+"unfix wallp"
 
 if "(${contact}==0) && (${passives}>0)" then &
 "unfix wallp"
@@ -42,7 +45,8 @@ if "${contact}==0" then &
 "fix wallm active wall/region finalCyl lj126 ${sigma_wall} ${sigma_wall} ${rcutoff_wall}" &
 "fix wallc cores wall/region finalCyl lj126 ${sigma_wall_cores} ${sigma_wall_cores} ${rcutoff_wall_cores}" &
 else &
-"fix wall all wall/gran/region granular hertz ${kn} ${en} tangential mindlin_rescale/force ${ktwall} ${er} ${muwall} damping viscoelastic {{rolling}} region finalCyl"
+"fix walls stars wall/gran/region granular hertz ${kn} ${en} tangential mindlin_rescale/force ${ktwall} ${er} ${muwall} damping viscoelastic {{rolling}} region finalCyl" &
+"fix wallp passive wall/gran/region granular hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktwall} ${erp} ${muwall} damping viscoelastic {{rollingpass}} region finalCyl"
 
 if "(${contact}==0) && (${passives}>0)" then &
 "fix wallp passive wall/region finalCyl lj126 ${sigma_wall_pass} ${sigma_wall_pass} ${rcutoff_wall_pass}"

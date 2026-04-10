@@ -463,7 +463,7 @@ def msd_func(traj, details):
 
     traj.reset_index(level='timestep', inplace=True)
     times = pd.unique(traj['timestep'])
-    trajlist = np.array([data[data.type != 2][["x", "y"]] for _, data in traj.groupby(["timestep"])])
+    trajlist = np.array([data[data.type %2 ==1][["x", "y"]] for _, data in traj.groupby(["timestep"])])
     trajlistc = np.array([data[data.type == 1][["x", "y"]] for _, data in traj.groupby(["timestep"])])
     utr, utc = np.triu_indices(len(times), 1)
     diffs = np.abs(times[utr] - times[utc])
@@ -483,5 +483,43 @@ def msd_func(traj, details):
     t = frames * dt
     results = pd.DataFrame(columns=["time", "msd_tot", "msd_tot_std", "msd_core", "msd_core_std"],
                                data=np.c_[t, msd, msd_std, msd_c, msd_c_std])
+
+    return results
+
+def msd_pass_func(traj, details):
+    if details['brownian'] == 0:
+        dt = min(0.001, 0.01 / details["gamma"])
+    else:
+        dt = 0.0001
+
+    # plt.hist(traj.theta, range=(-np.pi, np.pi), bins=np.linspace(-np.pi, np.pi, 20))
+    # plt.show()
+
+    tmax = traj.index.max()[1]
+    nmax = int(np.log2(tmax)) + 1
+
+    frames = 2 ** np.arange(nmax)
+    msd = np.zeros(nmax)
+    msd_std = np.zeros(nmax)
+
+    msd_c = np.zeros(nmax)
+    msd_c_std = np.zeros(nmax)
+
+    traj.reset_index(level='timestep', inplace=True)
+    times = pd.unique(traj['timestep'])
+    trajlist = np.array([data[data.type==4][["x", "y"]] for _, data in traj.groupby(["timestep"])])
+    utr, utc = np.triu_indices(len(times), 1)
+    diffs = np.abs(times[utr] - times[utc])
+
+    for i, tval in enumerate(frames):
+        cond = diffs == tval
+        nvals = min(np.sum(cond), tmax // tval)
+        msdval = np.sum((trajlist[utr[cond], :, :] - trajlist[utc[cond], :, :]) ** 2, axis=2)
+        msd[i] = np.mean(msdval)
+        msd_std[i] = np.std(msdval) / np.sqrt(nvals)
+
+    t = frames * dt
+    results = pd.DataFrame(columns=["time", "msd_tot", "msd_tot_std"],
+                               data=np.c_[t, msd, msd_std])
 
     return results
