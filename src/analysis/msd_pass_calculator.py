@@ -47,7 +47,7 @@ param, pcov = curve_fit(lp, t[:-nlast], msd[:-nlast],sigma=msd_std[:-nlast])
 perr = np.sqrt(np.diag(pcov))
 print(param)
 Dv=0.015
-gt=9.5
+gt=30
 m=1
 radius=.5
 mass_pass = m * (details["r_pass"]/radius)**3

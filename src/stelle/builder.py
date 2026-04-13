@@ -391,8 +391,8 @@ class LammpsLangevinInput:
 
         mass_pass = mass * (daisy.details["r_pass"]/radius)**3
         inpass= 2/5 * mass_pass * daisy.details["r_pass"]**2
-        gpass= 30 * mass_pass
-        grotpass= 9.5 * inpass
+        gpass= 30
+        grotpass= 9.5
         Drotpass = 4.4
         self.tau_pass=1/gpass
         self.tau_rot_pass=1/grotpass
