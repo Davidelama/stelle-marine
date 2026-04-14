@@ -153,3 +153,9 @@ This project simulates the behavior of star polymers in 2D using the LAMMPS mole
    - **Example**: `Dt_pass = 0.015`.
    - **Range**: `>0`.
 
+### 20. **Passive Friction Coefficient (`gam_pass`)**
+
+   - If `d_pass>1`, defines the friction coefficient of the **passive particles**.
+   - **Example**: `gam_pass = 30`.
+   - **Range**: `>0`.
+

@@ -50,7 +50,7 @@ def job_maker(details):
 
 sigma=15                    #diameter of bead in mm. This does not enter in the simulation, as it is automatically set to 1, just makes it easier to define the other parameters
 n_mol=1                     #number of molecules (not yet fully implemented)
-n_beads=[13]#[7,9,11,13]#[5,7,9,11,13,15]    #number of beads per arm
+n_beads=[11]#[7,9,11,13]#[5,7,9,11,13,15]    #number of beads per arm
 r_core=20/(2*sigma)         #core radius (units of bead diameters)
 n_restarts=0                #number of times simulation is automatically restarted on cluster
 gh=0                        #molecules do not interact with each other (not yet fully implemented)
@@ -71,9 +71,10 @@ fs=[3,6]#[3,4,5,6]                #number of arms of the star (functionality). T
 r_ints=[0]#[4,5,6,7,8,9,10,12,14,16,18,20]          #calculation of effective interaction between stars in sigma. If r_int>0, this automatically sets mol=2, gh=0, rconf=0, fixes the core positions and outputs their forces
 contact=1                   #if 1, introduces contact friction between particles and walls
 rolling=1                   #if 1, introduce rolling friction in the system
-d_pass=[0.01, 0.03,0.05,0.07,0.1,0.15,0.2]                #if >0, introduce passive particles to be captured by the stars
+d_pass=[0.05]#[0.01, 0.03,0.05,0.07,0.1,0.15,0.2]                #if >0, introduce passive particles to be captured by the stars
 r_pass=5/sigma             #radius of passive particles
-Dt_pass=0.015               #traslational diffusion of passive particles
+Dt_pass=[0.005,0.01,0.015,0.02]               #traslational diffusion of passive particles
+gam_pass=[30,100,150,200]                  #
 
 
 delet=True              #delete old data
@@ -96,7 +97,9 @@ for seed in seeds:
         for nval in n_beads:
             for rint in r_ints:
                 for d_pas in d_pass:
-                    details = {"n_beads": nval, "n_mol": n_mol,"functionality": fval,
-                    "r_core": r_core, "peclet":peclet, "r_conf":r_conf, "r_bond":r_bond, "r_cbond":r_cbond, "r_int":rint, "d_pass":d_pas, "r_pass":r_pass, "Dt_pass":Dt_pass, "seed_start": seed, "ghost":gh, "brownian":brownian, "Dr":Dr, "Dt":Dt, "gamma":gamma, "contact":contact, "rolling":rolling}
+                    for Dt_pas in Dt_pass:
+                        for gam_pas in gam_pass:
+                            details = {"n_beads": nval, "n_mol": n_mol,"functionality": fval,
+                            "r_core": r_core, "peclet":peclet, "r_conf":r_conf, "r_bond":r_bond, "r_cbond":r_cbond, "r_int":rint, "d_pass":d_pas, "r_pass":r_pass, "Dt_pass":Dt_pas, "gam_pass":gam_pas, "seed_start": seed, "ghost":gh, "brownian":brownian, "Dr":Dr, "Dt":Dt, "gamma":gamma, "contact":contact, "rolling":rolling}
 
-                    job_maker(details)
+                            job_maker(details)

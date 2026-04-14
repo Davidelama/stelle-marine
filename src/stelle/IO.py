@@ -313,6 +313,7 @@ def get_details(name):
     d_pass = 0.0
     r_pass = 0.0
     Dt_pass = 0.0
+    gam_pass = 0.0
     brownian = False
     contact = False
     seed_start = None
@@ -347,13 +348,15 @@ def get_details(name):
             r_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "Dp" in el:
             Dt_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
+        if "gp" in el:
+            gam_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "ctc" in el:
             contact = True
         if "rll" in el:
             rolling = True
 
     details = {"n_beads": n_beads, "n_mol": n_mol, "functionality": functionality,
-               "r_core": r_core, "r_bond":r_bond, "r_cbond":r_cbond, "r_conf": r_conf, "peclet": peclet, "brownian": brownian, "Dr": Dr, "Dt": Dt, "gamma": gamma, "r_int":r_int, "d_pass":d_pass, "r_pass":r_pass, "Dt_pass":Dt_pass,"seed_start": seed_start,"ghost": ghost,"contact":contact,"rolling":rolling}
+               "r_core": r_core, "r_bond":r_bond, "r_cbond":r_cbond, "r_conf": r_conf, "peclet": peclet, "brownian": brownian, "Dr": Dr, "Dt": Dt, "gamma": gamma, "r_int":r_int, "d_pass":d_pass, "r_pass":r_pass, "Dt_pass":Dt_pass, "gam_pass":gam_pass,"seed_start": seed_start,"ghost": ghost,"contact":contact,"rolling":rolling}
     # print(details)
     return details
 
@@ -373,6 +376,7 @@ def get_name(details, prefix=True):
     d_pass = details["d_pass"]
     r_pass = details["r_pass"]
     Dt_pass = details["Dt_pass"]
+    gam_pass = details["gam_pass"]
     seed_start = details["seed_start"]
     suff = ""
     pref = "mar_"
@@ -397,7 +401,7 @@ def get_name(details, prefix=True):
     if details["r_int"] > 0:
         suff += f"_ri{r_int:.1f}"
     if details["d_pass"] > 0:
-        suff += f"_dp{d_pass:.3f}_rp{r_pass:.3f}_Dp{Dt_pass:.3f}"
+        suff += f"_dp{d_pass:.3f}_rp{r_pass:.3f}_Dp{Dt_pass:.3f}_gp{gam_pass:.0f}"
     if details["contact"] > 0:
         suff += f"_ctc"
         if details["rolling"] > 0:

@@ -13,9 +13,10 @@
     "Dt": 0.01,
     "gamma": 100,
     "r_int": 0.0,
-    "d_pass": 0.1,
+    "d_pass": 0.05,
     "r_pass": 0.333,
-    "Dt_pass": 0.015,
+    "Dt_pass": 0.005,
+    "gam_pass": 150,
     "seed_start": null,
     "contact": 1,
     "rolling": 1
