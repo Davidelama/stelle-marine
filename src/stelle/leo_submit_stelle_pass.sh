@@ -42,7 +42,7 @@ do
 for suffix in "${suffixes[@]}";
 do
 
-name=mar_n"$n"_f"$f"_rc"$rc"_rb1.13_rcb0.57_pe2.3_rf10.0_Dt0.010_Dr0.800_gm100_dp"$pas"_rp0.333_Dp"$Dpas"_gp"$gpas_knp"$knpas_enp"$enpas_ktp"$ktpas_erp"$erpas_mup"$mupas""$suffix"; #_mols"$mols"_ri"$ri"
+name=mar_n"$n"_f"$f"_rc"$rc"_rb1.13_rcb0.57_pe2.3_rf10.0_Dt0.010_Dr0.800_gm100_dp"$pas"_rp0.333_Dp"$Dpas"_gp"$gpas"_knp"$knpas"_enp"$enpas"_ktp"$ktpas"_erp"$erpas"_mup"$mupas""$suffix"; #_mols"$mols"_ri"$ri"
 echo submitting $name;
 
 cd ../../data/01_raw/stelle/"$name"/
