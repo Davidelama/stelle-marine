@@ -110,6 +110,7 @@ rg_bro = np.array([])
 rg_dpass = np.array([])
 rg_rpass = np.array([])
 rg_Dtpass = np.array([])
+rg_gampass = np.array([])
 rg_seed = np.array([])
 rg_dts = np.array([])
 rgs = pd.DataFrame()
@@ -168,6 +169,7 @@ if __name__ == '__main__':
                 rg_dpass = np.append(rg_dpass, pipeline.details["d_pass"])
                 rg_rpass = np.append(rg_rpass, pipeline.details["r_pass"])
                 rg_Dtpass = np.append(rg_Dtpass, pipeline.details["Dt_pass"])
+                rg_gampass = np.append(rg_gampass, pipeline.details["gam_pass"])
                 rg_dts = np.append(rg_dts, np.shape(static["gyration"]))
                 if np.shape(static["gyration"])[0] < 00:
                     print(sim.name)
@@ -261,6 +263,7 @@ rgs["brownian"] = rg_bro.astype(int)
 rgs["d_pass"] = rg_dpass
 rgs["r_pass"] = rg_rpass
 rgs["Dt_pass"] = rg_Dtpass
+rgs["gam_pass"] = rg_gampass
 rgs["rg_mean"] = all_static.iloc[equil:, :].mean().values*diam
 rgs["rg_std"] = all_static.iloc[equil:, :].std().values*diam/np.sqrt(ndecorr)
 rgs["v_ctc_mean"] = all_vctc.iloc[equil:, :].mean().values
@@ -1653,6 +1656,64 @@ def hcr_f_fig(nmol=1,rf=10,pe=2.3,f_want=6):
 
     fig.savefig(output_dir / f"hcr_f{f_want}_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
+def hcr_var_fig(nmol=1,rf=10,pe=2.3):
+
+    Ds = np.sort(rgs.Dt_pass.unique())
+    gams = np.sort(rgs.gam_pass.unique())
+    fs = np.array([3,6])
+
+
+
+    hcr = np.ones((len(Ds),len(gams), len(fs)))*np.nan
+    hcr_std = np.ones((len(Ds),len(gams), len(fs)))*np.nan
+    for column in all_hcr:
+
+        fake_pipeline = AnalysisPipeline("mar_" + column)
+        fake_details = fake_pipeline.details
+        if fake_details["r_conf"] == rf and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and (np.abs(fake_details["d_pass"] - 0.05)<1e-8) and fake_details["rolling"] > 0 and fake_details["functionality"] in fs:
+            m = np.argwhere(np.abs(Ds - fake_details["Dt_pass"])<1e-8)[0][0]
+            k=np.argwhere(np.abs(gams-fake_details["gam_pass"])<1e-8)[0][0]
+            i = np.argwhere(np.abs(fs-fake_details["functionality"])<1e-8)[0][0]
+            hcr[m,k,i]=np.mean(all_hcr[column])
+            hcr_std[m,k,i]=np.std(all_hcr[column])/np.sqrt(ndecorr)
+            #corr_time=np.argmax(autocorr(all_cforces[column]-eff_force[j,m,k,i])<aut_thresh)
+            #eff_force_std[j,m,k,i]=np.std(all_cdists[column])/np.sqrt(len(all_cforces[column])/corr_time)
+
+
+    nplots = len(fs)
+    cmap = cmapper(np.max(Ds))
+    fig = plt.figure(figsize=(5 * nplots, 5))
+    gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
+
+    ax = []
+    for i in range(nplots):
+        ax.append(fig.add_subplot(gs[:, i:i + 1]))
+
+
+    ax[0].set_ylabel(r"hcr", fontsize=25)
+
+    for i in range(nplots):
+        ax[i].set_title(f"f={fs[i]}", fontsize=25)
+        for j in range(len(Ds)):
+            ax[i].errorbar(gams,hcr[j,:,i],yerr=hcr_std[j,:,i], color=cmap.to_rgba(Ds[j]),label=Ds[j], linestyle="",
+                           marker="o")
+
+    ax[0].legend(title=r"Dt", title_fontsize=20, fontsize=20)
+
+
+    for i in range(nplots):
+
+        ax[i].tick_params(axis='y', which='major', labelsize=25)
+        ax[i].tick_params(axis='x', which='major', labelsize=25)
+        ax[i].set_xlabel(r"$\gamma$", fontsize=25)
+        ax[i].set_ylim(0,0.25)
+        #ax[i].set_xlim(0, 250)
+        #ax[i].set_xscale("log")
+        #ax[i].set_yscale("log")
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
+
+    fig.savefig(output_dir / f"hcr_all_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
 letters = ["a", "b", "c", "d"]
 ms = ["s","o","^","*"]
@@ -1671,10 +1732,11 @@ plt.show()"""
 effpot_calc(pe=0)
 effpot_fig()
 effpot_fig(pe=0)"""
-hcr_f_fig()
-hcr_f_fig(f_want=3)
+"""hcr_f_fig()
+hcr_f_fig(f_want=3)"""
 """hcr_f_fig(pe=0)
 hcr_f_fig(f_want=3,pe=0)"""
+hcr_var_fig()
 plt.show()
 
 """R_g_n_fig(rf=rfwant, nmol=molwant)

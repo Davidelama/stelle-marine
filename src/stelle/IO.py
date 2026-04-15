@@ -314,6 +314,11 @@ def get_details(name):
     r_pass = 0.0
     Dt_pass = 0.0
     gam_pass = 0.0
+    kn_pass = 0.0
+    en_pass = 0.0
+    kt_pass = 0.0
+    er_pass = 0.0
+    mu_pass = 0.0
     brownian = False
     contact = False
     seed_start = None
@@ -350,13 +355,23 @@ def get_details(name):
             Dt_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "gp" in el:
             gam_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
+        if "knp" in el:
+            kn_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
+        if "enp" in el:
+            en_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
+        if "ktp" in el:
+            kt_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
+        if "erp" in el:
+            er_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
+        if "mup" in el:
+            mu_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "ctc" in el:
             contact = True
         if "rll" in el:
             rolling = True
 
     details = {"n_beads": n_beads, "n_mol": n_mol, "functionality": functionality,
-               "r_core": r_core, "r_bond":r_bond, "r_cbond":r_cbond, "r_conf": r_conf, "peclet": peclet, "brownian": brownian, "Dr": Dr, "Dt": Dt, "gamma": gamma, "r_int":r_int, "d_pass":d_pass, "r_pass":r_pass, "Dt_pass":Dt_pass, "gam_pass":gam_pass,"seed_start": seed_start,"ghost": ghost,"contact":contact,"rolling":rolling}
+               "r_core": r_core, "r_bond":r_bond, "r_cbond":r_cbond, "r_conf": r_conf, "peclet": peclet, "brownian": brownian, "Dr": Dr, "Dt": Dt, "gamma": gamma, "r_int":r_int, "d_pass":d_pass, "r_pass":r_pass, "Dt_pass":Dt_pass, "gam_pass":gam_pass, "kn_pass":kn_pass, "en_pass":en_pass, "kt_pass":kt_pass, "er_pass":er_pass, "mu_pass":mu_pass,"seed_start": seed_start,"ghost": ghost,"contact":contact,"rolling":rolling}
     # print(details)
     return details
 
@@ -377,6 +392,11 @@ def get_name(details, prefix=True):
     r_pass = details["r_pass"]
     Dt_pass = details["Dt_pass"]
     gam_pass = details["gam_pass"]
+    kn_pass = details["kn_pass"]
+    en_pass = details["en_pass"]
+    kt_pass = details["kt_pass"]
+    er_pass = details["er_pass"]
+    mu_pass = details["mu_pass"]
     seed_start = details["seed_start"]
     suff = ""
     pref = "mar_"
@@ -402,6 +422,8 @@ def get_name(details, prefix=True):
         suff += f"_ri{r_int:.1f}"
     if details["d_pass"] > 0:
         suff += f"_dp{d_pass:.3f}_rp{r_pass:.3f}_Dp{Dt_pass:.3f}_gp{gam_pass:.0f}"
+        if details["contact"]>0:
+            suff += f"_knp{kn_pass:.0f}_enp{en_pass:.1f}_ktp{kt_pass:.0f}_erp{er_pass:.1f}_mup{mu_pass:.1f}"
     if details["contact"] > 0:
         suff += f"_ctc"
         if details["rolling"] > 0:

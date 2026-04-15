@@ -159,3 +159,33 @@ This project simulates the behavior of star polymers in 2D using the LAMMPS mole
    - **Example**: `gam_pass = 30`.
    - **Range**: `>0`.
 
+### 21. **Passive Normal Contact Spring (`kn_pass`)**
+
+   - If `d_pass>1` and `contact = 1`, defines the normal contact spring coefficient of the **passive particles**.
+   - **Example**: `kn_pass = 1e6`.
+   - **Range**: `>0`.
+
+### 22. **Passive Normal Contact Friction (`en_pass`)**
+
+   - If `d_pass>1` and `contact = 1`, defines the normal contact friction coefficient of the **passive particles**.
+   - **Example**: `en_pass = 50`.
+   - **Range**: `>0`.
+
+### 23. **Passive Tangent Contact Spring (`kt_pass`)**
+
+   - If `d_pass>1` and `contact = 1`, defines the tangent contact spring coefficient of the **passive particles**.
+   - **Example**: `kt_pass = 1e7`.
+   - **Range**: `>0`.
+
+### 24. **Passive Tangent Contact Friction (`er_pass`)**
+
+   - If `d_pass>1` and `contact = 1`, defines the tangent contact friction coefficient of the **passive particles**.
+   - **Example**: `er_pass = 0.1`.
+   - **Range**: `>0`.
+
+### 25. **Passive Static Contact Friction (`mu_pass`)**
+
+   - If `d_pass>1` and `contact = 1`, defines the static contact friction coefficient of the **passive particles**.
+   - **Example**: `mu_pass = 10`.
+   - **Range**: `>0`.
+

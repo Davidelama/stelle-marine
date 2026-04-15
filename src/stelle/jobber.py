@@ -73,8 +73,13 @@ contact=1                   #if 1, introduces contact friction between particles
 rolling=1                   #if 1, introduce rolling friction in the system
 d_pass=[0.05]#[0.01, 0.03,0.05,0.07,0.1,0.15,0.2]                #if >0, introduce passive particles to be captured by the stars
 r_pass=5/sigma             #radius of passive particles
-Dt_pass=[0.005,0.01,0.015,0.02]               #traslational diffusion of passive particles
-gam_pass=[30,100,150,200]                  #
+Dt_pass=[0.015]               #traslational diffusion of passive particles
+gam_pass=[30]                  #friction coefficient of passive particles
+kn_pass=[1e5,1e6]
+en_pass=[50.0,100]
+kt_pass=[1e6,1e7]
+er_pass=[0.1,1.0]
+mu_pass=[1,10.0]
 
 
 delet=True              #delete old data
@@ -99,7 +104,12 @@ for seed in seeds:
                 for d_pas in d_pass:
                     for Dt_pas in Dt_pass:
                         for gam_pas in gam_pass:
-                            details = {"n_beads": nval, "n_mol": n_mol,"functionality": fval,
-                            "r_core": r_core, "peclet":peclet, "r_conf":r_conf, "r_bond":r_bond, "r_cbond":r_cbond, "r_int":rint, "d_pass":d_pas, "r_pass":r_pass, "Dt_pass":Dt_pas, "gam_pass":gam_pas, "seed_start": seed, "ghost":gh, "brownian":brownian, "Dr":Dr, "Dt":Dt, "gamma":gamma, "contact":contact, "rolling":rolling}
+                            for kn_pas in kn_pass:
+                                for en_pas in en_pass:
+                                    for kt_pas in kt_pass:
+                                        for er_pas in er_pass:
+                                            for mu_pas in mu_pass:
+                                                details = {"n_beads": nval, "n_mol": n_mol,"functionality": fval,
+                                                    "r_core": r_core, "peclet":peclet, "r_conf":r_conf, "r_bond":r_bond, "r_cbond":r_cbond, "r_int":rint, "d_pass":d_pas, "r_pass":r_pass, "Dt_pass":Dt_pas, "gam_pass":gam_pas, "kn_pass":kn_pas, "en_pass":en_pas, "kt_pass":kt_pas, "er_pass":er_pas, "mu_pass":mu_pas, "seed_start": seed, "ghost":gh, "brownian":brownian, "Dr":Dr, "Dt":Dt, "gamma":gamma, "contact":contact, "rolling":rolling}
 
-                            job_maker(details)
+                                                job_maker(details)

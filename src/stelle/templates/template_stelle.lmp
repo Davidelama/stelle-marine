@@ -93,11 +93,11 @@ variable mu equal 10.0
 variable ktwall equal 100000.0
 variable muwall equal 1.5
 
-variable knp equal 1000000.0
-variable enp equal 50.0
-variable ktp equal 10000000.0
-variable erp equal 0.1
-variable mup equal 10.0
+variable knp equal {{knp}}
+variable enp equal {{enp}}
+variable ktp equal {{ktp}}
+variable erp equal {{erp}}
+variable mup equal {{mup}}
 
 #---- BOUNDARY CONDITIONS and INPUT DATA ----------------------#
 newton off

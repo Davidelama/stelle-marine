@@ -437,6 +437,11 @@ class LammpsLangevinInput:
         self.temp_pass = self.details["Dt_pass"] * daisy.details["gam_pass"]
         self.trot_pass = Drotpass * grotpass
         self.passives = int(self.details["d_pass"]>0)
+        self.knp = self.details["kn_pass"]
+        self.enp = self.details["en_pass"]
+        self.ktp = self.details["kt_pass"]
+        self.erp = self.details["er_pass"]
+        self.mup = self.details["mu_pass"]
         if self.brownian == 0:
             self.temp *= mass
             self.Tr *= inertia
@@ -453,7 +458,7 @@ class LammpsLangevinInput:
         self.rollingpass = ""
         if self.details["rolling"]:
             self.rolling = "rolling sds ${kn} ${en} 1.0"
-            self.rollingpass = "rolling sds ${knp} ${enp} 10.0"
+            self.rollingpass = "rolling sds ${knp} ${enp} ${mup}"
         self.dtmove = timestep
         self.tmove = 1e5#10*int(1/timestep)
         self.t_force_dump = 1e4
