@@ -74,12 +74,12 @@ rolling=1                   #if 1, introduce rolling friction in the system
 d_pass=[0.05]#[0.01, 0.03,0.05,0.07,0.1,0.15,0.2]                #if >0, introduce passive particles to be captured by the stars
 r_pass=5/sigma             #radius of passive particles
 Dt_pass=[0.015]               #traslational diffusion of passive particles
-gam_pass=[30]                  #friction coefficient of passive particles
-kn_pass=[1e5,1e6]
-en_pass=[50.0,100]
-kt_pass=[1e6,1e7]
-er_pass=[0.1,1.0]
-mu_pass=[1,10.0]
+gam_pass=[10, 30, 100]                  #friction coefficient of passive particles
+kn_pass=[1e5]
+en_pass=[0.1, 0.25, 0.5, 0.75, 1.0]
+kt_pass=[1e6]
+er_pass=[0.1]
+mu_pass=[10.0]
 
 
 delet=True              #delete old data

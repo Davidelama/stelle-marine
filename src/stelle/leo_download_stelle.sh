@@ -28,4 +28,4 @@ scp -i ~/.ssh/id_cineca -r dbreoni0@login.leonardo.cineca.it:~/stelle-marine/dat
 done
 done
 
-#scp -i ~/.ssh/id_cineca -r dbreoni0@login.leonardo.cineca.it:~/stelle-marine/data/01_raw/stelle ../data/01_raw
+#scp -i ~/.ssh/id_cineca -r dbreoni0@login.leonardo.cineca.it:~/stelle-marine/data/01_raw/stelle data/01_raw

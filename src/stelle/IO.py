@@ -423,7 +423,7 @@ def get_name(details, prefix=True):
     if details["d_pass"] > 0:
         suff += f"_dp{d_pass:.3f}_rp{r_pass:.3f}_Dp{Dt_pass:.3f}_gp{gam_pass:.0f}"
         if details["contact"]>0:
-            suff += f"_knp{kn_pass:.0f}_enp{en_pass:.1f}_ktp{kt_pass:.0f}_erp{er_pass:.1f}_mup{mu_pass:.1f}"
+            suff += f"_knp{kn_pass:.0f}_enp{en_pass:.3f}_ktp{kt_pass:.0f}_erp{er_pass:.1f}_mup{mu_pass:.1f}"
     if details["contact"] > 0:
         suff += f"_ctc"
         if details["rolling"] > 0:

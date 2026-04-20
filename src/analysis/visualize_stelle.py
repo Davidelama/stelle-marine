@@ -111,6 +111,11 @@ rg_dpass = np.array([])
 rg_rpass = np.array([])
 rg_Dtpass = np.array([])
 rg_gampass = np.array([])
+rg_knpass = np.array([])
+rg_enpass = np.array([])
+rg_ktpass = np.array([])
+rg_erpass = np.array([])
+rg_mupass = np.array([])
 rg_seed = np.array([])
 rg_dts = np.array([])
 rgs = pd.DataFrame()
@@ -170,6 +175,11 @@ if __name__ == '__main__':
                 rg_rpass = np.append(rg_rpass, pipeline.details["r_pass"])
                 rg_Dtpass = np.append(rg_Dtpass, pipeline.details["Dt_pass"])
                 rg_gampass = np.append(rg_gampass, pipeline.details["gam_pass"])
+                rg_knpass = np.append(rg_knpass, pipeline.details["kn_pass"])
+                rg_enpass = np.append(rg_enpass, pipeline.details["en_pass"])
+                rg_ktpass = np.append(rg_ktpass, pipeline.details["kt_pass"])
+                rg_erpass = np.append(rg_erpass, pipeline.details["er_pass"])
+                rg_mupass = np.append(rg_mupass, pipeline.details["mu_pass"])
                 rg_dts = np.append(rg_dts, np.shape(static["gyration"]))
                 if np.shape(static["gyration"])[0] < 00:
                     print(sim.name)
@@ -264,6 +274,11 @@ rgs["d_pass"] = rg_dpass
 rgs["r_pass"] = rg_rpass
 rgs["Dt_pass"] = rg_Dtpass
 rgs["gam_pass"] = rg_gampass
+rgs["kn_pass"] = rg_knpass
+rgs["en_pass"] = rg_enpass
+rgs["kt_pass"] = rg_ktpass
+rgs["er_pass"] = rg_erpass
+rgs["mu_pass"] = rg_mupass
 rgs["rg_mean"] = all_static.iloc[equil:, :].mean().values*diam
 rgs["rg_std"] = all_static.iloc[equil:, :].std().values*diam/np.sqrt(ndecorr)
 rgs["v_ctc_mean"] = all_vctc.iloc[equil:, :].mean().values
@@ -1715,6 +1730,162 @@ def hcr_var_fig(nmol=1,rf=10,pe=2.3):
 
     fig.savefig(output_dir / f"hcr_all_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
+
+def hcr_ctc_fig(nmol=1,rf=10,pe=2.3,fwant=3):
+
+    kns = np.sort(rgs.kn_pass.unique())[1:]
+    ens = np.sort(rgs.en_pass.unique())[1:]
+    kts = np.sort(rgs.kt_pass.unique())[1:]
+    ers = np.sort(rgs.er_pass.unique())[1:]
+    mus = np.sort(rgs.mu_pass.unique())[1:]
+
+
+
+    hcr = np.ones((len(kns),len(ens),len(kts),len(ers),len(mus)))*np.nan
+    hcr_std = np.ones((len(kns),len(ens),len(kts),len(ers),len(mus)))*np.nan
+    for column in all_hcr:
+
+        fake_pipeline = AnalysisPipeline("mar_" + column)
+        fake_details = fake_pipeline.details
+        if fake_details["r_conf"] == rf and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and (np.abs(fake_details["d_pass"] - 0.05)<1e-8) and fake_details["rolling"] > 0 and fake_details["functionality"] ==fwant:
+            j = np.argwhere(np.abs(kns - fake_details["kn_pass"]) < 1e-8)[0][0]
+            k = np.argwhere(np.abs(ens - fake_details["en_pass"]) < 1e-8)[0][0]
+            l = np.argwhere(np.abs(kts - fake_details["kt_pass"]) < 1e-8)[0][0]
+            m = np.argwhere(np.abs(ers - fake_details["er_pass"]) < 1e-8)[0][0]
+            t = np.argwhere(np.abs(mus - fake_details["mu_pass"]) < 1e-8)[0][0]
+            hcr[j,k,l,m,t]=np.mean(all_hcr[column])
+            hcr_std[j,k,l,m,t]=np.std(all_hcr[column])/np.sqrt(ndecorr)
+            #corr_time=np.argmax(autocorr(all_cforces[column]-eff_force[j,m,k,i])<aut_thresh)
+            #eff_force_std[j,m,k,i]=np.std(all_cdists[column])/np.sqrt(len(all_cforces[column])/corr_time)
+
+    nplots = len(kns)
+    nplots1 = len(kts)
+    cmap = cmapper(len(mus))
+    fig = plt.figure(figsize=(5 * nplots, 5 * nplots1))
+    gs = gridspec.GridSpec(nplots1, nplots, hspace=0, wspace=0)
+
+    ax = []
+    for j in range(nplots1):
+        for i in range(nplots):
+            ax.append(fig.add_subplot(gs[j:j + 1, i:i + 1]))
+
+    fig1 = plt.figure(figsize=(5 * nplots, 5 * nplots1))
+    gs1 = gridspec.GridSpec(nplots1, nplots, hspace=0, wspace=0)
+    ax1 = []
+    for j in range(nplots1):
+        for i in range(nplots):
+            ax1.append(fig1.add_subplot(gs1[j:j + 1, i:i + 1]))
+
+
+    ax[0].set_ylabel(r"hcr", fontsize=25)
+
+    for j in range(nplots):
+        ax[j].set_title(f"kn={kns[j]}", fontsize=25)
+        ax1[j].set_title(f"kn={kns[j]}", fontsize=25)
+        for l in range(nplots1):
+            for t in range(len(mus)):
+                ax[j+nplots*l].errorbar(ers,hcr[j,0,l,:,t],yerr=hcr_std[j,0,l,:,t], color=cmap.to_rgba(t),label=mus[t], linestyle="",
+                           marker="o")
+                ax1[j + nplots * l].errorbar(ers, hcr[j, 1, l, :, t], yerr=hcr_std[j, 0, l, :, t],
+                                            color=cmap.to_rgba(t), label=mus[t], linestyle="",
+                                            marker="o")
+
+    ax[0].legend(title=r"$\mu$", title_fontsize=20, fontsize=20)
+
+
+    for i in range(nplots):
+        for j in range(nplots1):
+            ax[j+nplots*i].tick_params(axis='y', which='major', labelsize=25)
+            ax[j+nplots*i].tick_params(axis='x', which='major', labelsize=25)
+            ax1[j + nplots * i].tick_params(axis='y', which='major', labelsize=25)
+            ax1[j + nplots * i].tick_params(axis='x', which='major', labelsize=25)
+            ax[j + nplots * i].set_ylim(0, 0.25)
+            ax1[j + nplots * i].set_ylim(0, 0.25)
+            #ax[i].set_ylim(0,0.25)
+            #ax[i].set_xlim(0, 250)
+            #ax[i].set_xscale("log")
+            #ax[i].set_yscale("log")
+            if j>0:
+                ax[j + nplots * i].tick_params(which='both', left=False, labelleft=False)
+                ax1[j + nplots * i].tick_params(which='both', left=False, labelleft=False)
+            if i==0:
+                ax[j + nplots * i].tick_params(which='both', bottom=False, labelbottom=False)
+                ax1[j + nplots * i].tick_params(which='both', bottom=False, labelbottom=False)
+            if i>0:
+                ax[j + nplots * i].set_xlabel(r"$er$", fontsize=25)
+                ax1[j + nplots * i].set_xlabel(r"$er$", fontsize=25)
+
+    fig.savefig(output_dir / f"hcr_ctc_f_{fwant}_en{ens[0]}_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
+    fig1.savefig(output_dir / f"hcr_ctc_f_{fwant}_en{ens[1]}_pe{pe}_m{nmol}.png", bbox_inches="tight", dpi=300)
+
+def hcr_ctc_alt_fig(nmol=1,rf=10,pe=2.3):
+
+    kns = np.sort(rgs.kn_pass.unique())[1:]
+    kts = np.sort(rgs.kt_pass.unique())[1:]
+    mus = np.sort(rgs.mu_pass.unique())[1:]
+    fs = np.array([3,6])
+
+
+
+    hcr = np.ones((len(kns),len(fs),len(kts),len(mus)))*np.nan
+    hcr_std = np.ones((len(kns),len(fs),len(kts),len(mus)))*np.nan
+    for column in all_hcr:
+
+        fake_pipeline = AnalysisPipeline("mar_" + column)
+        fake_details = fake_pipeline.details
+        if fake_details["r_conf"] == rf and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and (np.abs(fake_details["d_pass"] - 0.05)<1e-8) and fake_details["rolling"] > 0 and fake_details["functionality"] in [3,6]:
+            i = np.argwhere(np.abs(kns - fake_details["kn_pass"]) < 1e-8)[0][0]
+            j = np.argwhere(np.abs(fs - fake_details["functionality"]) < 1e-8)[0][0]
+            l = np.argwhere(np.abs(kts - fake_details["kt_pass"]) < 1e-8)[0][0]
+            t = np.argwhere(np.abs(mus - fake_details["mu_pass"]) < 1e-8)[0][0]
+            hcr[i,j,l,t]=np.mean(all_hcr[column])
+            hcr_std[i,j,l,t]=np.std(all_hcr[column])/np.sqrt(ndecorr)
+            #corr_time=np.argmax(autocorr(all_cforces[column]-eff_force[j,m,k,i])<aut_thresh)
+            #eff_force_std[j,m,k,i]=np.std(all_cdists[column])/np.sqrt(len(all_cforces[column])/corr_time)
+
+    nplots = len(kns)
+    nplots1 = len(kts)
+    cmap = cmapper(len(mus))
+    fig = plt.figure(figsize=(5 * nplots, 5 * nplots1))
+    gs = gridspec.GridSpec(nplots1, nplots, hspace=0, wspace=0)
+
+    ax = []
+    for j in range(nplots1):
+        for i in range(nplots):
+            ax.append(fig.add_subplot(gs[j:j + 1, i:i + 1]))
+
+
+    ax[0].set_ylabel(r"hcr", fontsize=25)
+
+    for j in range(nplots):
+        ax[j].set_title(f"kn={kns[j]}", fontsize=25)
+        for l in range(nplots1):
+            for t in range(len(mus)):
+                ax[j+nplots*l].errorbar(fs,hcr[j,:,l,t],yerr=hcr_std[j,:,l,t], color=cmap.to_rgba(t),label=mus[t], linestyle="",
+                           marker="o")
+
+    ax[0].legend(title=r"$\mu$", title_fontsize=20, fontsize=20)
+
+
+    for i in range(nplots):
+        for j in range(nplots1):
+            ax[j+nplots*i].tick_params(axis='y', which='major', labelsize=25)
+            ax[j+nplots*i].tick_params(axis='x', which='major', labelsize=25)
+            ax[j + nplots * i].set_ylim(0, 0.25)
+            #ax[i].set_ylim(0,0.25)
+            #ax[i].set_xlim(0, 250)
+            #ax[i].set_xscale("log")
+            #ax[i].set_yscale("log")
+            if j>0:
+                ax[j + nplots * i].tick_params(which='both', left=False, labelleft=False)
+            if i==0:
+                ax[j + nplots * i].tick_params(which='both', bottom=False, labelbottom=False)
+            if i>0:
+                ax[j + nplots * i].set_xlabel(r"$er$", fontsize=25)
+
+    fig.savefig(output_dir / f"hcr_ctc_alt_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
+
+
 letters = ["a", "b", "c", "d"]
 ms = ["s","o","^","*"]
 colors = ["r", "g", "b", "k"]
@@ -1736,7 +1907,7 @@ effpot_fig(pe=0)"""
 hcr_f_fig(f_want=3)"""
 """hcr_f_fig(pe=0)
 hcr_f_fig(f_want=3,pe=0)"""
-hcr_var_fig()
+hcr_ctc_alt_fig()
 plt.show()
 
 """R_g_n_fig(rf=rfwant, nmol=molwant)

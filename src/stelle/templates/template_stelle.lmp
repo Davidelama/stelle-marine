@@ -165,16 +165,16 @@ if "(${contact}==0) && (${passives}>0)" then &
 "pair_coeff 4 4 ${epsilon} ${sigma} ${Delta_pp}"
 
 if "(${contact}>0) && (${passives}>0)" then &
-"pair_coeff 1 4 hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${erp} ${mup} damping viscoelastic {{rollingpass}}" &
-"pair_coeff 2 4 hertz 0.0001 ${enp} tangential mindlin_rescale/force 0.0001 ${erp} ${mup} damping viscoelastic {{rollingpass}}" &
-"pair_coeff 3 4 hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${erp} ${mup} damping viscoelastic {{rollingpass}}" &
-"pair_coeff 4 4 hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${erp} ${mup} damping viscoelastic {{rollingpass}}"
+"pair_coeff 1 4 hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${erp} ${mup} damping coeff_restitution {{rollingpass}}" &
+"pair_coeff 2 4 hertz 0.0001 ${enp} tangential mindlin_rescale/force 0.0001 ${erp} ${mup} damping coeff_restitution {{rollingpass}}" &
+"pair_coeff 3 4 hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${erp} ${mup} damping coeff_restitution {{rollingpass}}" &
+"pair_coeff 4 4 hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${erp} ${mup} damping coeff_restitution {{rollingpass}}"
 
 if "(${contact}>0) && (${int_fix}>0) && (${passives}>0)" then &
-"pair_coeff 1 4 granular hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${erp} ${mup} damping viscoelastic {{rollingpass}}" &
-"pair_coeff 2 4 granular hertz 0.0001 ${enp} tangential mindlin_rescale/force 0.0001 ${erp} ${mup} damping viscoelastic {{rollingpass}}" &
-"pair_coeff 3 4 granular hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${erp} ${mup} damping viscoelastic {{rollingpass}}" &
-"pair_coeff 4 4 granular hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${erp} ${mup} damping viscoelastic {{rollingpass}}" &
+"pair_coeff 1 4 granular hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${erp} ${mup} damping coeff_restitution {{rollingpass}}" &
+"pair_coeff 2 4 granular hertz 0.0001 ${enp} tangential mindlin_rescale/force 0.0001 ${erp} ${mup} damping coeff_restitution {{rollingpass}}" &
+"pair_coeff 3 4 granular hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${erp} ${mup} damping coeff_restitution {{rollingpass}}" &
+"pair_coeff 4 4 granular hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${erp} ${mup} damping coeff_restitution {{rollingpass}}" &
 "pair_coeff 1 4 lj/expand ${epsilon} ${sigma} ${Delta_pc}"
 
 #----BONDED INTERACTIONS: FENE + WCA --#
