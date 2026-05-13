@@ -18,6 +18,8 @@ if __name__ == '__main__':
     output_dir = root_dir / ('data/02_processed/stelle')
     output_dir.mkdir(parents=True, exist_ok=True)
     for sim in input_dir.glob('mar*'):
+        if "video" in str(sim):
+            continue
         outdir = output_dir / sim
         indir = input_dir / sim
         outdir.mkdir(parents=True, exist_ok=True)
@@ -30,7 +32,7 @@ if __name__ == '__main__':
             out = output_dir / str(pipeline)
             out_files = list(out.glob('*'))
             files_pqt = list(out.glob('*.pqt'))
-            if len(out_files)>0:#1000 or (p_details["r_int"]==0):# or (p_details["n_mol"]<2) or (p_details["r_int"]>0):# or (p_details["functionality"]!=15) or (p_details["n_beads"] !=3)
+            if len(out_files)>0: #1000 or (p_details["r_int"]!=0) or (p_details["en_pass"]>1) or (p_details["d_pass"]==0):# or (p_details["n_mol"]<2) or (p_details["r_int"]>0):# or (p_details["functionality"]!=15) or (p_details["n_beads"] !=3)
                 print(f'---Analysis of {sim} already performed, skipping.')
             else:
                 pipeline.save_interaction_properties(output_dir)

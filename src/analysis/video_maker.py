@@ -19,9 +19,16 @@ with open('stelle_parameters.json',"r") as f:
     details = json.load(f)
 
 
-nskip=1#per video di tutto usa 200
+nskip=5#per video di tutto usa 200
 time_limit=1
 initial_skip=0
+
+molcol=True
+armcol=False
+ccol=True
+cols=np.array([(220, 20, 60),(0, 0, 255),(0, 153, 0),(255, 0, 255)])/255
+armcols=np.array([(220, 20, 60),(0, 153, 0),(0, 102, 204), (255, 140, 0), (139, 69, 19), (255, 0, 255)])/255
+corecol=np.array([(255, 160, 0)])/255
 
 diam=15
 if details['r_conf']!=0:
@@ -80,13 +87,39 @@ for i, t in enumerate(timesteps[initial_skip:initial_skip+max_steps]):
     data = grouped.get_group(t)
     if details['r_conf'] != 0:
         ax.scatter(Cx,Cy,s=S,edgecolors= "blue",color="lightblue")
-        ax.scatter(data.x[data.type == 1], data.y[data.type == 1], s=s_core, edgecolors="k", color="w",lw=2)
-        for f in range(0,details["functionality"]*details["n_mol"]):
-            ax.plot(data.x[data.p_idx == f], data.y[data.p_idx == f], color=cmap.to_rgba(f),lw=2)
-        ax.scatter(data.x[data.type == 2], data.y[data.type == 2], s=s2, edgecolors="k", color=cmap.to_rgba(data.p_idx[data.type==2]))
-        ax.scatter(data.x[data.type==3],data.y[data.type==3],s=s,edgecolors= cmap.to_rgba(data.p_idx[data.type==3]),color="w",lw=2)
-        ax.scatter(data.x[data.type == 3] + np.cos(data.theta[data.type == 3]) * diam * .25,
-                   data.y[data.type == 3] + np.sin(data.theta[data.type == 3]) * diam * .25, s=s * .09, color="k")
+        if ccol:
+            ax.scatter(data.x[data.type == 1], data.y[data.type == 1], s=s_core, edgecolors="k", color=corecol,lw=2)
+        else:
+            ax.scatter(data.x[data.type == 1], data.y[data.type == 1], s=s_core, edgecolors="k", color="w", lw=2)
+        if molcol:
+            for f in range(0, details["functionality"] * details["n_mol"]):
+                ax.plot(data.x[data.p_idx == f], data.y[data.p_idx == f], color=cols[f // details["functionality"]],
+                        lw=2)
+            ax.scatter(data.x[data.type == 2], data.y[data.type == 2], s=s2, edgecolors="k",
+                       color=cols[data.p_idx[data.type == 2].values.astype(int) // details["functionality"]])
+            ax.scatter(data.x[data.type == 3], data.y[data.type == 3], s=s,
+                       edgecolors=cols[data.p_idx[data.type == 3].values.astype(int) // details["functionality"]],
+                       color="w", lw=2)
+            ax.scatter(data.x[data.type == 3] + np.cos(data.theta[data.type == 3]) * diam * .25,
+                       data.y[data.type == 3] + np.sin(data.theta[data.type == 3]) * diam * .25, s=s * .09, color="k")
+        elif armcol:
+            for f in range(0, details["functionality"] * details["n_mol"]):
+                ax.plot(data.x[data.p_idx == f], data.y[data.p_idx == f], color=armcols[f], lw=2)
+            ax.scatter(data.x[data.type == 2], data.y[data.type == 2], s=s2, edgecolors="k",
+                       color=armcols[data.p_idx[data.type == 2].values.astype(int)])
+            ax.scatter(data.x[data.type == 3], data.y[data.type == 3], s=s,
+                       edgecolors=armcols[data.p_idx[data.type == 3].values.astype(int)], color="w", lw=2)
+            ax.scatter(data.x[data.type == 3] + np.cos(data.theta[data.type == 3]) * diam * .25,
+                       data.y[data.type == 3] + np.sin(data.theta[data.type == 3]) * diam * .25, s=s * .09, color="k")
+        else:
+            for f in range(0, details["functionality"] * details["n_mol"]):
+                ax.plot(data.x[data.p_idx == f], data.y[data.p_idx == f], color=cmap.to_rgba(f), lw=2)
+            ax.scatter(data.x[data.type == 2], data.y[data.type == 2], s=s2, edgecolors="k",
+                       color=cmap.to_rgba(data.p_idx[data.type == 2]))
+            ax.scatter(data.x[data.type == 3], data.y[data.type == 3], s=s,
+                       edgecolors=cmap.to_rgba(data.p_idx[data.type == 3]), color="w", lw=2)
+            ax.scatter(data.x[data.type == 3] + np.cos(data.theta[data.type == 3]) * diam * .25,
+                       data.y[data.type == 3] + np.sin(data.theta[data.type == 3]) * diam * .25, s=s * .09, color="k")
         if details['d_pass'] != 0:
             ax.scatter(data.x[data.type == 4], data.y[data.type == 4], s=s_pass,
                        edgecolors="k", color="w", lw=2)
@@ -99,7 +132,7 @@ for i, t in enumerate(timesteps[initial_skip:initial_skip+max_steps]):
         ax.scatter(data.x[data.type == 3], data.y[data.type == 3], edgecolors="k", color=cmap.to_rgba(data.p_idx[data.type == 3]))
         if details['d_pass'] != 0:
             ax.scatter(data.x[data.type == 4], data.y[data.type == 4], edgecolors="k", color="w")
-    ax.text(0.01,.95,f"{t*dt:.2f}"+r"$ \tau$",color="k",transform=ax.transAxes,fontsize=20)
+    ax.text(0.01,.95,f"{t*dt:.2f}"+r"$ s$",color="k",transform=ax.transAxes,fontsize=20)
 
     #if i!=0 and i*nskip!=len(t)-1:
     #        vtot=np.sqrt((X[:,(i*nskip+1)]-X[:,(i*nskip-1)])**2+(Y[:,(i*nskip+1)]-Y[:,(i*nskip-1)])**2)
@@ -111,6 +144,6 @@ for i, t in enumerate(timesteps[initial_skip:initial_skip+max_steps]):
     
 
 animation = camera.animate(50) #the argument is ms/frame
-animation.save("../../data/03_analyzed/video/"+IO.get_name(details)+".mp4")
+animation.save("../../data/03_analyzed/video/"+IO.get_name(details)+".gif")
 
         

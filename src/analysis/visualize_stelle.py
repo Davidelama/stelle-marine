@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
-from numpy.ma.extras import column_stack
+from numpy.ma.extras import column_stack, row_stack
 from scipy.optimize import curve_fit
 from matplotlib import gridspec
 from scipy.integrate import simps
@@ -51,6 +51,9 @@ def sqr_root(x, x0):
 
 def three_fifth_root(x, x0):
     return x0 + .588 * x
+
+def three_fourth_root(x, x0):
+    return x0 + 3/4 * x
 
 
 def free_chain(x, f, b):
@@ -143,7 +146,7 @@ if __name__ == '__main__':
         files_interaction = list(sim.glob('*interaction_properties.csv'))
         files_capture = list(sim.glob('*capture_properties.csv'))
         pipeline = AnalysisPipeline("mar_" + sim.name)
-        if pipeline.details["r_int"]>0:# and pipeline.details["d_pass"]>0 and pipeline.details["n_mol"]==1:
+        if pipeline.details["r_int"]>0: #and pipeline.details["d_pass"]>0 :#and pipeline.details["n_mol"]==1:
             continue
         #if not (pipeline.graft in graft_want and pipeline.n_beads in n_want and pipeline.functionality in f_want):
         #    continue
@@ -287,6 +290,8 @@ rgs["clrt_mean"] = all_clrt.iloc[equil:, :].mean().values
 rgs["clrt_std"] = all_clrt.iloc[equil:, :].std().values/np.sqrt(ndecorr)
 rgs["chull_mean"] = all_chull.iloc[equil:, :].mean().values
 rgs["chull_std"] = all_chull.iloc[equil:, :].std().values/np.sqrt(ndecorr)
+rgs["hcr_mean"] = all_hcr.iloc[equil:, :].mean().values
+rgs["hcr_std"] = all_hcr.iloc[equil:, :].std().values/np.sqrt(ndecorr)
 rgs["asph_mean"] = all_asphericity.iloc[equil:, :].mean().values
 rgs["asph_std"] = all_asphericity.iloc[equil:, :].std().values/np.sqrt(ndecorr)
 rgs["armete_mean"] = all_armete.iloc[equil:, :].mean().values*diam
@@ -301,6 +306,8 @@ def R_g_n_fig(ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     nplots = 3
     fmin=8
     arr = np.array([fmin, 16])
+    if rf==0:
+        arr = np.array([20, 70])
     fig = plt.figure(figsize=(5*nplots, 5))
     gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
 
@@ -308,7 +315,9 @@ def R_g_n_fig(ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     for i in range(nplots):
         ax.append(fig.add_subplot(gs[:, i:i + 1]))
 
-    cmap = cmapper(np.max(rgs.f), min=np.min(rgs.f))
+    fs=rgs[rgs.r_conf==rf].f
+    cmap=cmapper(np.max(fs),min=np.min(fs))
+
     for i in range(nplots):
         ctc=0
         rll=0
@@ -316,39 +325,50 @@ def R_g_n_fig(ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
             ctc=1
         if i>1:
             rll=1
-        for fval in np.unique(rgs.f):
+        for fval in np.unique(fs):
             sel = rgs[(rgs.peclet == pe) & (rgs.f == fval) &  (rgs.contact == ctc) & (rgs.roll == rll)  & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol) & (rgs.d_pass == dpass)]
             ax[i].errorbar(sel.n.values, sel.rg_mean.values, yerr=sel.rg_std.values, c=cmap.to_rgba(fval), linestyle="",
                            marker="o",label=f"{fval}")
 
             fcond=sel.n.values>fmin
-            param, pcov = curve_fit(sqr_root, np.log(sel.n.values)[fcond], np.log(sel.rg_mean.values)[fcond],
-                                    sigma=np.log(sel.rg_std.values)[fcond] / sel.rg_mean.values[fcond])
-            perr = np.sqrt(np.diag(pcov))
-            ax[i].plot(arr, np.exp(sqr_root(np.log(arr), *param)), linestyle='--', c=cmap.to_rgba(fval))
+            if len(sel.n.values)>0:
+                if pe==0:
+                    param, pcov = curve_fit(three_fourth_root, np.log(sel.n.values)[fcond], np.log(sel.rg_mean.values)[fcond],
+                                            sigma=np.log(sel.rg_std.values)[fcond] / sel.rg_mean.values[fcond])
+                    perr = np.sqrt(np.diag(pcov))
+                    ax[i].plot(arr, np.exp(three_fourth_root(np.log(arr), *param)), linestyle='--', c=cmap.to_rgba(fval))
+                else:
+                    param, pcov = curve_fit(three_fourth_root, np.log(sel.n.values)[fcond], np.log(sel.rg_mean.values)[fcond],
+                                        sigma=np.log(sel.rg_std.values)[fcond] / sel.rg_mean.values[fcond])
+                    perr = np.sqrt(np.diag(pcov))
+                    ax[i].plot(arr, np.exp(three_fourth_root(np.log(arr), *param)), linestyle='--', c=cmap.to_rgba(fval))
 
 
     ax[0].set_ylabel(r"$R_g[mm]$", fontsize=30)  #+.5
 
     ax[0].legend(title=r"$f$", title_fontsize=25, fontsize=25)
-
-    ax[-1].text(.55, .75, r"$\propto N^{1/2}$", fontsize=25, transform=ax[-1].transAxes)
+    if pe==0:
+        ax[-1].text(.45, .75, r"$\propto N^{3/4}$", fontsize=25, transform=ax[-1].transAxes)
+    else:
+        ax[-1].text(.55, .75, r"$\propto N^{3/4}$", fontsize=25, transform=ax[-1].transAxes)
     for i in range(nplots):
         ax[i].set_title(labs[i],fontsize=25)
         ax[i].text(.05,.9,letters[i],fontsize=30, transform=ax[i].transAxes)
         ax[i].set_ylim(30,100)
-        ax[i].plot(arr, arr ** (1/2) * 20, c="k", ls="--", lw=3)
+        if rf==0:
+            ax[i].set_ylim(30, 300)
+        #ax[i].plot(arr, arr ** (1/2) * 20, c="k", ls="--", lw=3)
 
         #ax[i].set_xlim(0,)
         ax[i].set_xlabel(r"$n$", fontsize=30)
-        ax[i].set_xscale("log")
-        ax[i].set_yscale("log")
+        if i>1:
+            ax[i].set_xscale("log")
+            ax[i].set_yscale("log")
         ax[i].tick_params(axis='y', which='major', labelsize=30)
         ax[i].tick_params(axis='x', which='major', labelsize=30)
         if i>0:
             ax[i].tick_params(which='both', left=False, labelleft=False)
-
-    fig.savefig(output_dir / f"R_g_n_pe{pe}.png", bbox_inches="tight",dpi=300)
+    fig.savefig(output_dir / f"R_g_n_pe{pe}_rf{rf}.png", bbox_inches="tight",dpi=300)
 
 def R_g_f_fig(ri=0,rf=10,nmol=1, pe=2.3,dpass=0):
     nplots = 3
@@ -359,8 +379,8 @@ def R_g_f_fig(ri=0,rf=10,nmol=1, pe=2.3,dpass=0):
     ax = []
     for i in range(nplots):
         ax.append(fig.add_subplot(gs[:, i:i + 1]))
-
-    cmap=cmapper(np.max(rgs.n),min=np.min(rgs.n))
+    ns=rgs[rgs.r_conf==rf].n
+    cmap=cmapper(np.max(ns),min=np.min(ns))
     for i in range(nplots):
         ctc=0
         rll=0
@@ -368,7 +388,7 @@ def R_g_f_fig(ri=0,rf=10,nmol=1, pe=2.3,dpass=0):
             ctc=1
         if i>1:
             rll=1
-        for nval in np.unique(rgs.n):
+        for nval in np.unique(ns):
             sel = rgs[(rgs.peclet == pe) & (rgs.n == nval) &  (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol) & (rgs.d_pass == dpass)]
             ax[i].errorbar(sel.f.values, sel.rg_mean.values, yerr=sel.rg_std.values, c=cmap.to_rgba(nval), linestyle="",
                            marker="o",label=f"{nval}")
@@ -382,6 +402,8 @@ def R_g_f_fig(ri=0,rf=10,nmol=1, pe=2.3,dpass=0):
         ax[i].set_xlabel(r"$f$", fontsize=30)
         ax[i].text(.05,.9,letters[i],fontsize=30, transform=ax[i].transAxes)
         ax[i].set_ylim(0,100)
+        if rf==0:
+            ax[i].set_ylim(0, 300)
         #ax[i].set_xlim(0,)
         #ax[i].set_xscale("log")
         #ax[i].set_yscale("log")
@@ -390,12 +412,14 @@ def R_g_f_fig(ri=0,rf=10,nmol=1, pe=2.3,dpass=0):
         if i>0:
             ax[i].tick_params(which='both', left=False, labelleft=False)
 
-    fig.savefig(output_dir / f"R_g_f_pe{pe}.png", bbox_inches="tight",dpi=300)
+    fig.savefig(output_dir / f"R_g_f_pe{pe}_rf{rf}.png", bbox_inches="tight",dpi=300)
 
 def R_g_nf_fig(ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     nplots = 1
     fmin = 15
     arr = np.linspace(fmin, 90)
+    if rf==0:
+        arr = np.linspace(40, 300)
 
     fig = plt.figure(figsize=(5*nplots, 5))
     gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
@@ -412,7 +436,7 @@ def R_g_nf_fig(ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
                 ctc = 1
             if j > 1:
                 rll = 1
-            sel = rgs[(rgs.peclet == pe) & (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol)] & (rgs.d_pass == dpass)
+            sel = rgs[(rgs.peclet == pe) & (rgs.contact == ctc) & (rgs.roll == rll) & (rgs.brownian == 0) & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol) & (rgs.d_pass == dpass)]
             ax[i].errorbar(sel.f.values*sel.n.values, sel.rg_mean.values, yerr=sel.rg_std.values, c=colors[j], linestyle="",
                            marker=ms[j],label=labs[j])
 
@@ -430,6 +454,8 @@ def R_g_nf_fig(ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
         ax[i].set_xlabel(r"$f\times n$", fontsize=30)
         ax[i].text(.05,.9,letters[i],fontsize=30, transform=ax[i].transAxes)
         ax[i].set_ylim(30,90)
+        if rf==0:
+            ax[i].set_ylim(30, 300)
         #ax[i].set_xlim(0,)
         ax[i].set_xscale("log")
         ax[i].set_yscale("log")
@@ -438,7 +464,7 @@ def R_g_nf_fig(ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
         if i>0:
             ax[i].tick_params(which='both', left=False, labelleft=False)
 
-    fig.savefig(output_dir / f"R_g_nf_pe{pe}.png", bbox_inches="tight",dpi=300)
+    fig.savefig(output_dir / f"R_g_nf_pe{pe}_rf{rf}.png", bbox_inches="tight",dpi=300)
 
 def arm_ete_n_fig(ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     nplots = 3
@@ -947,7 +973,12 @@ def rad_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
     ax = []
     for i in range(nplots):
         ax.append(fig.add_subplot(gs[:, i:i + 1]))
-
+    col=all_bin.iloc[:,0].values
+    rown=np.array([0])
+    colc = all_bin.iloc[:, 0].values
+    rownc = np.array([0])
+    colr = all_bin.iloc[:, 0].values
+    rownr = np.array([0])
     for column in all_rad:
         fake_pipeline = AnalysisPipeline("mar_" + column)
         fake_details = fake_pipeline.details
@@ -958,11 +989,22 @@ def rad_f_fig(f_want=6,ri=0,rf=10,nmol=1,pe=2.3,dpass=0):
         if fake_details["functionality"] == f_want and fake_details["r_conf"] == rf and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] == dpass:
             if fake_details["contact"] == 0:
                 ax[0].plot(all_bin[column], rad_means, label=fake_n, c=cmap.to_rgba(fake_n))
+                rown = np.append(rown, fake_n)
+                col = column_stack([col, rad_means.values])
             elif fake_details["contact"] == 1 and fake_details["rolling"] == 0:
                 ax[1].plot(all_bin[column], rad_means, label=fake_n, c=cmap.to_rgba(fake_n))
+                rownc = np.append(rownc, fake_n)
+                colc = column_stack([colc, rad_means.values])
             else:
                 ax[2].plot(all_bin[column], rad_means, label=fake_n, c=cmap.to_rgba(fake_n))
-
+                rownr=np.append(rownr, fake_n)
+                colr=column_stack([colr,rad_means.values])
+    col=row_stack([rown,col])
+    np.savetxt(output_dir / f"plot_data/rad_f{f_want:d}_pe{pe}.txt",col,delimiter=" ")
+    colc = row_stack([rownc, colc])
+    np.savetxt(output_dir / f"plot_data/rad_f{f_want:d}_pe{pe}_contact.txt", colc, delimiter=" ")
+    colr = row_stack([rownr, colr])
+    np.savetxt(output_dir / f"plot_data/rad_f{f_want:d}_pe{pe}_rolling.txt", colr, delimiter=" ")
     ax[0].legend(title=r"$n$", title_fontsize=20, fontsize=20)
     ax[0].set_ylabel(r"$\phi(r)A_p$", fontsize=25)
 
@@ -1885,6 +1927,61 @@ def hcr_ctc_alt_fig(nmol=1,rf=10,pe=2.3):
 
     fig.savefig(output_dir / f"hcr_ctc_alt_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
+def hcr_ctc_en_fig(nmol=1,rf=10,pe=2.3):
+
+    ens = np.sort(rgs.en_pass.unique())[1:]
+    gps = np.sort(rgs.gam_pass.unique())[1:]
+    fs = np.array([3,6])
+
+
+
+    hcr = np.ones((len(ens),len(fs),len(gps)))*np.nan
+    hcr_std = np.ones((len(ens),len(fs),len(gps)))*np.nan
+    for column in all_hcr:
+
+        fake_pipeline = AnalysisPipeline("mar_" + column)
+        fake_details = fake_pipeline.details
+        if fake_details["r_conf"] == rf and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and (np.abs(fake_details["d_pass"] - 0.05)<1e-8) and fake_details["rolling"] > 0 and fake_details["functionality"] in [3,6]:
+            i = np.argwhere(np.abs(ens - fake_details["en_pass"]) < 1e-8)[0][0]
+            j = np.argwhere(np.abs(fs - fake_details["functionality"]) < 1e-8)[0][0]
+            l = np.argwhere(np.abs(gps - fake_details["gam_pass"]) < 1e-8)[0][0]
+            hcr[i,j,l]=np.mean(all_hcr[column])
+            hcr_std[i,j,l]=np.std(all_hcr[column])/np.sqrt(ndecorr)
+            #corr_time=np.argmax(autocorr(all_cforces[column]-eff_force[j,m,k,i])<aut_thresh)
+            #eff_force_std[j,m,k,i]=np.std(all_cdists[column])/np.sqrt(len(all_cforces[column])/corr_time)
+
+    nplots = len(fs)
+    cmap = cmapper(len(gps))
+    fig = plt.figure(figsize=(5 * nplots , 5 ))
+    gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0)
+
+    ax = []
+    for i in range(nplots):
+        ax.append(fig.add_subplot(gs[0, i:i + 1]))
+
+
+    ax[0].set_ylabel(r"hcr", fontsize=25)
+
+    for j in range(nplots):
+        ax[j].set_title(f"f={fs[j]}", fontsize=25)
+        for t in range(len(gps)):
+            ax[j].errorbar(ens,hcr[:,j,t],yerr=hcr_std[:,j,t], color=cmap.to_rgba(t),label=gps[t], linestyle="",
+                           marker="o")
+
+    ax[0].legend(title=r"$\gamma_p$", title_fontsize=20, fontsize=20)
+
+    ax[0].set_ylabel("$r_c$", fontsize=25)
+    for i in range(nplots):
+        ax[i].set_xlabel("$e$", fontsize=25)
+        ax[i].tick_params(axis='y', which='major', labelsize=25)
+        ax[i].tick_params(axis='x', which='major', labelsize=25)
+        ax[i].set_ylim(0, 0.25)
+        if i>0:
+            ax[i].tick_params(which='both', left=False, labelleft=False)
+
+    fig.savefig(output_dir / f"hcr_ctc_en_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
+
+
 
 letters = ["a", "b", "c", "d"]
 ms = ["s","o","^","*"]
@@ -1903,12 +2000,69 @@ plt.show()"""
 effpot_calc(pe=0)
 effpot_fig()
 effpot_fig(pe=0)"""
-"""hcr_f_fig()
-hcr_f_fig(f_want=3)"""
-"""hcr_f_fig(pe=0)
-hcr_f_fig(f_want=3,pe=0)"""
-hcr_ctc_alt_fig()
+
+
+hcr_f_fig()
+hcr_f_fig(f_want=3)
+hcr_f_fig(pe=0)
+hcr_f_fig(f_want=3,pe=0)
+
+
+R_g_n_fig(rf=0, nmol=1)
+R_g_nf_fig(rf=0, nmol=1)
+
+R_g_n_fig(rf=0, nmol=1,pe=0)
+R_g_nf_fig(rf=0, nmol=1,pe=0)
+
+"""hcr_ctc_alt_fig()"""
+
+"""R_g_f_fig(rf=rfwant, nmol=molwant)
+R_g_nf_fig(rf=rfwant, nmol=molwant)
+R_g_f_fig(rf=rfwant, nmol=molwant,pe=0)
+R_g_nf_fig(rf=rfwant, nmol=molwant,pe=0)
+rad_f_fig(rf=rfwant, nmol=molwant,f_want=3)
+rad_f_fig(rf=rfwant, nmol=molwant,f_want=6)
+rad_f_fig(rf=rfwant, nmol=molwant,f_want=3,pe=0)
+rad_f_fig(rf=rfwant, nmol=molwant,f_want=6,pe=0)
+rad_f_fig(rf=rfwant, nmol=molwant,f_want=3)
+rad_f_fig(rf=rfwant, nmol=molwant)
+rad_f_fig(rf=rfwant, nmol=molwant,f_want=3,pe=0)
+rad_f_fig(rf=rfwant, nmol=molwant,pe=0)
+plt.show()"""
+
+"""clrt_n_fig(rf=rfwant, nmol=4)
+clrt_f_fig(rf=rfwant, nmol=4)"""
+"""
+hcr_ctc_en_fig(nmol=1)
+hcr_ctc_en_fig(pe=0, nmol=1)"""
+
+sel = rgs[(rgs.brownian == 0) & (rgs.r_conf == 10 * diam) & (rgs.r_int == 0) & (
+            rgs.mols == 1) & (rgs.d_pass == 0) & (rgs.n != 14)].reset_index(drop=True)
+
+sel[["f", "n", "peclet", "contact", "roll", "rg_mean", "rg_std"]].to_csv(output_dir / f"plot_data/R_g.txt", sep=' ')
+
+sel = rgs[(rgs.brownian == 0) & (rgs.r_conf == 0) & (rgs.r_int == 0) & (
+            rgs.mols == 1) & (rgs.d_pass == 0) & (rgs.n != 14)].reset_index(drop=True)
+
+sel[["f", "n", "peclet", "contact", "roll", "rg_mean", "rg_std"]].to_csv(output_dir / f"plot_data/R_g_noconf.txt", sep=' ')
+
+sel = rgs[(rgs.brownian == 0) & (rgs.r_conf == 10 * diam) & (rgs.r_int == 0) & (
+            rgs.mols > 1) & (rgs.d_pass == 0) & (rgs.n != 14)].reset_index(drop=True)
+
+sel[["f", "n", "peclet", "contact", "roll", "mols", "clrt_mean", "clrt_std"]].to_csv(output_dir / f"plot_data/r_c.txt", sep=' ')
+
+sel = rgs[(rgs.brownian == 0) & (rgs.r_conf == 10 * diam) & (rgs.r_int == 0) & (
+            rgs.mols == 1) & (rgs.d_pass > 0) & (rgs.n != 14)].reset_index(drop=True)
+
+sel[["f", "n", "peclet", "d_pass", "contact", "roll", "hcr_mean", "hcr_std"]].to_csv(output_dir / f"plot_data/hcr.txt", sep=' ')
 plt.show()
+"""rad_f_fig()
+rad_f_fig(f_want=3)
+rad_f_fig(pe=0)
+rad_f_fig(f_want=3,pe=0)"""
+
+#np.savetxt(output_dir / f"plot_data/R_g.txt",
+#           column_stack([sel.f.values, sel.rg_mean.values, sel.rg_std.values]))
 
 """R_g_n_fig(rf=rfwant, nmol=molwant)
 R_g_f_fig(rf=rfwant, nmol=molwant)

@@ -458,7 +458,7 @@ class LammpsLangevinInput:
         self.rollingpass = ""
         if self.details["rolling"]:
             self.rolling = "rolling sds ${kn} ${en} 1.0"
-            self.rollingpass = "rolling sds ${knp} ${enp} ${mup}"
+            self.rollingpass = "rolling sds ${knp} ${en} 1.0"
         self.dtmove = timestep
         self.tmove = 1e5#10*int(1/timestep)
         self.t_force_dump = 1e4

@@ -6,10 +6,10 @@ from builder import logtimer
 
 def job_maker(details):
     
-    runtime = 2e9#2e9#5e6# #cannot be larger than 2e9!
-    dumptime = 1e6#1e6#2e4#
-    dumptime_msd = 2e7#2e7#5e4#
-    dumptime_angle = 1e4#1e4#2e1#
+    runtime = 2e9#125e5#5e6# #cannot be larger than 2e9!
+    dumptime = 1e6#125e2#2e4#
+    dumptime_msd = 2e7#250e2#5e4#
+    dumptime_angle =1e4#1e3#2e1#
     restime = 1e8
     
     queue="topolCPUQ"
@@ -50,7 +50,7 @@ def job_maker(details):
 
 sigma=15                    #diameter of bead in mm. This does not enter in the simulation, as it is automatically set to 1, just makes it easier to define the other parameters
 n_mol=1                     #number of molecules (not yet fully implemented)
-n_beads=[11]#[7,9,11,13]#[5,7,9,11,13,15]    #number of beads per arm
+n_beads=[11]#[5,7,9,11,13,15]    #number of beads per arm
 r_core=20/(2*sigma)         #core radius (units of bead diameters)
 n_restarts=0                #number of times simulation is automatically restarted on cluster
 gh=0                        #molecules do not interact with each other (not yet fully implemented)
@@ -74,9 +74,9 @@ rolling=1                   #if 1, introduce rolling friction in the system
 d_pass=[0.05]#[0.01, 0.03,0.05,0.07,0.1,0.15,0.2]                #if >0, introduce passive particles to be captured by the stars
 r_pass=5/sigma             #radius of passive particles
 Dt_pass=[0.015]               #traslational diffusion of passive particles
-gam_pass=[10, 30, 100]                  #friction coefficient of passive particles
+gam_pass=[30]                  #friction coefficient of passive particles
 kn_pass=[1e5]
-en_pass=[0.1, 0.25, 0.5, 0.75, 1.0]
+en_pass=[1e-6,1e-5,1e-4,1e-3,1e-2]
 kt_pass=[1e6]
 er_pass=[0.1]
 mu_pass=[10.0]

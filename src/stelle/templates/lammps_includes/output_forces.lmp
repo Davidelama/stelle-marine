@@ -1,10 +1,7 @@
 #---Output of forces--------------------------------------------#
 
-variable vx  atom x
-variable vy  atom y
-variable vfx atom f_save_forces[1]
-variable vfy atom f_save_forces[2]
+compute qts cores property/atom x y
 
-compute molchunk stars chunk/atom molecule
+compute molchunk cores chunk/atom molecule
 
-fix coreout cores ave/chunk ${dumptime_angle} 1 ${dumptime_angle} molchunk v_vx v_vy v_theta v_vfx v_vfy append ${name}_cores.dat
+fix coreout cores ave/chunk ${dumptime_angle} 1 ${dumptime_angle} molchunk c_qts[1] c_qts[2] v_theta f_save_forces[1] f_save_forces[2] append ${name}_cores.dat
