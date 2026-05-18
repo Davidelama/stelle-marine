@@ -317,8 +317,11 @@ def get_details(name):
     kn_pass = 0.0
     en_pass = 0.0
     kt_pass = 0.0
-    er_pass = 0.0
+    et_pass = 0.0
     mu_pass = 0.0
+    kr_pass = 0.0
+    er_pass = 0.0
+    mr_pass = 0.0
     brownian = False
     contact = False
     seed_start = None
@@ -361,17 +364,28 @@ def get_details(name):
             en_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "ktp" in el:
             kt_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
-        if "erp" in el:
-            er_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
+        if "etp" in el:
+            et_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "mup" in el:
             mu_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
+        if "krp" in el:
+            kr_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
+        if "erp" in el:
+            er_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
+        if "mrp" in el:
+            mr_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "ctc" in el:
             contact = True
         if "rll" in el:
             rolling = True
 
     details = {"n_beads": n_beads, "n_mol": n_mol, "functionality": functionality,
-               "r_core": r_core, "r_bond":r_bond, "r_cbond":r_cbond, "r_conf": r_conf, "peclet": peclet, "brownian": brownian, "Dr": Dr, "Dt": Dt, "gamma": gamma, "r_int":r_int, "d_pass":d_pass, "r_pass":r_pass, "Dt_pass":Dt_pass, "gam_pass":gam_pass, "kn_pass":kn_pass, "en_pass":en_pass, "kt_pass":kt_pass, "er_pass":er_pass, "mu_pass":mu_pass,"seed_start": seed_start,"ghost": ghost,"contact":contact,"rolling":rolling}
+               "r_core": r_core, "r_bond":r_bond, "r_cbond":r_cbond, "r_conf": r_conf,
+               "peclet": peclet, "brownian": brownian, "Dr": Dr, "Dt": Dt, "gamma": gamma,
+               "r_int":r_int, "d_pass":d_pass, "r_pass":r_pass, "Dt_pass":Dt_pass, "gam_pass":gam_pass,
+               "kn_pass":kn_pass, "en_pass":en_pass, "kt_pass":kt_pass, "et_pass":et_pass, "mu_pass":mu_pass,
+               "kr_pass":kr_pass, "er_pass":er_pass, "mr_pass":mr_pass, "seed_start": seed_start,"ghost": ghost,
+               "contact":contact,"rolling":rolling}
     # print(details)
     return details
 
@@ -395,8 +409,11 @@ def get_name(details, prefix=True):
     kn_pass = details["kn_pass"]
     en_pass = details["en_pass"]
     kt_pass = details["kt_pass"]
-    er_pass = details["er_pass"]
+    et_pass = details["et_pass"]
     mu_pass = details["mu_pass"]
+    kr_pass = details["kr_pass"]
+    er_pass = details["er_pass"]
+    mr_pass = details["mr_pass"]
     seed_start = details["seed_start"]
     suff = ""
     pref = "mar_"
@@ -423,7 +440,9 @@ def get_name(details, prefix=True):
     if details["d_pass"] > 0:
         suff += f"_dp{d_pass:.3f}_rp{r_pass:.3f}_Dp{Dt_pass:.3f}_gp{gam_pass:.0f}"
         if details["contact"]>0:
-            suff += f"_knp{kn_pass:.0f}_enp{en_pass:.6f}_ktp{kt_pass:.0f}_erp{er_pass:.1f}_mup{mu_pass:.1f}"
+            suff += f"_knp{kn_pass:.0f}_enp{en_pass:.1f}_ktp{kt_pass:.0f}_etp{et_pass:.1f}_mup{mu_pass:.1f}"
+            if details["rolling"]>0:
+                suff += f"_krp{kr_pass:.0f}_erp{er_pass:.1f}_mrp{mr_pass:.1f}"
     if details["contact"] > 0:
         suff += f"_ctc"
         if details["rolling"] > 0:

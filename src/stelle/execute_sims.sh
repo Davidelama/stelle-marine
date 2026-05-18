@@ -16,7 +16,7 @@ do
 for suffix in "${suffixes[@]}";
 do
 
-name=mar_n014_f003_rc0.67_rb1.13_rcb0.57_mols002_pe2.3_Dt0.010_Dr0.800_gm100_ri4.0_ctc_rll #mar_n"$n"_f"$f"_rc"$rc"_rb1.13_rcb0.57"$suffix" #; #_mols"$mols"_ri"$ri"
+name=mar_n011_f003_rc0.67_rb1.13_rcb0.57_pe2.3_rf10.0_Dt0.010_Dr0.800_gm100_dp0.050_rp0.333_Dp0.015_gp30_knp100000_enp10.0_ktp1000000_etp10.0_mup10.0_krp100000_erp10.0_mrp10.0_ctc_rll #mar_n"$n"_f"$f"_rc"$rc"_rb1.13_rcb0.57"$suffix" #; #_mols"$mols"_ri"$ri"
 echo executing $name;
 #mkdir ../../data/01_raw/cycles/"$name"
 cd ../../data/01_raw/stelle/"$name"

@@ -1929,7 +1929,7 @@ def hcr_ctc_alt_fig(nmol=1,rf=10,pe=2.3):
 
 def hcr_ctc_en_fig(nmol=1,rf=10,pe=2.3):
 
-    ens = np.sort(rgs.en_pass.unique())[1:]
+    ens = np.sort(rgs.er_pass.unique())[1:]
     gps = np.sort(rgs.gam_pass.unique())[1:]
     fs = np.array([3,6])
 
@@ -1942,7 +1942,7 @@ def hcr_ctc_en_fig(nmol=1,rf=10,pe=2.3):
         fake_pipeline = AnalysisPipeline("mar_" + column)
         fake_details = fake_pipeline.details
         if fake_details["r_conf"] == rf and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and (np.abs(fake_details["d_pass"] - 0.05)<1e-8) and fake_details["rolling"] > 0 and fake_details["functionality"] in [3,6]:
-            i = np.argwhere(np.abs(ens - fake_details["en_pass"]) < 1e-8)[0][0]
+            i = np.argwhere(np.abs(ens - fake_details["er_pass"]) < 1e-8)[0][0]
             j = np.argwhere(np.abs(fs - fake_details["functionality"]) < 1e-8)[0][0]
             l = np.argwhere(np.abs(gps - fake_details["gam_pass"]) < 1e-8)[0][0]
             hcr[i,j,l]=np.mean(all_hcr[column])
@@ -1972,7 +1972,8 @@ def hcr_ctc_en_fig(nmol=1,rf=10,pe=2.3):
 
     ax[0].set_ylabel("$r_c$", fontsize=25)
     for i in range(nplots):
-        ax[i].set_xlabel("$e$", fontsize=25)
+        ax[i].set_xscale("log")
+        ax[i].set_xlabel("$er$", fontsize=25)
         ax[i].tick_params(axis='y', which='major', labelsize=25)
         ax[i].tick_params(axis='x', which='major', labelsize=25)
         ax[i].set_ylim(0, 0.25)
@@ -2002,10 +2003,10 @@ effpot_fig()
 effpot_fig(pe=0)"""
 
 
-hcr_f_fig()
+"""hcr_f_fig()
 hcr_f_fig(f_want=3)
 hcr_f_fig(pe=0)
-hcr_f_fig(f_want=3,pe=0)
+hcr_f_fig(f_want=3,pe=0)"""
 
 
 R_g_n_fig(rf=0, nmol=1)
@@ -2032,9 +2033,9 @@ plt.show()"""
 
 """clrt_n_fig(rf=rfwant, nmol=4)
 clrt_f_fig(rf=rfwant, nmol=4)"""
-"""
+
 hcr_ctc_en_fig(nmol=1)
-hcr_ctc_en_fig(pe=0, nmol=1)"""
+hcr_ctc_en_fig(pe=0, nmol=1)
 
 sel = rgs[(rgs.brownian == 0) & (rgs.r_conf == 10 * diam) & (rgs.r_int == 0) & (
             rgs.mols == 1) & (rgs.d_pass == 0) & (rgs.n != 14)].reset_index(drop=True)

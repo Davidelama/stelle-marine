@@ -6,10 +6,10 @@ from builder import logtimer
 
 def job_maker(details):
     
-    runtime = 2e9#125e5#5e6# #cannot be larger than 2e9!
-    dumptime = 1e6#125e2#2e4#
-    dumptime_msd = 2e7#250e2#5e4#
-    dumptime_angle =1e4#1e3#2e1#
+    runtime = 125e5#2e9#125e5#5e6# #cannot be larger than 2e9!
+    dumptime = 125e2#1e6#125e2#2e4#
+    dumptime_msd = 250e2#2e7#250e2#5e4#
+    dumptime_angle =1e3#1e4#1e3#2e1#
     restime = 1e8
     
     queue="topolCPUQ"
@@ -67,7 +67,7 @@ gamma=100                   #determines the friction coefficient gamma (choose b
 dt=min(0.001,0.01/gamma)    #timestep in s
 if brownian:                #Brownian dynamics requires a smaller timestep
     dt=0.0001
-fs=[3,6]#[3,4,5,6]                #number of arms of the star (functionality). This is also an example of vector of parameters for multiple simulations
+fs=[3]#[3,4,5,6]                #number of arms of the star (functionality). This is also an example of vector of parameters for multiple simulations
 r_ints=[0]#[4,5,6,7,8,9,10,12,14,16,18,20]          #calculation of effective interaction between stars in sigma. If r_int>0, this automatically sets mol=2, gh=0, rconf=0, fixes the core positions and outputs their forces
 contact=1                   #if 1, introduces contact friction between particles and walls
 rolling=1                   #if 1, introduce rolling friction in the system
@@ -76,10 +76,13 @@ r_pass=5/sigma             #radius of passive particles
 Dt_pass=[0.015]               #traslational diffusion of passive particles
 gam_pass=[30]                  #friction coefficient of passive particles
 kn_pass=[1e5]
-en_pass=[1e-6,1e-5,1e-4,1e-3,1e-2]
+en_pass=[10.0]
 kt_pass=[1e6]
-er_pass=[0.1]
+et_pass=[10.0]
 mu_pass=[10.0]
+kr_pass=[1e5]
+er_pass=[10.0]
+mr_pass=[10.0]
 
 
 delet=True              #delete old data
@@ -107,9 +110,16 @@ for seed in seeds:
                             for kn_pas in kn_pass:
                                 for en_pas in en_pass:
                                     for kt_pas in kt_pass:
-                                        for er_pas in er_pass:
+                                        for et_pas in et_pass:
                                             for mu_pas in mu_pass:
-                                                details = {"n_beads": nval, "n_mol": n_mol,"functionality": fval,
-                                                    "r_core": r_core, "peclet":peclet, "r_conf":r_conf, "r_bond":r_bond, "r_cbond":r_cbond, "r_int":rint, "d_pass":d_pas, "r_pass":r_pass, "Dt_pass":Dt_pas, "gam_pass":gam_pas, "kn_pass":kn_pas, "en_pass":en_pas, "kt_pass":kt_pas, "er_pass":er_pas, "mu_pass":mu_pas, "seed_start": seed, "ghost":gh, "brownian":brownian, "Dr":Dr, "Dt":Dt, "gamma":gamma, "contact":contact, "rolling":rolling}
+                                                for kr_pas in kr_pass:
+                                                    for er_pas in er_pass:
+                                                        for mr_pas in mr_pass:
+                                                            details = {"n_beads": nval, "n_mol": n_mol,"functionality": fval,
+                                                                        "r_core": r_core, "peclet":peclet, "r_conf":r_conf, "r_bond":r_bond, "r_cbond":r_cbond,
+                                                                       "r_int":rint, "d_pass":d_pas, "r_pass":r_pass, "Dt_pass":Dt_pas, "gam_pass":gam_pas,
+                                                                       "kn_pass":kn_pas, "en_pass":en_pas, "kt_pass":kt_pas, "et_pass":et_pas, "mu_pass":mu_pas,
+                                                                       "kr_pass":kr_pas, "er_pass":er_pas, "mr_pass":mr_pas,"seed_start": seed, "ghost":gh,
+                                                                       "brownian":brownian, "Dr":Dr, "Dt":Dt, "gamma":gamma, "contact":contact, "rolling":rolling}
 
-                                                job_maker(details)
+                                                            job_maker(details)
