@@ -6,10 +6,10 @@ from builder import logtimer
 
 def job_maker(details):
     
-    runtime = 125e5#2e9#125e5#5e6# #cannot be larger than 2e9!
-    dumptime = 125e2#1e6#125e2#2e4#
-    dumptime_msd = 250e2#2e7#250e2#5e4#
-    dumptime_angle =1e3#1e4#1e3#2e1#
+    runtime = 2e9#125e5#5e6# #cannot be larger than 2e9!
+    dumptime = 1e6#125e2#2e4#
+    dumptime_msd = 2e7#250e2#5e4#
+    dumptime_angle = 1e4#1e3#2e1#
     restime = 1e8
     
     queue="topolCPUQ"
@@ -76,7 +76,7 @@ r_pass=5/sigma             #radius of passive particles
 Dt_pass=[0.015]               #traslational diffusion of passive particles
 gam_pass=[30]                  #friction coefficient of passive particles
 kn_pass=[1e5]
-en_pass=[10.0]
+en_pass=[1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6]
 kt_pass=[1e6]
 et_pass=[10.0]
 mu_pass=[10.0]

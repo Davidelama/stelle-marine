@@ -8,10 +8,13 @@ pass=(0.050) #(0.010 0.030 0.050 0.070 0.100 0.150 0.200)
 Dpass=(0.015)
 gpass=(30)
 knpass=(100000)
-enpass=(0.000001 0.000010 0.000100 0.001000 0.010000)
+enpass=(1.0 10.0 100.0 1000.0 10000.0 100000.0 1000000.0)
 ktpass=(1000000)
-erpass=(0.1)
+etpass=(10.0)
 mupass=(10.0)
+krpass=(100000)
+erpass=(10.0)
+mrpass=(10.0)
 suffixes=("_ctc_rll") #("" "_ctc" "_ctc_rll")
 for n in "${ns[@]}";
 do
@@ -35,14 +38,20 @@ for enpas in "${enpass[@]}";
 do
 for ktpas in "${ktpass[@]}";
 do
-for erpas in "${erpass[@]}";
+for etpas in "${etpass[@]}";
 do
 for mupas in "${mupass[@]}";
+do
+for krpas in "${krpass[@]}";
+do
+for erpas in "${erpass[@]}";
+do
+for mrpas in "${mrpass[@]}";
 do
 for suffix in "${suffixes[@]}";
 do
 
-name=mar_n"$n"_f"$f"_rc"$rc"_rb1.13_rcb0.57_pe2.3_rf10.0_Dt0.010_Dr0.800_gm100_dp"$pas"_rp0.333_Dp"$Dpas"_gp"$gpas"_knp"$knpas"_enp"$enpas"_ktp"$ktpas"_erp"$erpas"_mup"$mupas""$suffix"; #_mols"$mols"_ri"$ri"
+name=mar_n"$n"_f"$f"_rc"$rc"_rb1.13_rcb0.57_pe2.3_rf10.0_Dt0.010_Dr0.800_gm100_dp"$pas"_rp0.333_Dp"$Dpas"_gp"$gpas"_knp"$knpas"_enp"$enpas"_ktp"$ktpas"_etp"$etpas"_mup"$mupas"_krp"$krpas"_erp"$erpas"_mrp"$mrpas""$suffix"; #_mols"$mols"_ri"$ri"
 echo submitting $name;
 
 cd ../../data/01_raw/stelle/"$name"/
@@ -50,6 +59,9 @@ chmod +x schain.sh
 chmod +x schain_restart.sh
 ./schain.sh
 cd ../../
+done
+done
+done
 done
 done
 done
