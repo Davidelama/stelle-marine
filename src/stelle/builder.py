@@ -445,6 +445,11 @@ class LammpsLangevinInput:
         self.krp = self.details["kr_pass"]
         self.erp = self.details["er_pass"]
         self.mrp = self.details["mr_pass"]
+        self.epsattr = self.details["epsattr"] * self.details["gamma"]
+        self.rcutattr = self.details["rcutattr"]
+        self.attraction=0
+        if self.epsattr>0:
+            self.attraction=1
         if self.brownian == 0:
             self.temp *= mass
             self.Tr *= inertia

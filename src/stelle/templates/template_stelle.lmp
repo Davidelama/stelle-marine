@@ -39,6 +39,7 @@ variable damp_rot equal ${damp}*3.3333333
 variable sdt equal ${dt}*0.1
 variable contact equal {{contact}}
 variable passives equal {{passives}}
+variable attraction equal {{attraction}}
 #---
 print "-> Seed: ${seed}"
 print "-> Stopping after walltime: ${time}"
@@ -68,6 +69,8 @@ variable temp equal {{temp}}
 variable sigma equal 1.0
 variable rcutoff equal {{rcutoff}}
 variable epsilon equal {{epsilon}}
+variable rcutattr equal {{rcutattr}}
+variable epsattr equal {{epsattr}}
 variable Delta_cc equal {{Delta_cc}}
 variable Delta_cm equal {{Delta_cm}}
 variable Delta_pc equal {{Delta_pc}}
@@ -176,6 +179,23 @@ if "(${contact}>0) && (${int_fix}>0) && (${passives}>0)" then &
 "pair_coeff 3 4 granular hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${etp} ${mup} damping viscoelastic {{rollingpass}}" &
 "pair_coeff 4 4 granular hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${etp} ${mup} damping viscoelastic {{rollingpass}}" &
 "pair_coeff 1 4 lj/expand ${epsilon} ${sigma} ${Delta_pc}"
+
+if "(${contact}>0) && (${passives}>0) && (${attraction}>0)" then &
+"pair_style hybrid/overlay granular lj/expand ${rcutattr}" &
+"pair_coeff 1 1 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${et} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 1 2 granular hertz 0.0001 ${en} tangential mindlin_rescale/force 0.0001 ${et} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 1 3 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${et} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 2 2 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${et} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 2 3 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${et} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 3 3 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${et} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 1 4 granular hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${etp} ${mup} damping viscoelastic {{rollingpass}}" &
+"pair_coeff 2 4 granular hertz 0.0001 ${enp} tangential mindlin_rescale/force 0.0001 ${etp} ${mup} damping viscoelastic {{rollingpass}}" &
+"pair_coeff 3 4 granular hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${etp} ${mup} damping viscoelastic {{rollingpass}}" &
+"pair_coeff 4 4 granular hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${etp} ${mup} damping viscoelastic {{rollingpass}}" &
+"pair_coeff 3 4 lj/expand ${epsattr} ${sigma} ${Delta_pm}"
+
+
+
 
 #----BONDED INTERACTIONS: FENE + WCA --#
 #  E= - 0.5 K R0^2 ln[ 1- ((r-Delta)/R0)^2]

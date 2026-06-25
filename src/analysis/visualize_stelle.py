@@ -117,8 +117,11 @@ rg_gampass = np.array([])
 rg_knpass = np.array([])
 rg_enpass = np.array([])
 rg_ktpass = np.array([])
-rg_erpass = np.array([])
+rg_etpass = np.array([])
 rg_mupass = np.array([])
+rg_krpass = np.array([])
+rg_erpass = np.array([])
+rg_mrpass = np.array([])
 rg_seed = np.array([])
 rg_dts = np.array([])
 rgs = pd.DataFrame()
@@ -181,8 +184,11 @@ if __name__ == '__main__':
                 rg_knpass = np.append(rg_knpass, pipeline.details["kn_pass"])
                 rg_enpass = np.append(rg_enpass, pipeline.details["en_pass"])
                 rg_ktpass = np.append(rg_ktpass, pipeline.details["kt_pass"])
-                rg_erpass = np.append(rg_erpass, pipeline.details["er_pass"])
+                rg_etpass = np.append(rg_etpass, pipeline.details["et_pass"])
                 rg_mupass = np.append(rg_mupass, pipeline.details["mu_pass"])
+                rg_krpass = np.append(rg_krpass, pipeline.details["kr_pass"])
+                rg_erpass = np.append(rg_erpass, pipeline.details["er_pass"])
+                rg_mrpass = np.append(rg_mrpass, pipeline.details["mr_pass"])
                 rg_dts = np.append(rg_dts, np.shape(static["gyration"]))
                 if np.shape(static["gyration"])[0] < 00:
                     print(sim.name)
@@ -280,8 +286,11 @@ rgs["gam_pass"] = rg_gampass
 rgs["kn_pass"] = rg_knpass
 rgs["en_pass"] = rg_enpass
 rgs["kt_pass"] = rg_ktpass
-rgs["er_pass"] = rg_erpass
+rgs["et_pass"] = rg_etpass
 rgs["mu_pass"] = rg_mupass
+rgs["kr_pass"] = rg_krpass
+rgs["er_pass"] = rg_erpass
+rgs["mr_pass"] = rg_mrpass
 rgs["rg_mean"] = all_static.iloc[equil:, :].mean().values*diam
 rgs["rg_std"] = all_static.iloc[equil:, :].std().values*diam/np.sqrt(ndecorr)
 rgs["v_ctc_mean"] = all_vctc.iloc[equil:, :].mean().values
@@ -1929,7 +1938,7 @@ def hcr_ctc_alt_fig(nmol=1,rf=10,pe=2.3):
 
 def hcr_ctc_en_fig(nmol=1,rf=10,pe=2.3):
 
-    ens = np.sort(rgs.er_pass.unique())[1:]
+    ens = np.sort(rgs.kn_pass.unique())[1:]
     gps = np.sort(rgs.gam_pass.unique())[1:]
     fs = np.array([3,6])
 
@@ -1942,7 +1951,7 @@ def hcr_ctc_en_fig(nmol=1,rf=10,pe=2.3):
         fake_pipeline = AnalysisPipeline("mar_" + column)
         fake_details = fake_pipeline.details
         if fake_details["r_conf"] == rf and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and (np.abs(fake_details["d_pass"] - 0.05)<1e-8) and fake_details["rolling"] > 0 and fake_details["functionality"] in [3,6]:
-            i = np.argwhere(np.abs(ens - fake_details["er_pass"]) < 1e-8)[0][0]
+            i = np.argwhere(np.abs(ens - fake_details["kn_pass"]) < 1e-8)[0][0]
             j = np.argwhere(np.abs(fs - fake_details["functionality"]) < 1e-8)[0][0]
             l = np.argwhere(np.abs(gps - fake_details["gam_pass"]) < 1e-8)[0][0]
             hcr[i,j,l]=np.mean(all_hcr[column])
@@ -1973,14 +1982,14 @@ def hcr_ctc_en_fig(nmol=1,rf=10,pe=2.3):
     ax[0].set_ylabel("$r_c$", fontsize=25)
     for i in range(nplots):
         ax[i].set_xscale("log")
-        ax[i].set_xlabel("$er$", fontsize=25)
+        ax[i].set_xlabel("$kn$", fontsize=25)
         ax[i].tick_params(axis='y', which='major', labelsize=25)
         ax[i].tick_params(axis='x', which='major', labelsize=25)
         ax[i].set_ylim(0, 0.25)
         if i>0:
             ax[i].tick_params(which='both', left=False, labelleft=False)
 
-    fig.savefig(output_dir / f"hcr_ctc_en_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
+    fig.savefig(output_dir / f"hcr_ctc_kn_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
 
 
@@ -2009,11 +2018,11 @@ hcr_f_fig(pe=0)
 hcr_f_fig(f_want=3,pe=0)"""
 
 
-R_g_n_fig(rf=0, nmol=1)
+"""R_g_n_fig(rf=0, nmol=1)
 R_g_nf_fig(rf=0, nmol=1)
 
 R_g_n_fig(rf=0, nmol=1,pe=0)
-R_g_nf_fig(rf=0, nmol=1,pe=0)
+R_g_nf_fig(rf=0, nmol=1,pe=0)"""
 
 """hcr_ctc_alt_fig()"""
 
@@ -2035,7 +2044,7 @@ plt.show()"""
 clrt_f_fig(rf=rfwant, nmol=4)"""
 
 hcr_ctc_en_fig(nmol=1)
-hcr_ctc_en_fig(pe=0, nmol=1)
+#hcr_ctc_en_fig(pe=0, nmol=1)
 
 sel = rgs[(rgs.brownian == 0) & (rgs.r_conf == 10 * diam) & (rgs.r_int == 0) & (
             rgs.mols == 1) & (rgs.d_pass == 0) & (rgs.n != 14)].reset_index(drop=True)

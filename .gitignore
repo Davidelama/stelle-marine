@@ -2,6 +2,7 @@ bin/**
 data/01_raw/**
 data/02_processed/**
 data/03_analyzed/**
+Cor_test/**
 **/.DS_Store
 
 # Byte-compiled / optimized / DLL files

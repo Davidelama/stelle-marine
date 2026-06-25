@@ -6,10 +6,10 @@ from builder import logtimer
 
 def job_maker(details):
     
-    runtime = 2e9#125e5#5e6# #cannot be larger than 2e9!
-    dumptime = 1e6#125e2#2e4#
-    dumptime_msd = 2e7#250e2#5e4#
-    dumptime_angle = 1e4#1e3#2e1#
+    runtime = 2e9#2e9#250e5#5e6# #cannot be larger than 2e9!
+    dumptime = 1e6#1e6#125e2#2e4#
+    dumptime_msd = 2e7#2e7#250e2#5e4#
+    dumptime_angle = 1e4#1e4#1e3#2e1#
     restime = 1e8
     
     queue="topolCPUQ"
@@ -71,18 +71,21 @@ fs=[3]#[3,4,5,6]                #number of arms of the star (functionality). Thi
 r_ints=[0]#[4,5,6,7,8,9,10,12,14,16,18,20]          #calculation of effective interaction between stars in sigma. If r_int>0, this automatically sets mol=2, gh=0, rconf=0, fixes the core positions and outputs their forces
 contact=1                   #if 1, introduces contact friction between particles and walls
 rolling=1                   #if 1, introduce rolling friction in the system
-d_pass=[0.05]#[0.01, 0.03,0.05,0.07,0.1,0.15,0.2]                #if >0, introduce passive particles to be captured by the stars
+d_pass=[0.07]#[0.01, 0.03,0.05,0.07,0.1,0.15,0.2]                #if >0, introduce passive particles to be captured by the stars
 r_pass=5/sigma             #radius of passive particles
 Dt_pass=[0.015]               #traslational diffusion of passive particles
 gam_pass=[30]                  #friction coefficient of passive particles
 kn_pass=[1e5]
-en_pass=[1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6]
+en_pass=[50.0]
 kt_pass=[1e6]
-et_pass=[10.0]
+et_pass=[0.1]              #10 maximizes
 mu_pass=[10.0]
 kr_pass=[1e5]
-er_pass=[10.0]
-mr_pass=[10.0]
+er_pass=[50.0]
+mr_pass=[1.0]
+epsattr = [.01,.02,.05,.1]
+rcutattr = [1.5,2,3,4,5]
+
 
 
 delet=True              #delete old data
@@ -115,11 +118,13 @@ for seed in seeds:
                                                 for kr_pas in kr_pass:
                                                     for er_pas in er_pass:
                                                         for mr_pas in mr_pass:
-                                                            details = {"n_beads": nval, "n_mol": n_mol,"functionality": fval,
+                                                            for epsatt in epsattr:
+                                                                for rcutatt in rcutattr:
+                                                                    details = {"n_beads": nval, "n_mol": n_mol,"functionality": fval,
                                                                         "r_core": r_core, "peclet":peclet, "r_conf":r_conf, "r_bond":r_bond, "r_cbond":r_cbond,
                                                                        "r_int":rint, "d_pass":d_pas, "r_pass":r_pass, "Dt_pass":Dt_pas, "gam_pass":gam_pas,
                                                                        "kn_pass":kn_pas, "en_pass":en_pas, "kt_pass":kt_pas, "et_pass":et_pas, "mu_pass":mu_pas,
                                                                        "kr_pass":kr_pas, "er_pass":er_pas, "mr_pass":mr_pas,"seed_start": seed, "ghost":gh,
-                                                                       "brownian":brownian, "Dr":Dr, "Dt":Dt, "gamma":gamma, "contact":contact, "rolling":rolling}
+                                                                       "brownian":brownian, "Dr":Dr, "Dt":Dt, "gamma":gamma, "contact":contact, "rolling":rolling, "epsattr":epsatt, "rcutattr":rcutatt}
 
-                                                            job_maker(details)
+                                                                    job_maker(details)

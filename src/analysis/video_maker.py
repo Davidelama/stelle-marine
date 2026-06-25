@@ -19,9 +19,9 @@ with open('stelle_parameters.json',"r") as f:
     details = json.load(f)
 
 
-nskip=1#per video di tutto usa 200
+nskip=2#per video di tutto usa 200
 time_limit=1
-initial_skip=0
+initial_skip=0#1000
 
 molcol=True
 armcol=False
