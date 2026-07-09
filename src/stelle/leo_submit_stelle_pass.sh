@@ -1,22 +1,22 @@
 #!/bin/bash
 ns=(011) #(007 009 011 013) # (090)#
-fs=(003) #(003 004 005 006)  #(010 030 060 100 150) # (020 060 120 200 300)#
+fs=(003 006) #(003 004 005 006)  #(010 030 060 100 150) # (020 060 120 200 300)#
 rcs=(0.67)
 ris=(4.0) # (4.0 5.0 6.0 7.0 8.0 9.0 10.0 12.0 14.0 16.0 18.0 20.0)
 mols=(001) #008
-pass=(0.050) #(0.010 0.030 0.050 0.070 0.100 0.150 0.200)
+pass=(0.010 0.030 0.050 0.070 0.100 0.150 0.200)
 Dpass=(0.015)
 gpass=(30)
 knpass=(100000)
 enpass=(50.0)
 ktpass=(1000000)
-etpass=(10.0)
+etpass=(0.1)
 mupass=(10.0)
 krpass=(100000)
-erpass=(10.0)
-mrpass=(10.0)
-epsattr=(0.010 0.020 0.050 0.100)
-rcutattr=(1.5 2.0 3.0 4.0 5.0)
+erpass=(50.0)
+mrpass=(1.0)
+epsattr=(0.000) #(0.010 0.020 0.050 0.100)
+rcutattr=(1.5) #(1.5 2.0 3.0 4.0 5.0)
 suffixes=("_ctc_rll") #("" "_ctc" "_ctc_rll")
 for n in "${ns[@]}";
 do
@@ -57,7 +57,7 @@ do
 for suffix in "${suffixes[@]}";
 do
 
-name=mar_n"$n"_f"$f"_rc"$rc"_rb1.13_rcb0.57_pe2.3_rf10.0_Dt0.010_Dr0.800_gm100_dp"$pas"_rp0.333_Dp"$Dpas"_gp"$gpas"_knp"$knpas"_enp"$enpas"_ktp"$ktpas"_etp"$etpas"_mup"$mupas"_krp"$krpas"_erp"$erpas"_mrp"$mrpas""$suffix"_ea"$epsatt"_ra"$rcutatt; #_mols"$mols"_ri"$ri"
+name=mar_n"$n"_f"$f"_rc"$rc"_rb1.13_rcb0.57_pe2.3_rf10.0_Dt0.010_Dr0.800_gm100_dp"$pas"_rp0.333_Dp"$Dpas"_gp"$gpas"_knp"$knpas"_enp"$enpas"_ktp"$ktpas"_etp"$etpas"_mup"$mupas"_krp"$krpas"_erp"$erpas"_mrp"$mrpas$suffix"; #_ea"$epsatt"_ra"$rcutatt"_mols"$mols"_ri"$ri"
 echo submitting $name;
 
 cd ../../data/01_raw/stelle/"$name"/

@@ -25,8 +25,8 @@
     "kr_pass": 1e5,
     "er_pass": 50,
     "mr_pass": 1,
-    "epsattr": 0.01,
-    "rcutattr": 4,
+    "epsattr": 0,
+    "rcutattr": 3,
     "seed_start": null,
     "contact": 1,
     "rolling": 1

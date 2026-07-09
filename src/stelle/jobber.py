@@ -67,11 +67,11 @@ gamma=100                   #determines the friction coefficient gamma (choose b
 dt=min(0.001,0.01/gamma)    #timestep in s
 if brownian:                #Brownian dynamics requires a smaller timestep
     dt=0.0001
-fs=[3]#[3,4,5,6]                #number of arms of the star (functionality). This is also an example of vector of parameters for multiple simulations
+fs=[3,6]#[3,4,5,6]                #number of arms of the star (functionality). This is also an example of vector of parameters for multiple simulations
 r_ints=[0]#[4,5,6,7,8,9,10,12,14,16,18,20]          #calculation of effective interaction between stars in sigma. If r_int>0, this automatically sets mol=2, gh=0, rconf=0, fixes the core positions and outputs their forces
 contact=1                   #if 1, introduces contact friction between particles and walls
 rolling=1                   #if 1, introduce rolling friction in the system
-d_pass=[0.07]#[0.01, 0.03,0.05,0.07,0.1,0.15,0.2]                #if >0, introduce passive particles to be captured by the stars
+d_pass=[0.01, 0.03,0.05,0.07,0.1,0.15,0.2]                #if >0, introduce passive particles to be captured by the stars
 r_pass=5/sigma             #radius of passive particles
 Dt_pass=[0.015]               #traslational diffusion of passive particles
 gam_pass=[30]                  #friction coefficient of passive particles
@@ -83,8 +83,8 @@ mu_pass=[10.0]
 kr_pass=[1e5]
 er_pass=[50.0]
 mr_pass=[1.0]
-epsattr = [.01,.02,.05,.1]
-rcutattr = [1.5,2,3,4,5]
+epsattr = [0]#,.02,.05,.1]
+rcutattr = [1.5]#,2,3,4,5]
 
 
 

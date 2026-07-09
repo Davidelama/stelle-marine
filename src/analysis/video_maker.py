@@ -19,7 +19,7 @@ with open('stelle_parameters.json',"r") as f:
     details = json.load(f)
 
 
-nskip=2#per video di tutto usa 200
+nskip=20
 time_limit=1
 initial_skip=0#1000
 
@@ -143,7 +143,8 @@ for i, t in enumerate(timesteps[initial_skip:initial_skip+max_steps]):
 
     
 
-animation = camera.animate(50) #the argument is ms/frame
+#animation = camera.animate(50) #the argument is ms/frame
+animation = camera.animate(500)
 animation.save("../../data/03_analyzed/video/"+IO.get_name(details)+".mp4")
 
         

@@ -122,6 +122,8 @@ rg_mupass = np.array([])
 rg_krpass = np.array([])
 rg_erpass = np.array([])
 rg_mrpass = np.array([])
+rg_epsattr = np.array([])
+rg_rcutattr = np.array([])
 rg_seed = np.array([])
 rg_dts = np.array([])
 rgs = pd.DataFrame()
@@ -189,6 +191,8 @@ if __name__ == '__main__':
                 rg_krpass = np.append(rg_krpass, pipeline.details["kr_pass"])
                 rg_erpass = np.append(rg_erpass, pipeline.details["er_pass"])
                 rg_mrpass = np.append(rg_mrpass, pipeline.details["mr_pass"])
+                rg_epsattr = np.append(rg_epsattr, pipeline.details["epsattr"])
+                rg_rcutattr = np.append(rg_rcutattr, pipeline.details["rcutattr"])
                 rg_dts = np.append(rg_dts, np.shape(static["gyration"]))
                 if np.shape(static["gyration"])[0] < 00:
                     print(sim.name)
@@ -291,6 +295,8 @@ rgs["mu_pass"] = rg_mupass
 rgs["kr_pass"] = rg_krpass
 rgs["er_pass"] = rg_erpass
 rgs["mr_pass"] = rg_mrpass
+rgs["epsattr"] = rg_epsattr
+rgs["rcutattr"] = rg_rcutattr
 rgs["rg_mean"] = all_static.iloc[equil:, :].mean().values*diam
 rgs["rg_std"] = all_static.iloc[equil:, :].std().values*diam/np.sqrt(ndecorr)
 rgs["v_ctc_mean"] = all_vctc.iloc[equil:, :].mean().values
@@ -1938,9 +1944,9 @@ def hcr_ctc_alt_fig(nmol=1,rf=10,pe=2.3):
 
 def hcr_ctc_en_fig(nmol=1,rf=10,pe=2.3):
 
-    ens = np.sort(rgs.kn_pass.unique())[1:]
-    gps = np.sort(rgs.gam_pass.unique())[1:]
-    fs = np.array([3,6])
+    ens = np.sort(rgs.epsattr.unique())[1:]
+    gps = np.sort(rgs.rcutattr.unique())[1:]
+    fs = np.array([3])
 
 
 
@@ -1950,10 +1956,10 @@ def hcr_ctc_en_fig(nmol=1,rf=10,pe=2.3):
 
         fake_pipeline = AnalysisPipeline("mar_" + column)
         fake_details = fake_pipeline.details
-        if fake_details["r_conf"] == rf and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and (np.abs(fake_details["d_pass"] - 0.05)<1e-8) and fake_details["rolling"] > 0 and fake_details["functionality"] in [3,6]:
-            i = np.argwhere(np.abs(ens - fake_details["kn_pass"]) < 1e-8)[0][0]
+        if fake_details["r_conf"] == rf and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and (np.abs(fake_details["d_pass"] - 0.07)<1e-8) and fake_details["rolling"] > 0 and fake_details["functionality"] in [3,6]:
+            i = np.argwhere(np.abs(ens - fake_details["epsattr"]) < 1e-8)[0][0]
             j = np.argwhere(np.abs(fs - fake_details["functionality"]) < 1e-8)[0][0]
-            l = np.argwhere(np.abs(gps - fake_details["gam_pass"]) < 1e-8)[0][0]
+            l = np.argwhere(np.abs(gps - fake_details["rcutattr"]) < 1e-8)[0][0]
             hcr[i,j,l]=np.mean(all_hcr[column])
             hcr_std[i,j,l]=np.std(all_hcr[column])/np.sqrt(ndecorr)
             #corr_time=np.argmax(autocorr(all_cforces[column]-eff_force[j,m,k,i])<aut_thresh)
@@ -1977,15 +1983,15 @@ def hcr_ctc_en_fig(nmol=1,rf=10,pe=2.3):
             ax[j].errorbar(ens,hcr[:,j,t],yerr=hcr_std[:,j,t], color=cmap.to_rgba(t),label=gps[t], linestyle="",
                            marker="o")
 
-    ax[0].legend(title=r"$\gamma_p$", title_fontsize=20, fontsize=20)
+    ax[0].legend(title=r"$r_{cut}$", title_fontsize=20, fontsize=20)
 
     ax[0].set_ylabel("$r_c$", fontsize=25)
     for i in range(nplots):
         ax[i].set_xscale("log")
-        ax[i].set_xlabel("$kn$", fontsize=25)
+        ax[i].set_xlabel("$\epsilon$", fontsize=25)
         ax[i].tick_params(axis='y', which='major', labelsize=25)
         ax[i].tick_params(axis='x', which='major', labelsize=25)
-        ax[i].set_ylim(0, 0.25)
+        #ax[i].set_ylim(0, 0.25)
         if i>0:
             ax[i].tick_params(which='both', left=False, labelleft=False)
 

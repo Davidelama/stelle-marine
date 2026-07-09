@@ -143,67 +143,79 @@ This project simulates the behavior of star polymers in 2D using the LAMMPS mole
 
 ### 20. **Passive Radius (`r_pass`)**
 
-   - If `d_pass>1`, defines the radius of the **passive particles**, in terms of the active particle diameter `sigma`.
+   - If `d_pass>0`, defines the radius of the **passive particles**, in terms of the active particle diameter `sigma`.
    - **Example**: `r_pass = 5/sigma`.
    - **Range**: `>0`.
 
 ### 19. **Passive Traslational Diffusion Coefficient (`Dt_pass`)**
 
-   - If `d_pass>1`, defines the traslational diffusion coefficent of the **passive particles**.
+   - If `d_pass>0`, defines the traslational diffusion coefficent of the **passive particles**.
    - **Example**: `Dt_pass = 0.015`.
    - **Range**: `>0`.
 
 ### 20. **Passive Friction Coefficient (`gam_pass`)**
 
-   - If `d_pass>1`, defines the friction coefficient of the **passive particles**.
+   - If `d_pass>0`, defines the friction coefficient of the **passive particles**.
    - **Example**: `gam_pass = 30`.
    - **Range**: `>0`.
 
 ### 21. **Passive Normal Contact Spring (`kn_pass`)**
 
-   - If `d_pass>1` and `contact = 1`, defines the normal contact spring coefficient of the **passive particles**.
+   - If `d_pass>0` and `contact = 1`, defines the normal contact spring coefficient of the **passive particles**.
    - **Example**: `kn_pass = 1e5`.
    - **Range**: `>0`.
 
 ### 22. **Passive Normal Contact Friction (`en_pass`)**
 
-   - If `d_pass>1` and `contact = 1`, defines the normal passive contact friction of the **passive particles**.
+   - If `d_pass>0` and `contact = 1`, defines the normal passive contact friction of the **passive particles**.
    - **Example**: `en_pass = 10`.
    - **Range**: `>0`.
 
 ### 23. **Passive Tangent Contact Spring (`kt_pass`)**
 
-   - If `d_pass>1` and `contact = 1`, defines the tangent contact spring coefficient of the **passive particles**.
+   - If `d_pass>0` and `contact = 1`, defines the tangent contact spring coefficient of the **passive particles**.
    - **Example**: `kt_pass = 1e6`.
    - **Range**: `>0`.
 
 ### 24. **Passive Tangent Contact Friction (`et_pass`)**
 
-   - If `d_pass>1` and `contact = 1`, defines the tangent contact friction coefficient of the **passive particles**.
+   - If `d_pass>0` and `contact = 1`, defines the tangent contact friction coefficient of the **passive particles**.
    - **Example**: `et_pass = 10`.
    - **Range**: `>0`.
 
 ### 25. **Passive Static Contact Friction (`mu_pass`)**
 
-   - If `d_pass>1` and `contact = 1`, defines the static contact friction coefficient of the **passive particles**.
+   - If `d_pass>0` and `contact = 1`, defines the static contact friction coefficient of the **passive particles**.
    - **Example**: `mu_pass = 10`.
    - **Range**: `>0`.
 
 ### 26. **Passive Rolling Contact Spring (`kr_pass`)**
 
-   - If `d_pass>1`, `contact = 1` and `rolling = 1`, defines the rolling contact spring coefficient of the **passive particles**.
+   - If `d_pass>0`, `contact = 1` and `rolling = 1`, defines the rolling contact spring coefficient of the **passive particles**.
    - **Example**: `kr_pass = 1e5`.
    - **Range**: `>0`.
 
 ### 27. **Passive Rolling Contact Friction (`er_pass`)**
 
-   - If `d_pass>1`, `contact = 1` and `rolling = 1`, defines the rolling contact friction coefficient of the **passive particles**.
+   - If `d_pass>0`, `contact = 1` and `rolling = 1`, defines the rolling contact friction coefficient of the **passive particles**.
    - **Example**: `er_pass = 10`.
    - **Range**: `>0`.
 
 ### 28. **Passive Rolling Static Contact Friction (`mr_pass`)**
 
-   - If `d_pass>1`, `contact = 1` and `rolling = 1`, defines the rolling static contact friction coefficient of the **passive particles**.
+   - If `d_pass>0`, `contact = 1` and `rolling = 1`, defines the rolling static contact friction coefficient of the **passive particles**.
    - **Example**: `mr_pass = 10`.
+   - **Range**: `>0`.
+
+### 29. **Passive-Active attraction strength (`epsattr`)**
+
+   - If `epsattr>0`, `d_pass>0` and `contact = 1`, defines the attraction strength between passive and active particles.
+   - **Example**: `epsattr = 0.1`.
+   - **Range**: `>0`.
+
+### 30. **Passive-Active attraction distance cutoff (`rcutattr`)**
+
+   - If `epsattr>0`, `d_pass>0` and `contact = 1`, defines the attraction cutoff distance between passive and active particles.
+   - **Example**: `rcutattr = 3`.
    - **Range**: `>0`.
 
