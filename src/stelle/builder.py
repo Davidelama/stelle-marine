@@ -431,6 +431,8 @@ class LammpsLangevinInput:
         #all force coefficients must be multiplied by gamma
         self.bending = bending * self.details["gamma"]
         self.peclet = self.details["peclet"] * self.details["gamma"]
+        self.cpp = self.details["cap_pe"] * self.details["gam_pass"]
+        self.crp = self.details["core_pe"] * self.details["gamma"]
         self.epsilon = 10.0 * self.details["gamma"]
         self.temp = self.details["Dt"] * self.details["gamma"]
         self.Tr = self.details["Dr"] * self.details["gamma"]

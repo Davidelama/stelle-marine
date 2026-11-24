@@ -6,10 +6,10 @@ from builder import logtimer
 
 def job_maker(details):
     
-    runtime = 2e9#2e9#250e5#5e6# #cannot be larger than 2e9!
-    dumptime = 1e6#1e6#125e2#2e4#
-    dumptime_msd = 2e7#2e7#250e2#5e4#
-    dumptime_angle = 1e4#1e4#1e3#2e1#
+    runtime = 250e5#2e9#250e5#5e6# #cannot be larger than 2e9!
+    dumptime = 125e2#1e6#125e2#2e4#
+    dumptime_msd = 250e2#2e7#250e2#5e4#
+    dumptime_angle = 1e3#1e4#1e3#2e1#
     restime = 1e8
     
     queue="topolCPUQ"
@@ -54,7 +54,7 @@ n_beads=[11]#[5,7,9,11,13,15]    #number of beads per arm
 r_core=20/(2*sigma)         #core radius (units of bead diameters)
 n_restarts=0                #number of times simulation is automatically restarted on cluster
 gh=0                        #molecules do not interact with each other (not yet fully implemented)
-r_conf=150.0/sigma          #radius of confinement in sigma. If 0, there is no confinement
+r_conf=0#150.0/sigma          #radius of confinement in sigma. If 0, there is no confinement
 peclet=35/sigma             #peclet number (self propulsion strength) in sigma/s
 r_bond=17/sigma             #size of bead-bead bonds in sigma
 r_cbond=(10-1.5)/sigma      #distance of arm grafting locations on the core with respect to the core center in sigma
@@ -67,11 +67,11 @@ gamma=100                   #determines the friction coefficient gamma (choose b
 dt=min(0.001,0.01/gamma)    #timestep in s
 if brownian:                #Brownian dynamics requires a smaller timestep
     dt=0.0001
-fs=[3,6]#[3,4,5,6]                #number of arms of the star (functionality). This is also an example of vector of parameters for multiple simulations
+fs=[3]#[3,4,5,6]                #number of arms of the star (functionality). This is also an example of vector of parameters for multiple simulations
 r_ints=[0]#[4,5,6,7,8,9,10,12,14,16,18,20]          #calculation of effective interaction between stars in sigma. If r_int>0, this automatically sets mol=2, gh=0, rconf=0, fixes the core positions and outputs their forces
 contact=1                   #if 1, introduces contact friction between particles and walls
 rolling=1                   #if 1, introduce rolling friction in the system
-d_pass=[0.01, 0.03,0.05,0.07,0.1,0.15,0.2]                #if >0, introduce passive particles to be captured by the stars
+d_pass=[0.0]#[0.01, 0.03,0.05,0.07,0.1,0.15,0.2]                #if >0, introduce passive particles to be captured by the stars
 r_pass=5/sigma             #radius of passive particles
 Dt_pass=[0.015]               #traslational diffusion of passive particles
 gam_pass=[30]                  #friction coefficient of passive particles
@@ -85,6 +85,8 @@ er_pass=[50.0]
 mr_pass=[1.0]
 epsattr = [0]#,.02,.05,.1]
 rcutattr = [1.5]#,2,3,4,5]
+cap_pe = [0]
+core_pe = [1]
 
 
 
@@ -120,11 +122,13 @@ for seed in seeds:
                                                         for mr_pas in mr_pass:
                                                             for epsatt in epsattr:
                                                                 for rcutatt in rcutattr:
-                                                                    details = {"n_beads": nval, "n_mol": n_mol,"functionality": fval,
-                                                                        "r_core": r_core, "peclet":peclet, "r_conf":r_conf, "r_bond":r_bond, "r_cbond":r_cbond,
-                                                                       "r_int":rint, "d_pass":d_pas, "r_pass":r_pass, "Dt_pass":Dt_pas, "gam_pass":gam_pas,
-                                                                       "kn_pass":kn_pas, "en_pass":en_pas, "kt_pass":kt_pas, "et_pass":et_pas, "mu_pass":mu_pas,
-                                                                       "kr_pass":kr_pas, "er_pass":er_pas, "mr_pass":mr_pas,"seed_start": seed, "ghost":gh,
-                                                                       "brownian":brownian, "Dr":Dr, "Dt":Dt, "gamma":gamma, "contact":contact, "rolling":rolling, "epsattr":epsatt, "rcutattr":rcutatt}
+                                                                    for cppe in cap_pe:
+                                                                        for crpe in core_pe:
+                                                                            details = {"n_beads": nval, "n_mol": n_mol,"functionality": fval,
+                                                                                "r_core": r_core, "peclet":peclet, "r_conf":r_conf, "r_bond":r_bond, "r_cbond":r_cbond,
+                                                                                "r_int":rint, "d_pass":d_pas, "r_pass":r_pass, "Dt_pass":Dt_pas, "gam_pass":gam_pas,
+                                                                                "kn_pass":kn_pas, "en_pass":en_pas, "kt_pass":kt_pas, "et_pass":et_pas, "mu_pass":mu_pas,
+                                                                                "kr_pass":kr_pas, "er_pass":er_pas, "mr_pass":mr_pas, "cap_pe":cppe, "core_pe":crpe,"seed_start": seed, "ghost":gh,
+                                                                                "brownian":brownian, "Dr":Dr, "Dt":Dt, "gamma":gamma, "contact":contact, "rolling":rolling, "epsattr":epsatt, "rcutattr":rcutatt}
 
-                                                                    job_maker(details)
+                                                                            job_maker(details)

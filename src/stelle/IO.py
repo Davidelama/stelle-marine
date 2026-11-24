@@ -305,6 +305,7 @@ def get_details(name):
     ghost = False
     r_conf = 0.0
     peclet = 0.0
+    core_pe = 0.0
     Dr = 1.0
     Dt = 1.0
     gamma = 1.0
@@ -322,6 +323,7 @@ def get_details(name):
     kr_pass = 0.0
     er_pass = 0.0
     mr_pass = 0.0
+    cap_pe = 0.0
     epsattr = 0.0
     rcutattr = 0.0
     brownian = False
@@ -333,6 +335,8 @@ def get_details(name):
             n_mol = int(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "pe" in el:
             peclet = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
+        if "crp" in el:
+            core_pe = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "rf" in el and r_int==0.0:
             r_conf = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "bro" in el:
@@ -376,6 +380,8 @@ def get_details(name):
             er_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "mrp" in el:
             mr_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
+        if "cpp" in el:
+            cap_pe = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "ea" in el:
             epsattr = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "ra" in el:
@@ -390,7 +396,7 @@ def get_details(name):
                "peclet": peclet, "brownian": brownian, "Dr": Dr, "Dt": Dt, "gamma": gamma,
                "r_int":r_int, "d_pass":d_pass, "r_pass":r_pass, "Dt_pass":Dt_pass, "gam_pass":gam_pass,
                "kn_pass":kn_pass, "en_pass":en_pass, "kt_pass":kt_pass, "et_pass":et_pass, "mu_pass":mu_pass,
-               "kr_pass":kr_pass, "er_pass":er_pass, "mr_pass":mr_pass, "seed_start": seed_start,"ghost": ghost,
+               "kr_pass":kr_pass, "er_pass":er_pass, "mr_pass":mr_pass, "cap_pe":cap_pe, "core_pe":core_pe, "seed_start": seed_start,"ghost": ghost,
                "contact":contact,"rolling":rolling,"epsattr":epsattr,"rcutattr":rcutattr}
     # print(details)
     return details
@@ -420,6 +426,8 @@ def get_name(details, prefix=True):
     kr_pass = details["kr_pass"]
     er_pass = details["er_pass"]
     mr_pass = details["mr_pass"]
+    cap_pe = details["cap_pe"]
+    core_pe = details["core_pe"]
     epsattr = details["epsattr"]
     rcutattr = details["rcutattr"]
     seed_start = details["seed_start"]
@@ -431,6 +439,8 @@ def get_name(details, prefix=True):
             suff += "_gh"
     if details["peclet"] > 0:
         suff += f"_pe{peclet:.1f}"
+    if details["core_pe"] > 0:
+        suff += f"_crp{core_pe:.1f}"
     if details["r_conf"] > 0:
         suff += f"_rf{r_conf:.1f}"
     if details["brownian"] > 0:
@@ -451,6 +461,8 @@ def get_name(details, prefix=True):
             suff += f"_knp{kn_pass:.0f}_enp{en_pass:.1f}_ktp{kt_pass:.0f}_etp{et_pass:.1f}_mup{mu_pass:.1f}"
             if details["rolling"]>0:
                 suff += f"_krp{kr_pass:.0f}_erp{er_pass:.1f}_mrp{mr_pass:.1f}"
+            if details["cap_pe"] > 0:
+                suff += f"_cpp{cap_pe:.1f}"
     if details["contact"] > 0:
         suff += f"_ctc"
         if details["rolling"] > 0:

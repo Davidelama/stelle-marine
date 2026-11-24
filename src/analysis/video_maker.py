@@ -19,9 +19,9 @@ with open('stelle_parameters.json',"r") as f:
     details = json.load(f)
 
 
-nskip=20
+nskip=5
 time_limit=1
-initial_skip=0#1000
+initial_skip=1000
 
 molcol=True
 armcol=False
@@ -123,6 +123,13 @@ for i, t in enumerate(timesteps[initial_skip:initial_skip+max_steps]):
         if details['d_pass'] != 0:
             ax.scatter(data.x[data.type == 4], data.y[data.type == 4], s=s_pass,
                        edgecolors="k", color="w", lw=2)
+            if details['cap_pe'] != 0:
+                ax.scatter(data.x[data.type == 4] + np.cos(data.theta[data.type == 4]) * diam_pass * .25,
+                           data.y[data.type == 4] + np.sin(data.theta[data.type == 4]) * diam_pass * .25, s=s * .09,
+                           color="k")
+        if details['core_pe'] !=0:
+            ax.scatter(data.x[data.type == 1] + np.cos(data.theta[data.type == 1]) * diam * .25,
+                       data.y[data.type == 1] + np.sin(data.theta[data.type == 1]) * diam * .25, s=s * .09, color="k")
     else:
         ax.scatter(data.x[data.type == 1], data.y[data.type == 1], edgecolors="k", color="w",s=50)
         for f in range(0,details["functionality"]*details["n_mol"]):
@@ -144,7 +151,7 @@ for i, t in enumerate(timesteps[initial_skip:initial_skip+max_steps]):
     
 
 #animation = camera.animate(50) #the argument is ms/frame
-animation = camera.animate(500)
+animation = camera.animate(50)
 animation.save("../../data/03_analyzed/video/"+IO.get_name(details)+".mp4")
 
         

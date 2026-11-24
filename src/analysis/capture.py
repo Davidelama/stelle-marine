@@ -25,7 +25,7 @@ with open('stelle_parameters.json',"r") as f:
 
 
 nskip=1
-time_limit=10
+time_limit=1
 initial_skip=0
 
 
@@ -82,7 +82,7 @@ print("Filming:")
 grouped = traj.groupby("timestep")
 timesteps = list(grouped.groups.keys())
 max_steps = int(np.ceil(len(timesteps) / time_limit))
-
+all_hcr=np.zeros(len(timesteps[initial_skip:initial_skip+max_steps:nskip]))
 for i, t in enumerate(timesteps[initial_skip:initial_skip+max_steps:nskip]):
     data = grouped.get_group(t)
     stars = data[data.type %2 ==1].copy()
@@ -126,8 +126,9 @@ for i, t in enumerate(timesteps[initial_skip:initial_skip+max_steps:nskip]):
 
     hcr = len(cap_set)/len(passives)
     cap_list=list(cap_set)
+    all_hcr[i]=hcr
 
-    if details['r_conf'] != 0:
+    """if details['r_conf'] != 0:
         ax.scatter(Cx,Cy,s=S,edgecolors= "blue",color="lightblue")
         ax.scatter(data.x[data.type == 1], data.y[data.type == 1], s=s_core, edgecolors="k", color="w",lw=2)
         for f in range(0,details["functionality"]*details["n_mol"]):
@@ -175,6 +176,10 @@ for i, t in enumerate(timesteps[initial_skip:initial_skip+max_steps:nskip]):
     
 
 animation = camera.animate(80) #the argument is ms/frame
-animation.save("../../data/03_analyzed/hulls/"+IO.get_name(details)+"_capture.mp4")
+animation.save("../../data/03_analyzed/hulls/"+IO.get_name(details)+"_capture.mp4")"""
 
-        
+N=10
+print(np.max(all_hcr))
+print(np.argmax(all_hcr))
+indices = np.argpartition(all_hcr, -N)[-N:]
+print(indices)

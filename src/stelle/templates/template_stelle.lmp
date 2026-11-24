@@ -24,6 +24,8 @@ variable start_radius  index {{start_radius}}
 variable end_radius  index {{end_radius}}
 variable conf equal {{conf}}
 variable peclet equal {{peclet}}
+variable core_peclet equal {{crp}}
+variable cap_peclet equal {{cpp}}
 variable brownian equal {{brownian}}
 variable r_bond equal {{r_bond}}
 variable r_cbond equal {{r_cbond}}
@@ -256,6 +258,8 @@ if "(${restart}==0) && (${int_fix}>0)" then "include int_fix.lmp"
 
 #--- ACTIVITY --------------------------------------------#
 fix 6 active propel/self dipole ${peclet}
+if "(${core_peclet}>0)" then "fix 6cr cores propel/self dipole ${core_peclet}"
+if "(${cap_peclet}>0)" then "fix 6cp passive propel/self dipole ${core_peclet}"
 unfix 5
 fix 5 all enforce2d
 

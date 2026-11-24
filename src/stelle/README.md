@@ -219,3 +219,14 @@ This project simulates the behavior of star polymers in 2D using the LAMMPS mole
    - **Example**: `rcutattr = 3`.
    - **Range**: `>0`.
 
+### 31. **Core Peclet Number (`core_pe`)**
+
+   - Defines the Peclet number for the core, which controls the strength of self-propulsion. A higher Peclet number results in stronger propulsion.
+   - **Example:** `core_pe = 10.0` means the self-propulsion strength is set to 10.
+   - **Range:** Any positive real number.
+
+### 32. **Captured Peclet Number (`cap_pe`)**
+
+   - Defines the Peclet number for the particles to be captured.
+   - **Example:** `cap_pe = 10.0` means the self-propulsion strength is set to 10.
+   - **Range:** Any positive real number.

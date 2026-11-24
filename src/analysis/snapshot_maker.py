@@ -26,12 +26,16 @@ with open('stelle_parameters.json',"r") as f:
 #150 1pass3b15
 #35 1pass6b9
 #13*5 1act6b9
-#18*5 act3arm11beads0.03dpass
-#1161/1350 act6arm11beads0.03dpass
+#18*5 act3arm11beads0.03dpass  #[909  634 1764 1862]
+#1161/1350 act6arm11beads0.03dpass #[659  201  592  202]
 #20 pass3arm11beads0.03dpass
 #50 pass6arm11beads0.03dpass
 
-chosen_snapshot = 20#24*5#2mpass53*5#2mact25*5#
+#133*5 3mactroll-frictions
+#42*5 3mactctc-frictions
+#6*5 3mactctc-frictions
+
+chosen_snapshot = 50#24*5#2mpass53*5#2mact25*5#
 molcol=True
 armcol=False
 ccol=True

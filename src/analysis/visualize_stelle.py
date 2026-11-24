@@ -1598,7 +1598,7 @@ def hcr_n_fig(nmol=1,rf=10,pe=2.3,n_want=11):
 
         fake_pipeline = AnalysisPipeline("mar_" + column)
         fake_details = fake_pipeline.details
-        if fake_details["r_conf"] == rf and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] > 0:
+        if fake_details["r_conf"] == rf and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] > 0 and fake_details["epsattr"] ==0:
             m = np.argwhere(fs == fake_details["functionality"])[0][0]
             k=np.argwhere(ns==fake_details["n_beads"])[0][0]
             j = np.argwhere(np.abs(dpass- fake_details["d_pass"])<1e-8)[0][0]
@@ -1670,7 +1670,7 @@ def hcr_f_fig(nmol=1,rf=10,pe=2.3,f_want=6):
 
         fake_pipeline = AnalysisPipeline("mar_" + column)
         fake_details = fake_pipeline.details
-        if fake_details["r_conf"] == rf and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] > 0:
+        if fake_details["r_conf"] == rf and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and fake_details["d_pass"] > 0 and fake_details["epsattr"] ==0:
             m = np.argwhere(fs == fake_details["functionality"])[0][0]
             k=np.argwhere(ns==fake_details["n_beads"])[0][0]
             j = np.argwhere(np.abs(dpass- fake_details["d_pass"])<1e-8)[0][0]
@@ -1804,7 +1804,7 @@ def hcr_ctc_fig(nmol=1,rf=10,pe=2.3,fwant=3):
 
         fake_pipeline = AnalysisPipeline("mar_" + column)
         fake_details = fake_pipeline.details
-        if fake_details["r_conf"] == rf and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and (np.abs(fake_details["d_pass"] - 0.05)<1e-8) and fake_details["rolling"] > 0 and fake_details["functionality"] ==fwant:
+        if fake_details["r_conf"] == rf and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and (np.abs(fake_details["d_pass"] - 0.05)<1e-8) and fake_details["rolling"] > 0 and fake_details["functionality"] ==fwant and fake_details["epsattr"] ==0:
             j = np.argwhere(np.abs(kns - fake_details["kn_pass"]) < 1e-8)[0][0]
             k = np.argwhere(np.abs(ens - fake_details["en_pass"]) < 1e-8)[0][0]
             l = np.argwhere(np.abs(kts - fake_details["kt_pass"]) < 1e-8)[0][0]
@@ -2018,10 +2018,10 @@ effpot_fig()
 effpot_fig(pe=0)"""
 
 
-"""hcr_f_fig()
+hcr_f_fig()
 hcr_f_fig(f_want=3)
 hcr_f_fig(pe=0)
-hcr_f_fig(f_want=3,pe=0)"""
+hcr_f_fig(f_want=3,pe=0)
 
 
 """R_g_n_fig(rf=0, nmol=1)
@@ -2049,26 +2049,31 @@ plt.show()"""
 """clrt_n_fig(rf=rfwant, nmol=4)
 clrt_f_fig(rf=rfwant, nmol=4)"""
 
-hcr_ctc_en_fig(nmol=1)
-#hcr_ctc_en_fig(pe=0, nmol=1)
+"""hcr_f_fig(nmol=1)
+hcr_f_fig(pe=0, nmol=1)"""
 
 sel = rgs[(rgs.brownian == 0) & (rgs.r_conf == 10 * diam) & (rgs.r_int == 0) & (
-            rgs.mols == 1) & (rgs.d_pass == 0) & (rgs.n != 14)].reset_index(drop=True)
+            rgs.mols == 1) & (rgs.d_pass == 0) & (rgs.n%2!=0)].reset_index(drop=True)
 
 sel[["f", "n", "peclet", "contact", "roll", "rg_mean", "rg_std"]].to_csv(output_dir / f"plot_data/R_g.txt", sep=' ')
 
+sel = rgs[(rgs.brownian == 0) & (rgs.r_conf == 10 * diam) & (rgs.r_int == 0) & (
+            rgs.mols == 1) & (rgs.d_pass == 0) & (rgs.n%2!=0)].reset_index(drop=True)
+
+sel[["f", "n", "peclet", "contact", "roll", "asph_mean", "asph_std"]].to_csv(output_dir / f"plot_data/asph.txt", sep=' ')
+
 sel = rgs[(rgs.brownian == 0) & (rgs.r_conf == 0) & (rgs.r_int == 0) & (
-            rgs.mols == 1) & (rgs.d_pass == 0) & (rgs.n != 14)].reset_index(drop=True)
+            rgs.mols == 1) & (rgs.d_pass == 0) & (rgs.n!=14)].reset_index(drop=True)
 
 sel[["f", "n", "peclet", "contact", "roll", "rg_mean", "rg_std"]].to_csv(output_dir / f"plot_data/R_g_noconf.txt", sep=' ')
 
 sel = rgs[(rgs.brownian == 0) & (rgs.r_conf == 10 * diam) & (rgs.r_int == 0) & (
-            rgs.mols > 1) & (rgs.d_pass == 0) & (rgs.n != 14)].reset_index(drop=True)
+            rgs.mols > 1) & (rgs.d_pass == 0) & (rgs.n%2!=0)].reset_index(drop=True)
 
 sel[["f", "n", "peclet", "contact", "roll", "mols", "clrt_mean", "clrt_std"]].to_csv(output_dir / f"plot_data/r_c.txt", sep=' ')
 
 sel = rgs[(rgs.brownian == 0) & (rgs.r_conf == 10 * diam) & (rgs.r_int == 0) & (
-            rgs.mols == 1) & (rgs.d_pass > 0) & (rgs.n != 14)].reset_index(drop=True)
+            rgs.mols == 1) & (rgs.d_pass > 0) & (rgs.n%2!=0) & (rgs.epsattr == 0)].reset_index(drop=True)
 
 sel[["f", "n", "peclet", "d_pass", "contact", "roll", "hcr_mean", "hcr_std"]].to_csv(output_dir / f"plot_data/hcr.txt", sep=' ')
 plt.show()
@@ -2079,6 +2084,9 @@ rad_f_fig(f_want=3,pe=0)"""
 
 #np.savetxt(output_dir / f"plot_data/R_g.txt",
 #           column_stack([sel.f.values, sel.rg_mean.values, sel.rg_std.values]))
+
+"""asph_f_fig(rf=rfwant, nmol=molwant,pe=0)
+asph_f_fig(rf=rfwant, nmol=molwant)"""
 
 """R_g_n_fig(rf=rfwant, nmol=molwant)
 R_g_f_fig(rf=rfwant, nmol=molwant)
