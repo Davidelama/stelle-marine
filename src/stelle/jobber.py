@@ -3,6 +3,8 @@ import numpy as np
 from pathlib import Path
 import os
 from builder import logtimer
+from IO import get_name
+import subprocess
 
 def job_maker(details):
     
@@ -47,6 +49,33 @@ def job_maker(details):
     
     renderer.render_sim(Path(os.path.dirname(os.path.abspath(__file__))).parent.parent/"data"/"01_raw"/folder,exist_ok=True)
 
+def job_submitter(details, env="SLURM", restart=0):
+
+    if env not in["PBS", "SLURM"]:
+        print("Environment not supported")
+        return
+
+    folder = "stelle"
+
+    name = get_name(details)
+
+    os.chdir(Path(f"../../data/01_raw/{folder}/"+name))
+
+    shfile = "chain"
+
+    if env=="SLURM":
+        shfile = "s"+shfile
+
+    if restart:
+        shfile = shfile+"_restart"
+
+    shfile = shfile+".sh"
+
+    command = ['chmod', "+x", shfile, ";", "./" + shfile]
+
+    subprocess.run(command)
+
+    os.chdir(Path(f"../../" ))
 
 sigma=15                    #diameter of bead in mm. This does not enter in the simulation, as it is automatically set to 1, just makes it easier to define the other parameters
 n_mol=1                     #number of molecules (not yet fully implemented)
@@ -128,3 +157,4 @@ for seed in seeds:
                                                                 "brownian":brownian, "Dr":Dr, "Dt":Dt, "gamma":gamma, "contact":contact, "rolling":rolling, "epsattr":epsatt, "rcutattr":rcutatt, "epsattra":epsatta, "rcutattra":rcutatta}
 
                                                     job_maker(details)
+                                                    job_submitter(details)
