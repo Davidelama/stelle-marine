@@ -326,6 +326,8 @@ def get_details(name):
     cap_pe = 0.0
     epsattr = 0.0
     rcutattr = 0.0
+    epsattra = 0.0
+    rcutattra = 0.0
     brownian = False
     contact = False
     seed_start = None
@@ -358,7 +360,7 @@ def get_details(name):
             ghost=False
         if "dp" in el:
             d_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
-        if "rp" in el:
+        if el.startswith("rp"):
             r_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "Dp" in el:
             Dt_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
@@ -382,10 +384,15 @@ def get_details(name):
             mr_pass = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "cpp" in el:
             cap_pe = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
-        if "ea" in el:
+        # Exact-prefix matches, so that "ea"/"ra" do not catch "eaa"/"raa"
+        if re.match(r"ea[-+\d.]", el):
             epsattr = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
-        if "ra" in el:
+        if re.match(r"ra[-+\d.]", el):
             rcutattr = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
+        if re.match(r"eaa[-+\d.]", el):
+            epsattra = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
+        if re.match(r"raa[-+\d.]", el):
+            rcutattra = float(re.findall(r"[-+]?\d*\.\d+|\d+", el)[0])
         if "ctc" in el:
             contact = True
         if "rll" in el:
@@ -397,7 +404,7 @@ def get_details(name):
                "r_int":r_int, "d_pass":d_pass, "r_pass":r_pass, "Dt_pass":Dt_pass, "gam_pass":gam_pass,
                "kn_pass":kn_pass, "en_pass":en_pass, "kt_pass":kt_pass, "et_pass":et_pass, "mu_pass":mu_pass,
                "kr_pass":kr_pass, "er_pass":er_pass, "mr_pass":mr_pass, "cap_pe":cap_pe, "core_pe":core_pe, "seed_start": seed_start,"ghost": ghost,
-               "contact":contact,"rolling":rolling,"epsattr":epsattr,"rcutattr":rcutattr}
+               "contact":contact,"rolling":rolling,"epsattr":epsattr,"rcutattr":rcutattr,"epsattra":epsattra,"rcutattra":rcutattra}
     # print(details)
     return details
 
@@ -461,14 +468,18 @@ def get_name(details, prefix=True):
             suff += f"_knp{kn_pass:.0f}_enp{en_pass:.1f}_ktp{kt_pass:.0f}_etp{et_pass:.1f}_mup{mu_pass:.1f}"
             if details["rolling"]>0:
                 suff += f"_krp{kr_pass:.0f}_erp{er_pass:.1f}_mrp{mr_pass:.1f}"
-            if details["cap_pe"] > 0:
-                suff += f"_cpp{cap_pe:.1f}"
+        if details["cap_pe"] > 0:
+            suff += f"_cpp{cap_pe:.1f}"
     if details["contact"] > 0:
         suff += f"_ctc"
         if details["rolling"] > 0:
             suff += f"_rll"
     if details["epsattr"] > 0:
         suff += f"_ea{epsattr:.3f}_ra{rcutattr:.1f}"
+    epsattra = details.get("epsattra", 0.0)
+    rcutattra = details.get("rcutattra", 0.0)
+    if epsattra > 0:
+        suff += f"_eaa{epsattra:.3f}_raa{rcutattra:.1f}"
     if not prefix:
         pref=""
     name = f'{pref}n{n_beads:03d}_f{functionality:03d}_rc{r_core:.2f}_rb{r_bond:.2f}_rcb{r_cbond:.2f}' + suff

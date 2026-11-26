@@ -16,7 +16,7 @@ do
 for suffix in "${suffixes[@]}";
 do
 
-name=mar_n011_f003_rc0.67_rb1.13_rcb0.57_pe2.3_crp1.0_Dt0.010_Dr0.800_gm100_ctc_rll
+name=mar_n011_f003_rc0.67_rb1.13_rcb0.57_pe2.3_rf10.0_Dt0.010_Dr0.800_gm100_dp0.070_rp0.333_Dp0.015_gp30_knp100000_enp50.0_ktp1000000_etp0.1_mup10.0_krp100000_erp50.0_mrp1.0_cpp3.1_ctc_rll
 echo executing $name;
 #mkdir ../../data/01_raw/cycles/"$name"
 cd ../../data/01_raw/stelle/"$name"

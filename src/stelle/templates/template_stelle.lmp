@@ -42,6 +42,7 @@ variable sdt equal ${dt}*0.1
 variable contact equal {{contact}}
 variable passives equal {{passives}}
 variable attraction equal {{attraction}}
+variable attraction_aa equal {{attraction_aa}}
 #---
 print "-> Seed: ${seed}"
 print "-> Stopping after walltime: ${time}"
@@ -73,6 +74,8 @@ variable rcutoff equal {{rcutoff}}
 variable epsilon equal {{epsilon}}
 variable rcutattr equal {{rcutattr}}
 variable epsattr equal {{epsattr}}
+variable rcutattra equal {{rcutattra}}
+variable epsattra equal {{epsattra}}
 variable Delta_cc equal {{Delta_cc}}
 variable Delta_cm equal {{Delta_cm}}
 variable Delta_pc equal {{Delta_pc}}
@@ -182,19 +185,35 @@ if "(${contact}>0) && (${int_fix}>0) && (${passives}>0)" then &
 "pair_coeff 4 4 granular hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${etp} ${mup} damping viscoelastic {{rollingpass}}" &
 "pair_coeff 1 4 lj/expand ${epsilon} ${sigma} ${Delta_pc}"
 
-if "(${contact}>0) && (${passives}>0) && (${attraction}>0)" then &
-"pair_style hybrid/overlay granular lj/expand ${rcutattr}" &
+#----ATTRACTIONS (only with contact) ----#
+# attr_pa: passive-active (3-4) attraction, active only if passives are present
+# attr_aa: active-active (3-3) attraction
+# Each lj/expand pair gets its own cutoff, so the global one is just the largest.
+variable attr_pa equal (${contact}>0)&&(${passives}>0)&&(${attraction}>0)
+variable attr_aa equal (${contact}>0)&&(${attraction_aa}>0)
+variable attr_any equal (${attr_pa}>0)||(${attr_aa}>0)
+variable rcutattrmax equal {{rcutattrmax}}
+
+if "${attr_any}>0" then &
+"pair_style hybrid/overlay granular lj/expand ${rcutattrmax}" &
 "pair_coeff 1 1 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${et} ${mu} damping viscoelastic {{rolling}}" &
 "pair_coeff 1 2 granular hertz 0.0001 ${en} tangential mindlin_rescale/force 0.0001 ${et} ${mu} damping viscoelastic {{rolling}}" &
 "pair_coeff 1 3 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${et} ${mu} damping viscoelastic {{rolling}}" &
 "pair_coeff 2 2 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${et} ${mu} damping viscoelastic {{rolling}}" &
 "pair_coeff 2 3 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${et} ${mu} damping viscoelastic {{rolling}}" &
-"pair_coeff 3 3 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${et} ${mu} damping viscoelastic {{rolling}}" &
+"pair_coeff 3 3 granular hertz ${kn} ${en} tangential mindlin_rescale/force ${kt} ${et} ${mu} damping viscoelastic {{rolling}}"
+
+if "(${attr_any}>0) && (${passives}>0)" then &
 "pair_coeff 1 4 granular hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${etp} ${mup} damping viscoelastic {{rollingpass}}" &
 "pair_coeff 2 4 granular hertz 0.0001 ${enp} tangential mindlin_rescale/force 0.0001 ${etp} ${mup} damping viscoelastic {{rollingpass}}" &
 "pair_coeff 3 4 granular hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${etp} ${mup} damping viscoelastic {{rollingpass}}" &
-"pair_coeff 4 4 granular hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${etp} ${mup} damping viscoelastic {{rollingpass}}" &
-"pair_coeff 3 4 lj/expand ${epsattr} ${sigma} ${Delta_pm}"
+"pair_coeff 4 4 granular hertz ${knp} ${enp} tangential mindlin_rescale/force ${ktp} ${etp} ${mup} damping viscoelastic {{rollingpass}}"
+
+if "${attr_pa}>0" then &
+"pair_coeff 3 4 lj/expand ${epsattr} ${sigma} ${Delta_pm} ${rcutattr}"
+
+if "${attr_aa}>0" then &
+"pair_coeff 3 3 lj/expand ${epsattra} ${sigma} 0 ${rcutattra}"
 
 
 
@@ -259,7 +278,7 @@ if "(${restart}==0) && (${int_fix}>0)" then "include int_fix.lmp"
 #--- ACTIVITY --------------------------------------------#
 fix 6 active propel/self dipole ${peclet}
 if "(${core_peclet}>0)" then "fix 6cr cores propel/self dipole ${core_peclet}"
-if "(${cap_peclet}>0)" then "fix 6cp passive propel/self dipole ${core_peclet}"
+if "(${cap_peclet}>0)" then "fix 6cp passive propel/self dipole ${cap_peclet}"
 unfix 5
 fix 5 all enforce2d
 

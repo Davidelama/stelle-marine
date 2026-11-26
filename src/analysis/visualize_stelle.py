@@ -122,6 +122,8 @@ rg_mupass = np.array([])
 rg_krpass = np.array([])
 rg_erpass = np.array([])
 rg_mrpass = np.array([])
+rg_crp = np.array([])
+rg_cpp = np.array([])
 rg_epsattr = np.array([])
 rg_rcutattr = np.array([])
 rg_seed = np.array([])
@@ -191,6 +193,8 @@ if __name__ == '__main__':
                 rg_krpass = np.append(rg_krpass, pipeline.details["kr_pass"])
                 rg_erpass = np.append(rg_erpass, pipeline.details["er_pass"])
                 rg_mrpass = np.append(rg_mrpass, pipeline.details["mr_pass"])
+                rg_crp = np.append(rg_crp, pipeline.details["core_pe"])
+                rg_cpp = np.append(rg_cpp, pipeline.details["cap_pe"])
                 rg_epsattr = np.append(rg_epsattr, pipeline.details["epsattr"])
                 rg_rcutattr = np.append(rg_rcutattr, pipeline.details["rcutattr"])
                 rg_dts = np.append(rg_dts, np.shape(static["gyration"]))
@@ -295,6 +299,8 @@ rgs["mu_pass"] = rg_mupass
 rgs["kr_pass"] = rg_krpass
 rgs["er_pass"] = rg_erpass
 rgs["mr_pass"] = rg_mrpass
+rgs["core_pe"] = rg_crp
+rgs["cap_pe"] = rg_cpp
 rgs["epsattr"] = rg_epsattr
 rgs["rcutattr"] = rg_rcutattr
 rgs["rg_mean"] = all_static.iloc[equil:, :].mean().values*diam
@@ -1952,18 +1958,32 @@ def hcr_ctc_en_fig(nmol=1,rf=10,pe=2.3):
 
     hcr = np.ones((len(ens),len(fs),len(gps)))*np.nan
     hcr_std = np.ones((len(ens),len(fs),len(gps)))*np.nan
+    # Reference values without attraction (epsattr=0), one per functionality
+    hcr_ref = np.ones(len(fs))*np.nan
+    hcr_ref_std = np.ones(len(fs))*np.nan
     for column in all_hcr:
 
         fake_pipeline = AnalysisPipeline("mar_" + column)
         fake_details = fake_pipeline.details
-        if fake_details["r_conf"] == rf and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and (np.abs(fake_details["d_pass"] - 0.07)<1e-8) and fake_details["rolling"] > 0 and fake_details["functionality"] in [3,6]:
+        if not (fake_details["r_conf"] == rf and fake_details["n_mol"] == nmol and fake_details["peclet"] == pe and (np.abs(fake_details["d_pass"] - 0.07)<1e-8) and fake_details["rolling"] > 0 and fake_details["functionality"] in fs):
+            continue
+        j = np.argwhere(np.abs(fs - fake_details["functionality"]) < 1e-8)[0][0]
+        if fake_details["epsattr"] == 0:
+            hcr_ref[j] = np.mean(all_hcr[column])
+            hcr_ref_std[j] = np.std(all_hcr[column])/np.sqrt(ndecorr)
+        else:
             i = np.argwhere(np.abs(ens - fake_details["epsattr"]) < 1e-8)[0][0]
-            j = np.argwhere(np.abs(fs - fake_details["functionality"]) < 1e-8)[0][0]
             l = np.argwhere(np.abs(gps - fake_details["rcutattr"]) < 1e-8)[0][0]
             hcr[i,j,l]=np.mean(all_hcr[column])
             hcr_std[i,j,l]=np.std(all_hcr[column])/np.sqrt(ndecorr)
-            #corr_time=np.argmax(autocorr(all_cforces[column]-eff_force[j,m,k,i])<aut_thresh)
-            #eff_force_std[j,m,k,i]=np.std(all_cdists[column])/np.sqrt(len(all_cforces[column])/corr_time)
+
+    # Ratio to the epsattr=0 reference, with errors propagated in quadrature
+    ref = hcr_ref[None, :, None]
+    ref_std = hcr_ref_std[None, :, None]
+    hcr_ratio = hcr / ref
+    hcr_ratio_std = np.abs(hcr_ratio) * np.sqrt((hcr_std / hcr)**2 + (ref_std / ref)**2)
+    if np.any(np.isnan(hcr_ref)):
+        print(f"hcr_ctc_en_fig: missing epsattr=0 reference for f={fs[np.isnan(hcr_ref)]}")
 
     nplots = len(fs)
     cmap = cmapper(len(gps))
@@ -1974,18 +1994,16 @@ def hcr_ctc_en_fig(nmol=1,rf=10,pe=2.3):
     for i in range(nplots):
         ax.append(fig.add_subplot(gs[0, i:i + 1]))
 
-
-    ax[0].set_ylabel(r"hcr", fontsize=25)
-
     for j in range(nplots):
         ax[j].set_title(f"f={fs[j]}", fontsize=25)
+        ax[j].axhline(1, c="gray", ls="--", lw=1, zorder=0)
         for t in range(len(gps)):
-            ax[j].errorbar(ens,hcr[:,j,t],yerr=hcr_std[:,j,t], color=cmap.to_rgba(t),label=gps[t], linestyle="",
+            ax[j].errorbar(ens,hcr_ratio[:,j,t],yerr=hcr_ratio_std[:,j,t], color=cmap.to_rgba(t),label=gps[t], linestyle="",
                            marker="o")
 
     ax[0].legend(title=r"$r_{cut}$", title_fontsize=20, fontsize=20)
 
-    ax[0].set_ylabel("$r_c$", fontsize=25)
+    ax[0].set_ylabel(r"$hcr/hcr_{\epsilon=0}$", fontsize=25)
     for i in range(nplots):
         ax[i].set_xscale("log")
         ax[i].set_xlabel("$\epsilon$", fontsize=25)
@@ -1998,6 +2016,113 @@ def hcr_ctc_en_fig(nmol=1,rf=10,pe=2.3):
     fig.savefig(output_dir / f"hcr_ctc_kn_pe{pe}_m{nmol}.png", bbox_inches="tight",dpi=300)
 
 
+def msdc_crp_fig(n_want=11,ri=0,nmol=1,pe=2.3,dpass=0,f_list=(3,6),rf_list=(0,10.0)):
+    # Collect the matching runs (only contact=1, rolling=1 exist for core activity)
+    runs = []
+    for column in all_rad:
+        fake_details = AnalysisPipeline("mar_" + column).details
+        if (fake_details["n_beads"] == n_want and fake_details["r_int"] == ri and fake_details["n_mol"] == nmol
+                and fake_details["peclet"] == pe and fake_details["d_pass"] == dpass
+                and fake_details["contact"] == 1 and fake_details["rolling"] == 1
+                and fake_details["functionality"] in f_list and fake_details["r_conf"] in rf_list):
+            runs.append((fake_details["core_pe"], fake_details["functionality"], fake_details["r_conf"], column))
+
+    # Colour by rank of core_pe, since values span orders of magnitude
+    crps = sorted(set(r[0] for r in runs if r[0] > 0))
+    cmap = cmapper(max(len(crps) - 1, 1))
+    crp_color = {crp: cmap.to_rgba(i) for i, crp in enumerate(crps)}
+
+    nrows, ncols = len(rf_list), len(f_list)
+
+    def make_grid():
+        fig = plt.figure(figsize=(5 * ncols, 5 * nrows))
+        gs = gridspec.GridSpec(nrows, ncols, hspace=0, wspace=0)
+        return fig, [[fig.add_subplot(gs[i, j]) for j in range(ncols)] for i in range(nrows)]
+
+    fig, ax = make_grid()            # MSD
+    fig_a, ax_a = make_grid()        # growth exponent alpha = dlog(MSD)/dlog(t)
+
+    for crp, f, rf, column in sorted(runs):
+        i, j = list(rf_list).index(rf), list(f_list).index(f)
+        style = dict(label="0", c="k", ls="--", lw=2, zorder=100) if crp == 0 else dict(label=f"{crp:g}", c=crp_color[crp])
+        t, msd = all_time[column].values, all_msdc[column].values
+        ax[i][j].errorbar(t, msd, yerr=all_msdc_std[column], **style)
+        # Local growth exponent: derivative of log(MSD) with respect to log(t)
+        ok = np.isfinite(t) & np.isfinite(msd) & (t > 0) & (msd > 0)
+        if ok.sum() > 2:
+            logt = np.log(t[ok])
+            ax_a[i][j].plot(t[ok], np.gradient(np.log(msd[ok]), logt), **style)
+
+    def format_grid(ax, ylabel, ylim_fn, yscale):
+        for i, rf in enumerate(rf_list):
+            for j, f in enumerate(f_list):
+                a = ax[i][j]
+                a.text(0.05, 0.92, rf"$f={f}$, $r_{{conf}}={rf:g}$", transform=a.transAxes, fontsize=20, va="top")
+                a.tick_params(axis='both', which='major', labelsize=25)
+                a.set_ylim(*ylim_fn(rf))
+                a.set_xscale("log")
+                a.set_yscale(yscale)
+                if j == 0:
+                    a.set_ylabel(ylabel, fontsize=25)
+                else:
+                    a.tick_params(which='both', left=False, labelleft=False)
+                if i == nrows - 1:
+                    a.set_xlabel(r"$t[s]$", fontsize=25)
+                else:
+                    a.tick_params(which='both', bottom=False, labelbottom=False)
+
+        # Legend gathered from all panels (the reference may not exist in every panel)
+        handles = {}
+        for row in ax:
+            for a in row:
+                for h, l in zip(*a.get_legend_handles_labels()):
+                    handles.setdefault(l, h)
+        labels = sorted(handles, key=float)
+        ax[0][0].legend([handles[l] for l in labels], labels, title=r"$Pe_{core}$", title_fontsize=20, fontsize=16, loc="lower right")
+
+    format_grid(ax, r"$MSD[mm^2]$", lambda rf: (1e-6, 1e5 if rf > 0 else 1e8), "log")
+    format_grid(ax_a, r"$\alpha$", lambda rf: (-0.5, 2.5), "linear")
+    for row in ax_a:
+        for a in row:
+            for y in (0, 1, 2):
+                a.axhline(y, c="gray", ls=":", lw=1, zorder=0)
+
+    fig.savefig(output_dir / f"msdc_crp_n{n_want:d}_pe{pe}.png", bbox_inches="tight",dpi=300)
+    fig_a.savefig(output_dir / f"msdc_alpha_crp_n{n_want:d}_pe{pe}.png", bbox_inches="tight",dpi=300)
+
+def R_g_crp_fig(n_want=11,ri=0,nmol=1,pe=2.3,dpass=0,f_list=(3,6),rf_list=(0,10.0)):
+    # Only contact=1, rolling=1 runs exist for core activity
+    nplots = len(rf_list)
+    fig = plt.figure(figsize=(5*nplots, 5))
+    gs = gridspec.GridSpec(1, nplots, hspace=0, wspace=0.05)
+    ax = [fig.add_subplot(gs[0, i]) for i in range(nplots)]
+
+    cmap = cmapper(max(f_list), min=min(f_list))
+    for i, rf in enumerate(rf_list):
+        for fval in f_list:
+            sel = rgs[(rgs.peclet == pe) & (rgs.n == n_want) & (rgs.f == fval) & (rgs.contact == 1) & (rgs.roll == 1)
+                      & (rgs.r_conf == rf*diam) & (rgs.r_int == ri*diam) & (rgs.mols == nmol) & (rgs.d_pass == dpass)]
+            sel = sel.sort_values("core_pe")
+            act = sel[sel.core_pe > 0]
+            ax[i].errorbar(act.core_pe.values, act.rg_mean.values, yerr=act.rg_std.values, c=cmap.to_rgba(fval),
+                           marker="o", label=f"{fval}")
+            # Passive-core reference (core_pe=0) as a horizontal line, since x is logarithmic
+            ref = sel[sel.core_pe == 0]
+            if len(ref) > 0:
+                ax[i].axhline(ref.rg_mean.values[0], c=cmap.to_rgba(fval), ls="--")
+
+    ax[0].set_ylabel(r"$R_g[mm]$", fontsize=30)
+    ax[0].legend(title=r"$f$", title_fontsize=25, fontsize=25)
+    for i, rf in enumerate(rf_list):
+        ax[i].text(.05, .9, letters[i], fontsize=30, transform=ax[i].transAxes)
+        ax[i].set_title(rf"$r_{{conf}}={rf:g}$", fontsize=25)
+        ax[i].set_xlabel(r"$Pe_{core}$", fontsize=30)
+        ax[i].set_xscale("log")
+        ax[i].tick_params(axis='both', which='major', labelsize=30)
+    ax[-1].yaxis.tick_right()
+
+    fig.savefig(output_dir / f"R_g_crp_n{n_want}_pe{pe}.png", bbox_inches="tight",dpi=300)
+
 
 letters = ["a", "b", "c", "d"]
 ms = ["s","o","^","*"]
@@ -2005,6 +2130,13 @@ colors = ["r", "g", "b", "k"]
 labs = ["no friction", "contact", "rolling"]
 molwant=1
 rfwant=10
+
+
+msdc_crp_fig()
+R_g_crp_fig()
+hcr_ctc_en_fig()
+
+plt.show()
 
 """clrt_f_fig(rf=rfwant, nmol=2)
 clrt_f_fig(rf=rfwant, nmol=2,pe=0)
@@ -2018,10 +2150,10 @@ effpot_fig()
 effpot_fig(pe=0)"""
 
 
-hcr_f_fig()
+"""hcr_f_fig()
 hcr_f_fig(f_want=3)
 hcr_f_fig(pe=0)
-hcr_f_fig(f_want=3,pe=0)
+hcr_f_fig(f_want=3,pe=0)"""
 
 
 """R_g_n_fig(rf=0, nmol=1)
@@ -2052,7 +2184,7 @@ clrt_f_fig(rf=rfwant, nmol=4)"""
 """hcr_f_fig(nmol=1)
 hcr_f_fig(pe=0, nmol=1)"""
 
-sel = rgs[(rgs.brownian == 0) & (rgs.r_conf == 10 * diam) & (rgs.r_int == 0) & (
+"""sel = rgs[(rgs.brownian == 0) & (rgs.r_conf == 10 * diam) & (rgs.r_int == 0) & (
             rgs.mols == 1) & (rgs.d_pass == 0) & (rgs.n%2!=0)].reset_index(drop=True)
 
 sel[["f", "n", "peclet", "contact", "roll", "rg_mean", "rg_std"]].to_csv(output_dir / f"plot_data/R_g.txt", sep=' ')
@@ -2076,7 +2208,7 @@ sel = rgs[(rgs.brownian == 0) & (rgs.r_conf == 10 * diam) & (rgs.r_int == 0) & (
             rgs.mols == 1) & (rgs.d_pass > 0) & (rgs.n%2!=0) & (rgs.epsattr == 0)].reset_index(drop=True)
 
 sel[["f", "n", "peclet", "d_pass", "contact", "roll", "hcr_mean", "hcr_std"]].to_csv(output_dir / f"plot_data/hcr.txt", sep=' ')
-plt.show()
+plt.show()"""
 """rad_f_fig()
 rad_f_fig(f_want=3)
 rad_f_fig(pe=0)

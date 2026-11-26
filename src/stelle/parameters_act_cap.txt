@@ -1,0 +1,12 @@
+"real" particle:
+MEDIA GLOBAL: 47.2560
+STD GLOBAL:  11.8069
+
+----------------------------------------------
+
+particle + big sticker:
+MEDIA GLOBAL: 39.9556
+STD GLOBAL:  7.1906
+
+Dr = 5.487173e-01 ± 2.733295e-03 rad²/s
+Gamma_r / I = 8.431482e+00 ± 1.963876e-01 s⁻¹

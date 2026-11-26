@@ -219,6 +219,18 @@ This project simulates the behavior of star polymers in 2D using the LAMMPS mole
    - **Example**: `rcutattr = 3`.
    - **Range**: `>0`.
 
+### 30b. **Active-Active attraction strength (`epsattra`)**
+
+   - If `epsattra>0` and `contact = 1`, defines the attraction strength between active monomers (type 3). Encoded in the name as `_eaa`.
+   - **Example**: `epsattra = 0.1`.
+   - **Range**: `>0`.
+
+### 30c. **Active-Active attraction distance cutoff (`rcutattra`)**
+
+   - If `epsattra>0` and `contact = 1`, defines the attraction cutoff distance between active monomers (type 3). Encoded in the name as `_raa`.
+   - **Example**: `rcutattra = 3`.
+   - **Range**: `>0`.
+
 ### 31. **Core Peclet Number (`core_pe`)**
 
    - Defines the Peclet number for the core, which controls the strength of self-propulsion. A higher Peclet number results in stronger propulsion.

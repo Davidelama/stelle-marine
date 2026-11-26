@@ -54,7 +54,7 @@ n_beads=[11]#[5,7,9,11,13,15]    #number of beads per arm
 r_core=20/(2*sigma)         #core radius (units of bead diameters)
 n_restarts=0                #number of times simulation is automatically restarted on cluster
 gh=0                        #molecules do not interact with each other (not yet fully implemented)
-r_conf=0#150.0/sigma          #radius of confinement in sigma. If 0, there is no confinement
+r_conf=150.0/sigma          #radius of confinement in sigma. If 0, there is no confinement
 peclet=35/sigma             #peclet number (self propulsion strength) in sigma/s
 r_bond=17/sigma             #size of bead-bead bonds in sigma
 r_cbond=(10-1.5)/sigma      #distance of arm grafting locations on the core with respect to the core center in sigma
@@ -71,22 +71,24 @@ fs=[3]#[3,4,5,6]                #number of arms of the star (functionality). Thi
 r_ints=[0]#[4,5,6,7,8,9,10,12,14,16,18,20]          #calculation of effective interaction between stars in sigma. If r_int>0, this automatically sets mol=2, gh=0, rconf=0, fixes the core positions and outputs their forces
 contact=1                   #if 1, introduces contact friction between particles and walls
 rolling=1                   #if 1, introduce rolling friction in the system
-d_pass=[0.0]#[0.01, 0.03,0.05,0.07,0.1,0.15,0.2]                #if >0, introduce passive particles to be captured by the stars
+d_pass=[0.07]#[0.01, 0.03,0.05,0.07,0.1,0.15,0.2]                #if >0, introduce passive particles to be captured by the stars
 r_pass=5/sigma             #radius of passive particles
 Dt_pass=[0.015]               #traslational diffusion of passive particles
 gam_pass=[30]                  #friction coefficient of passive particles
-kn_pass=[1e5]
-en_pass=[50.0]
-kt_pass=[1e6]
-et_pass=[0.1]              #10 maximizes
-mu_pass=[10.0]
-kr_pass=[1e5]
-er_pass=[50.0]
-mr_pass=[1.0]
+kn_pass=1e5
+en_pass=50.0
+kt_pass=1e6
+et_pass=0.1             #10 maximizes
+mu_pass=10.0
+kr_pass=1e5
+er_pass=50.0
+mr_pass=1.0
 epsattr = [0]#,.02,.05,.1]
 rcutattr = [1.5]#,2,3,4,5]
-cap_pe = [0]
-core_pe = [1]
+epsattra = [0]#[1]             #attraction between active monomers (type 3)
+rcutattra = [3]
+cap_pe = [47/sigma]
+core_pe = [0]
 
 
 
@@ -112,23 +114,17 @@ for seed in seeds:
                 for d_pas in d_pass:
                     for Dt_pas in Dt_pass:
                         for gam_pas in gam_pass:
-                            for kn_pas in kn_pass:
-                                for en_pas in en_pass:
-                                    for kt_pas in kt_pass:
-                                        for et_pas in et_pass:
-                                            for mu_pas in mu_pass:
-                                                for kr_pas in kr_pass:
-                                                    for er_pas in er_pass:
-                                                        for mr_pas in mr_pass:
-                                                            for epsatt in epsattr:
-                                                                for rcutatt in rcutattr:
-                                                                    for cppe in cap_pe:
-                                                                        for crpe in core_pe:
-                                                                            details = {"n_beads": nval, "n_mol": n_mol,"functionality": fval,
-                                                                                "r_core": r_core, "peclet":peclet, "r_conf":r_conf, "r_bond":r_bond, "r_cbond":r_cbond,
-                                                                                "r_int":rint, "d_pass":d_pas, "r_pass":r_pass, "Dt_pass":Dt_pas, "gam_pass":gam_pas,
-                                                                                "kn_pass":kn_pas, "en_pass":en_pas, "kt_pass":kt_pas, "et_pass":et_pas, "mu_pass":mu_pas,
-                                                                                "kr_pass":kr_pas, "er_pass":er_pas, "mr_pass":mr_pas, "cap_pe":cppe, "core_pe":crpe,"seed_start": seed, "ghost":gh,
-                                                                                "brownian":brownian, "Dr":Dr, "Dt":Dt, "gamma":gamma, "contact":contact, "rolling":rolling, "epsattr":epsatt, "rcutattr":rcutatt}
+                            for epsatt in epsattr:
+                                for rcutatt in rcutattr:
+                                    for epsatta in epsattra:
+                                        for rcutatta in rcutattra:
+                                            for cppe in cap_pe:
+                                                for crpe in core_pe:
+                                                    details = {"n_beads": nval, "n_mol": n_mol,"functionality": fval,
+                                                                "r_core": r_core, "peclet":peclet, "r_conf":r_conf, "r_bond":r_bond, "r_cbond":r_cbond,
+                                                                "r_int":rint, "d_pass":d_pas, "r_pass":r_pass, "Dt_pass":Dt_pas, "gam_pass":gam_pas,
+                                                                "kn_pass":kn_pass, "en_pass":en_pass, "kt_pass":kt_pass, "et_pass":et_pass, "mu_pass":mu_pass,
+                                                                "kr_pass":kr_pass, "er_pass":er_pass, "mr_pass":mr_pass, "cap_pe":cppe, "core_pe":crpe,"seed_start": seed, "ghost":gh,
+                                                                "brownian":brownian, "Dr":Dr, "Dt":Dt, "gamma":gamma, "contact":contact, "rolling":rolling, "epsattr":epsatt, "rcutattr":rcutatt, "epsattra":epsatta, "rcutattra":rcutatta}
 
-                                                                            job_maker(details)
+                                                    job_maker(details)

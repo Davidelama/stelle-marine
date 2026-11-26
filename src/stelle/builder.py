@@ -389,10 +389,15 @@ class LammpsLangevinInput:
         radius = .5
         inertia = 2 / 5 * mass * radius ** 2
 
+        mass_core = mass * (daisy.details["r_core"] / radius) ** 3
+
         mass_pass = mass * (daisy.details["r_pass"]/radius)**3
         inpass= 2/5 * mass_pass * daisy.details["r_pass"]**2
         grotpass= 9.5
         Drotpass = 4.4
+        if daisy.details["cap_pe"]>0:
+            grotpass = 8.4e+00
+            Drotpass = 5.5e-01
         self.tau_pass=1/daisy.details["gam_pass"]
         self.tau_rot_pass=1/grotpass
 
@@ -452,11 +457,18 @@ class LammpsLangevinInput:
         self.attraction=0
         if self.epsattr>0:
             self.attraction=1
+        # Attraction between active monomers (type 3 - type 3)
+        self.epsattra = self.details.get("epsattra", 0.0) * self.details["gamma"]
+        self.rcutattra = self.details.get("rcutattra", 0.0)
+        self.attraction_aa = int(self.epsattra > 0)
+        self.rcutattrmax = max([self.rcutattra, self.rcutattr])
         if self.brownian == 0:
             self.temp *= mass
             self.Tr *= inertia
             self.temp_pass *= mass_pass
             self.trot_pass *= inpass
+            self.crp *= mass_core
+            self.cpp *= mass_pass
         if self.details["Dt"] == 0:
             self.temp = 0.000001
         if self.details["Dr"] == 0:
